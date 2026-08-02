@@ -33,49 +33,82 @@
     <!-- FontAwesome (Iconos) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- Estilos propios -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Bootstrap: script CLÁSICO. Va inline y ANTES de todo módulo:
+         los módulos son diferidos, así que este corre primero. -->
+    <script>
+    (function () {
+      'use strict';
+
+      // --- Globals que el código existente lee pero nunca inicializa -------
+      window.cart            = [];
+      window.catalogData     = [];
+      window.inventoryData   = [];
+      window.clientsData     = [];
+      window.mockLeads       = window.clientsData;   // alias legacy: mismo array
+      window.citasData       = [];
+      window.auditLogs       = [];
+      window.employeesData   = {};
+      window.timeOffData     = [];
+      window.capacityData    = { pequeno:{total:0,occ:0}, mediano:{total:0,occ:0}, grande:{total:0,occ:0} };
+      window.capacityTotals  = { peq:0, med:0, gra:0 };
+      window.apiKeys         = { modoPrueba: true };
+      window.connectorStatus = {};
+      window.currentTerms    = '';
+      window.currentTermsVersion = 'v0';
+      window.currentUser     = null;                 // { uid, email, name, role }
+      window.currentEmployeeEmail = null;
+      window.charts          = {};
+
+      // --- Reemplazo de via.placeholder.com (dominio caído) ---------------
+      // SVG inline: no depende de red, nunca se rompe.
+      window.PLACEHOLDER_IMG =
+        'data:image/svg+xml;utf8,' + encodeURIComponent(
+          '<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150">' +
+          '<rect width="150" height="150" fill="#F4F1EA"/>' +
+          '<text x="75" y="82" font-family="sans-serif" font-size="42" ' +
+          'fill="#C5A059" text-anchor="middle">🐾</text></svg>'
+        );
+
+      // Cualquier <img> que falle cae al placeholder en lugar de mostrar el
+      // ícono de imagen rota. Captura en fase de captura porque `error` no
+      // burbujea desde <img>.
+      document.addEventListener('error', function (e) {
+        var t = e.target;
+        if (t && t.tagName === 'IMG' && t.src !== window.PLACEHOLDER_IMG) {
+          t.src = window.PLACEHOLDER_IMG;
+        }
+      }, true);
+
+      // --- Estilo real para .admin-only -----------------------------------
+      // Hasta ahora la clase existía en 13 lugares del HTML sin ninguna regla
+      // que la respaldara. `data-role` se fija en el BLOQUE B tras el login.
+      var css = document.createElement('style');
+      css.textContent =
+        'body[data-role="agent"] .admin-only{display:none !important;}' +
+        'body:not([data-role]) .admin-only{display:none !important;}' +
+        '.cc-readonly{background:#f9fafb;color:#6b7280;cursor:not-allowed;}';
+      document.head.appendChild(css);
+
+      // --- Stubs defensivos ------------------------------------------------
+      // Si un onclick del HTML se dispara antes de que el BLOQUE B termine de
+      // cargar, esto evita un ReferenceError en consola.
+      ['handleTargetChange','updateMsgCount','updateMsgPreview',
+       'filterIndividualClients','fillMsgTargetOptions','logEvent'
+      ].forEach(function (fn) {
+        if (typeof window[fn] !== 'function') window[fn] = function () {};
+      });
+    })();
+    </script>
+
     <!-- Chart.js CDN (Para Reportes Corporativos) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <!-- html2canvas CDN (Para Captura de Recibos de Caja) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
-    <style>
-        /* Estilos Base Globales */
-        body { 
-            background-color: #F4F1EA; 
-            color: #0B2F1D; 
-            overflow-x: hidden;
-        }
-        
-        /* Glassmorphism panel styling */
-        .glass-panel {
-            background: rgba(244, 241, 234, 0.85);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(197, 160, 89, 0.2);
-        }
-        
-        /* Animaciones utilitarias */
-        .fade-in { animation: fadeIn 0.6s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Custom scrollbar para estética premium */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #F4F1EA; }
-        ::-webkit-scrollbar-thumb { background: #C5A059; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #0B2F1D; }
-        
-        /* Smooth scrolling en la navegación */
-        html { scroll-behavior: smooth; }
-        
-        /* FullCalendar Custom Theme */
-        .fc { font-family: 'Inter', sans-serif !important; }
-        .fc .fc-toolbar-title { font-family: 'Playfair Display', serif !important; font-size: 1.5rem !important; color: #0B2F1D !important; font-weight: bold; }
-        .fc .fc-button-primary { background-color: #0B2F1D !important; border-color: #0B2F1D !important; border-radius: 8px !important; text-transform: capitalize !important; }
-        .fc .fc-button-primary:hover { background-color: #C5A059 !important; border-color: #C5A059 !important; color: #0B2F1D !important; }
-        .fc .fc-button-active { background-color: #C5A059 !important; border-color: #C5A059 !important; color: #0B2F1D !important; }
-        .fc-theme-standard td, .fc-theme-standard th { border-color: #f3f4f6 !important; }
-        .fc-day-today { background-color: #fefce8 !important; }
-    </style>
     <!-- FullCalendar CDN -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 </head>
@@ -354,7 +387,7 @@
                 <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-md">
                     <i class="fa-solid fa-calendar-plus text-forest text-2xl"></i>
                 </div>
-                <h2 class="text-2xl font-serif font-bold text-forest">Nueva Cita</h2>
+                <h2 class="text-2xl font-bold text-forest">Nueva Cita</h2>
             </div>
             <div class="space-y-4">
                 <div class="relative">
@@ -444,7 +477,7 @@
                 <div class="w-20 h-20 bg-forest rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
                     <i class="fa-solid fa-shield-halved text-gold text-3xl"></i>
                 </div>
-                <h2 class="text-3xl font-serif font-bold text-forest">Portal Interno</h2>
+                <h2 class="text-3xl font-bold text-forest">Portal Interno</h2>
                 <p class="text-sm text-gray-500 mt-2">Acceso restringido a personal de Casa Canis</p>
             </div>
             <form onsubmit="event.preventDefault(); performLogin();" class="space-y-5">
@@ -476,7 +509,7 @@
     <div id="client-profile-modal" class="hidden fixed inset-0 z-[100] bg-forest/95 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-gray-100 rounded-3xl w-full max-w-4xl p-0 shadow-2xl relative fade-in my-8 flex flex-col max-h-[90vh]">
             <div class="p-6 bg-white rounded-t-3xl border-b border-gray-200 flex justify-between items-center sticky top-0 z-10">
-                <h2 class="text-2xl font-serif font-bold text-forest"><i class="fa-solid fa-user-edit text-gold mr-3"></i>Perfil de Cliente</h2>
+                <h2 class="text-2xl font-bold text-forest"><i class="fa-solid fa-user-edit text-gold mr-3"></i>Perfil de Cliente</h2>
                 <button onclick="closeClientProfile()" class="text-gray-400 hover:text-red-500 transition text-2xl"><i class="fa-solid fa-times"></i></button>
             </div>
             
@@ -568,8 +601,8 @@
                 </button>
                 <div id="group-op" class="space-y-2 mb-6 overflow-hidden transition-all duration-300">
                     <button onclick="switchTab('tab-leads')" class="admin-tab w-full flex items-center gap-4 px-4 py-3.5 rounded-xl bg-gold/20 text-gold hover:bg-white/10 transition text-left font-medium" data-target="tab-leads">
-                        <i class="fa-brands fa-whatsapp w-6 text-center text-lg"></i>
-                        <span>Leads Entrantes</span>
+                        <i class="fa-solid fa-users w-6 text-center text-lg"></i>
+                        <span>Directorio Clientes</span>
                         <span id="leads-badge" class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow animate-pulse">2</span>
                     </button>
                     
@@ -606,8 +639,8 @@
                     </button>
                     
                     <button onclick="switchTab('tab-config')" class="admin-tab w-full flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-white/10 transition text-left font-medium text-white/80 admin-only" data-target="tab-config">
-                        <i class="fa-solid fa-pen-to-square w-6 text-center text-lg"></i>
-                        <span>Editor Web (Landing)</span>
+                        <i class="fa-solid fa-cogs w-6 text-center text-lg"></i>
+                        <span>Ajustes del Sistema</span>
                     </button>
                     
                     <button onclick="switchTab('tab-mi-perfil')" class="admin-tab w-full flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-white/10 transition text-left font-medium text-white/80" data-target="tab-mi-perfil">
@@ -651,7 +684,7 @@
                         <p class="text-xs text-gold">Recepción Central</p>
                     </div>
                 </div>
-                <button onclick="logout()" class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-red-500/20 text-red-300 hover:bg-red-500 hover:text-white transition font-bold text-sm">
+                <button onclick="performLogout()" class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-red-500/20 text-red-300 hover:bg-red-500 hover:text-white transition font-bold text-sm">
                     <i class="fa-solid fa-sign-out-alt"></i> Cerrar Sesión Segura
                 </button>
             </div>
@@ -679,11 +712,18 @@
                 <div id="tab-leads" class="admin-panel fade-in">
                     <div class="flex justify-between items-end mb-8">
                         <div>
-                            <h3 class="text-3xl font-serif font-bold text-forest flex items-center gap-3">
-                                <div class="bg-[#25D366]/20 p-2 rounded-lg"><i class="fa-brands fa-whatsapp text-[#25D366]"></i></div>
-                                Inbox de Recepción
+                            <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
+                                <div class="bg-blue-100 p-2 rounded-lg"><i class="fa-solid fa-address-book text-blue-600"></i></div>
+                                Directorio de Clientes (CRM)
                             </h3>
-                            <p class="text-gray-500 mt-2">Leads pre-registrados automáticamente desde el Bot de WhatsApp o Web.</p>
+                            <p class="text-gray-500 mt-2">Gestión de todos tus clientes registrados manual o automáticamente desde la Web/WhatsApp.</p>
+                            <div class="flex gap-2 mt-4 overflow-x-auto pb-2">
+                                <button onclick="filterCRM('all')" class="crm-filter-btn px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 border bg-forest text-gold border-forest shadow-md" data-filter="all">Todos</button>
+                                <button onclick="filterCRM('Pendiente Validación Médica')" class="crm-filter-btn px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 border bg-white text-forest border-forest/20 hover:bg-forest/5" data-filter="Pendiente Validación Médica">Por Validar</button>
+                                <button onclick="filterCRM('Reserva Próxima')" class="crm-filter-btn px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 border bg-white text-forest border-forest/20 hover:bg-forest/5" data-filter="Reserva Próxima">Reservas Próximas</button>
+                                <button onclick="filterCRM('Mascota Adentro')" class="crm-filter-btn px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 border bg-white text-forest border-forest/20 hover:bg-forest/5" data-filter="Mascota Adentro">En Hotel</button>
+                            </div>
+
                         </div>
                         <button onclick="openClientProfile()" class="bg-forest text-gold border border-forest px-5 py-2.5 rounded-xl hover:bg-forestLight transition font-medium flex items-center gap-2 text-sm shadow-sm">
                             <i class="fa-solid fa-user-plus"></i> Ingresar Cliente Manual
@@ -718,7 +758,7 @@
                 <div id="tab-calendario" class="admin-panel hidden fade-in h-full flex flex-col">
                     <div class="mb-6 flex justify-between items-end">
                         <div>
-                            <h3 class="text-3xl font-serif font-bold text-forest flex items-center gap-3">
+                            <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
                                 <div class="bg-indigo-100 p-2 rounded-lg"><i class="fa-regular fa-calendar-check text-indigo-600"></i></div>
                                 Calendario de Servicios
                             </h3>
@@ -744,7 +784,7 @@
                 <!-- TAB: PUNTO DE VENTA Y CAJA -->
                 <div id="tab-caja" class="admin-panel hidden fade-in">
                     <div class="mb-8">
-                        <h3 class="text-3xl font-serif font-bold text-forest flex items-center gap-3">
+                        <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
                             <div class="bg-gold/20 p-2 rounded-lg"><i class="fa-solid fa-cash-register text-gold"></i></div>
                             Facturación Rápida
                         </h3>
@@ -782,7 +822,7 @@
                             <!-- Decoración Ticket -->
                             <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 w-20 h-6 bg-gray-100 rounded-b-xl border-b border-x border-gray-200"></div>
                             
-                            <h4 class="text-2xl font-serif font-bold text-forest mb-6 text-center">Ticket de Cobro</h4>
+                            <h4 class="text-2xl font-bold text-forest mb-6 text-center">Ticket de Cobro</h4>
                             
                             <!-- Datos de Facturación -->
                             <div class="space-y-4 mb-6 bg-gray-50 p-4 rounded-xl border border-gray-200">
@@ -824,6 +864,21 @@
                                     <span class="text-gray-500 font-bold uppercase tracking-wider">Total a Pagar</span>
                                     <span id="cart-total" class="text-4xl font-black text-forest tracking-tight">Q 0.00</span>
                                 </div>
+
+                                <!-- Toggles FEL -->
+                                <div class="flex items-center justify-between mb-6 bg-green-50/50 p-3 rounded-lg border border-green-100">
+                                    <div class="flex items-center gap-3">
+                                        <i class="fa-solid fa-file-invoice-dollar text-green-600 text-lg"></i>
+                                        <div>
+                                            <p class="text-sm font-bold text-forest">Generar FEL Oficial (SAT)</p>
+                                            <p class="text-[10px] text-gray-500">Se reportará automáticamente a la SAT.</p>
+                                        </div>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" id="emit-fel-checkbox" class="sr-only peer">
+                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                                    </label>
+                                </div>
                                 <button onclick="generateReceipt()" class="w-full bg-forest text-gold font-bold text-lg py-4 rounded-xl hover:bg-forestLight hover:shadow-lg transition transform hover:-translate-y-1 flex items-center justify-center gap-3">
                                     <i class="fa-solid fa-cash-register"></i> Procesar Cobro
                                 </button>
@@ -836,7 +891,7 @@
                 <div id="tab-capacidad" class="admin-panel hidden fade-in">
                     <div class="mb-8 flex justify-between items-end">
                         <div>
-                            <h3 class="text-3xl font-serif font-bold text-forest flex items-center gap-3">
+                            <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
                                 <div class="bg-blue-100 p-2 rounded-lg"><i class="fa-solid fa-hotel text-blue-600"></i></div>
                                 Control de Disponibilidad
                             </h3>
@@ -937,15 +992,34 @@
                 <!-- TAB: CONFIGURACIÓN WEB -->
                 <div id="tab-config" class="admin-panel hidden fade-in admin-only">
                     <div class="mb-8">
-                        <h3 class="text-3xl font-serif font-bold text-forest flex items-center gap-3">
-                            <div class="bg-purple-100 p-2 rounded-lg"><i class="fa-solid fa-pen-to-square text-purple-600"></i></div>
-                            Editor Contenido Landing Page
+                        <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
+                            <div class="bg-purple-100 p-2 rounded-lg"><i class="fa-solid fa-cogs text-purple-600"></i></div>
+                            Ajustes del Sistema
                         </h3>
-                        <p class="text-gray-500 mt-2">Modifica los textos principales sin necesidad de programar.</p>
+                        <p class="text-gray-500 mt-2">Configuración general, integraciones y personalización del sistema.</p>
                     </div>
                     
                     <div class="bg-white p-10 rounded-3xl shadow-sm border border-gray-100 max-w-4xl">
                         <div class="space-y-8">
+                            
+                            <!-- MODO PRUEBA GLOBAL -->
+                            <div class="bg-red-50 p-6 rounded-2xl border-2 border-red-200 shadow-sm relative overflow-hidden">
+                                <div class="absolute -right-4 -top-4 text-red-100/50">
+                                    <i class="fa-solid fa-flask text-8xl"></i>
+                                </div>
+                                <div class="relative z-10 flex items-start justify-between">
+                                    <div>
+                                        <h4 class="text-xl font-bold text-red-800 flex items-center gap-2 mb-2">
+                                            <i class="fa-solid fa-bug text-red-600"></i> Modo Prueba Global
+                                        </h4>
+                                        <p class="text-sm text-red-700 max-w-md">Actívalo para probar el sistema sin realizar cobros reales ni enviar datos a la SAT o APIs. Al apagarlo, todas las conexiones serán <strong class="font-black">EN VIVO</strong>.</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer mt-2">
+                                        <input type="checkbox" id="edit-modo-prueba" class="sr-only peer" checked>
+                                        <div class="w-14 h-7 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-red-600"></div>
+                                    </label>
+                                </div>
+                            </div>
                             <div>
                                 <label class="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">Título Principal (Hero Banner)</label>
                                 <input type="text" id="edit-title" value="Exclusividad y confort para tu mejor amigo" class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none font-serif text-xl text-forest">
@@ -1005,6 +1079,31 @@
                             
                             <hr class="border-gray-200 my-8">
 
+                            <h4 class="font-bold text-forest mb-4 text-lg"><i class="fa-solid fa-file-invoice-dollar text-green-500 mr-2"></i>Facturación Electrónica (FEL - SAT Guatemala)</h4>
+                            <div class="bg-green-50 p-6 rounded-2xl border border-green-100">
+                                <label class="block text-sm font-bold text-gray-700 mb-3 tracking-wider">Certificador</label>
+                                <select id="edit-fel-provider" class="w-full px-5 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-400 outline-none text-gray-600 mb-4">
+                                    <option value="infile">Infile</option>
+                                    <option value="megaprint">Megaprint</option>
+                                    <option value="guatefacturas">Guatefacturas</option>
+                                    <option value="digifact">Digifact</option>
+                                </select>
+
+                                <label class="block text-sm font-bold text-gray-700 mb-3 tracking-wider">Alias / Usuario (Requestor)</label>
+                                <input type="text" id="edit-fel-alias" placeholder="ej. CASA_CANIS_FEL" class="w-full px-5 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-400 outline-none text-gray-600 mb-4">
+
+                                <label class="block text-sm font-bold text-gray-700 mb-3 tracking-wider">Llave / Token API (Firma)</label>
+                                <input type="password" id="edit-fel-llave" placeholder="Ingresa tu token o llave..." class="w-full px-5 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-400 outline-none text-gray-600 mb-4">
+
+                                <label class="block text-sm font-bold text-gray-700 mb-3 tracking-wider">NIT Emisor / Afiliación IVA</label>
+                                <input type="text" id="edit-fel-afiliacion" placeholder="ej. 1234567-8" class="w-full px-5 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-400 outline-none text-gray-600 mb-4">
+
+                                <label class="block text-sm font-bold text-gray-700 mb-3 tracking-wider">Frase Legal (SAT)</label>
+                                <input type="text" id="edit-fel-frase" placeholder="Sujeto a pagos trimestrales..." class="w-full px-5 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-400 outline-none text-gray-600">
+                                <p class="text-xs text-gray-500 mt-2"><i class="fa-solid fa-circle-info mr-1"></i>Frase obligatoria según tu régimen en la SAT.</p>
+                            </div>
+                            
+                            <hr class="border-gray-200 my-8">
                             <h4 class="font-bold text-forest mb-4 text-lg"><i class="fa-brands fa-google text-blue-500 mr-2"></i>Integraciones de Calendario</h4>
                             <div class="bg-blue-50 p-6 rounded-2xl border border-blue-100">
                                 <label class="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">Google Calendar ID (Negocio)</label>
@@ -1027,74 +1126,164 @@
                 <!-- TAB: PERFIL EMPLEADOS -->
                 <!-- TAB: MI PERFIL -->
                 <div id="tab-mi-perfil" class="admin-panel hidden fade-in">
-                    <div class="mb-8">
-                        <h3 class="text-3xl font-serif font-bold text-forest flex items-center gap-3">
-                            <div class="bg-gold/20 p-2 rounded-lg"><i class="fa-solid fa-user text-gold"></i></div>
-                            Mi Perfil
-                        </h3>
-                        <p class="text-gray-500 mt-2">Gestiona tu información personal, foto y envía solicitudes de permiso.</p>
+
+                  <div class="mb-8 flex items-start justify-between">
+                    <div>
+                      <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
+                        <div class="bg-gold/20 p-2 rounded-lg"><i class="fa-solid fa-users-gear text-gold"></i></div>
+                        <span id="staff-tab-title">Mi Perfil</span>
+                      </h3>
+                      <p id="staff-tab-sub" class="text-gray-500 mt-2">Tu información y solicitudes.</p>
+                    </div>
+                    <button id="btn-add-staff" onclick="openStaffModal()"
+                            class="admin-only bg-forest text-gold font-bold px-6 py-3 rounded-xl hover:bg-forestLight shadow-lg transition">
+                      <i class="fa-solid fa-user-plus mr-2"></i>Agregar Empleado
+                    </button>
+                  </div>
+
+                  <!-- ============ VISTA ADMIN ============ -->
+                  <div id="staff-admin-view" class="hidden space-y-8">
+
+                    <!-- Cola de solicitudes pendientes -->
+                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                      <div class="px-8 py-5 border-b border-gray-100 flex items-center justify-between">
+                        <h4 class="font-bold text-forest text-lg">
+                          <i class="fa-regular fa-calendar-xmark text-gold mr-2"></i>Solicitudes de Ausencia
+                        </h4>
+                        <span id="timeoff-pending-count"
+                              class="bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full">0 pendientes</span>
+                      </div>
+                      <div id="timeoff-queue" class="divide-y divide-gray-100"></div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                        <!-- Edición de Perfil -->
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                            <h4 class="text-lg font-bold text-forest mb-4 border-b pb-2">Información Personal</h4>
-                            <div class="space-y-4">
-                                <div class="flex items-center gap-4">
-                                    <img id="my-profile-img" src="https://via.placeholder.com/100" class="w-20 h-20 rounded-full object-cover border border-gray-200">
-                                    <div class="flex-grow">
-                                        <label class="block text-xs font-bold text-gray-700 mb-1">Foto de Perfil</label>
-                                        <input type="file" id="my-profile-upload" accept="image/*" class="w-full text-xs">
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-gray-700 mb-1">Puesto / Cargo</label>
-                                    <input type="text" id="my-profile-role" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 outline-none focus:border-gold text-sm" readonly>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-gray-700 mb-1">Mis Tareas / Funciones</label>
-                                    <textarea id="my-profile-tasks" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 outline-none focus:border-gold text-sm h-24"></textarea>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-gray-700 mb-1">Disponibilidad (Horario)</label>
-                                    <input type="text" id="my-profile-schedule" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 outline-none focus:border-gold text-sm">
-                                </div>
-                                <button onclick="saveMyProfile()" class="w-full bg-gold text-white font-bold py-2 rounded-lg hover:bg-yellow-500 transition shadow-sm"><i class="fa-solid fa-save mr-2"></i>Guardar Perfil</button>
-                            </div>
-                        </div>
-
-                        <!-- Solicitud de Permisos -->
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                            <h4 class="text-lg font-bold text-forest mb-4 border-b pb-2">Solicitar Permiso (Ausencia/Vacaciones)</h4>
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-xs font-bold text-gray-700 mb-1">Tipo de Permiso</label>
-                                    <select id="req-type" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 outline-none focus:border-gold text-sm">
-                                        <option value="Vacaciones">Vacaciones</option>
-                                        <option value="Enfermedad">Enfermedad (Requiere Constancia)</option>
-                                        <option value="Salida Temprano">Salida Temprano</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-gray-700 mb-1">Fechas / Horario</label>
-                                    <input type="text" id="req-dates" placeholder="Ej. 15 de Agosto al 20 de Agosto" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 outline-none focus:border-gold text-sm">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-gray-700 mb-1">Motivo Detallado</label>
-                                    <textarea id="req-reason" class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 outline-none focus:border-gold text-sm h-24" placeholder="Explica la razón de tu solicitud..."></textarea>
-                                </div>
-                                <button onclick="submitPermissionRequest()" class="w-full bg-forest text-gold font-bold py-2 rounded-lg hover:bg-forestLight transition shadow-sm"><i class="fa-solid fa-paper-plane mr-2"></i>Enviar Solicitud al Administrador</button>
-                            </div>
-                            
-                            <!-- Historial de Solicitudes -->
-                            <div class="mt-6">
-                                <h5 class="text-sm font-bold text-gray-700 mb-2">Mis Solicitudes Anteriores</h5>
-                                <div id="my-requests-list" class="space-y-2 max-h-40 overflow-y-auto">
-                                    <!-- Renderizado Dinámico -->
-                                </div>
-                            </div>
-                        </div>
+                    <!-- Plantilla -->
+                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                      <div class="px-8 py-5 border-b border-gray-100">
+                        <h4 class="font-bold text-forest text-lg">
+                          <i class="fa-solid fa-id-badge text-gold mr-2"></i>Plantilla de Personal
+                        </h4>
+                      </div>
+                      <div id="staff-roster" class="divide-y divide-gray-100"></div>
                     </div>
+
+                    <!-- Editor de horario semanal -->
+                    <div id="schedule-editor" class="hidden bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+                      <div class="flex items-center justify-between mb-6">
+                        <h4 class="font-bold text-forest text-lg">
+                          <i class="fa-regular fa-clock text-gold mr-2"></i>
+                          Horario semanal · <span id="sched-emp-name" class="text-gold"></span>
+                        </h4>
+                        <button onclick="closeScheduleEditor()" class="text-gray-400 hover:text-gray-700">
+                          <i class="fa-solid fa-xmark text-xl"></i>
+                        </button>
+                      </div>
+                      <p class="text-xs text-gray-500 mb-6">
+                        <i class="fa-solid fa-circle-info mr-1"></i>
+                        Estos horarios definen la disponibilidad real de los servicios en el calendario público.
+                        Un día sin marcar no genera cupos.
+                      </p>
+                      <div id="schedule-grid" class="space-y-3"></div>
+                      <div class="flex justify-end mt-8">
+                        <button onclick="saveSchedule()"
+                                class="bg-gold text-forest font-bold px-8 py-3 rounded-xl hover:bg-goldHover shadow-lg transition">
+                          <i class="fa-solid fa-save mr-2"></i>Guardar Horario
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- ============ VISTA AGENTE ============ -->
+                  <div id="staff-agent-view" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+                    <!-- Perfil -->
+                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+                      <div class="flex items-center gap-4 mb-6">
+                        <img id="my-profile-img" alt="Foto de perfil"
+                             class="w-20 h-20 rounded-full object-cover border-2 border-gold/40 bg-cream">
+                        <div class="flex-1">
+                          <p id="my-profile-name" class="font-bold text-forest text-lg"></p>
+                          <p id="my-profile-role" class="text-sm text-gold font-medium"></p>
+                        </div>
+                      </div>
+                      <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Cambiar foto</label>
+                      <input type="file" id="my-profile-upload" accept="image/*"
+                             class="w-full text-xs mb-4 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-cream file:text-forest file:font-bold">
+                      <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Teléfono</label>
+                      <input type="text" id="my-profile-phone"
+                             class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-gold mb-4">
+                      <button onclick="saveMyProfile()"
+                              class="w-full bg-forest text-gold font-bold py-3 rounded-xl hover:bg-forestLight transition">
+                        Guardar
+                      </button>
+                    </div>
+
+                    <!-- Mi horario (solo lectura) + descansos -->
+                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+                      <h4 class="font-bold text-forest mb-4">
+                        <i class="fa-regular fa-clock text-gold mr-2"></i>Mi Horario
+                      </h4>
+                      <div id="my-schedule-list" class="space-y-2 text-sm mb-6"></div>
+                      <p class="text-[11px] text-gray-400 mb-6">
+                        Definido por administración. Si necesitas un cambio, envía una solicitud.
+                      </p>
+                      <div class="border-t border-gray-100 pt-5">
+                        <h5 class="font-bold text-forest text-sm mb-3">Registro de descanso</h5>
+                        <button id="btn-break" onclick="toggleBreak()"
+                                class="w-full bg-cream text-forest font-bold py-3 rounded-xl hover:bg-gold/20 transition border border-gold/30">
+                          <i class="fa-solid fa-mug-hot mr-2"></i>Iniciar descanso
+                        </button>
+                        <p class="text-[11px] text-gray-400 mt-2">Queda registrado en auditoría.</p>
+                      </div>
+                    </div>
+
+                    <!-- Solicitudes -->
+                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+                      <h4 class="font-bold text-forest mb-4">
+                        <i class="fa-regular fa-calendar-xmark text-gold mr-2"></i>Solicitar Ausencia
+                      </h4>
+
+                      <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Tipo</label>
+                      <select id="req-type" onchange="onReqTypeChange()"
+                              class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-gold mb-3">
+                        <option value="vacaciones">Vacaciones</option>
+                        <option value="dia_completo">Ausencia de día completo</option>
+                        <option value="salida_temprana">Salida temprana</option>
+                        <option value="permiso">Permiso especial</option>
+                      </select>
+
+                      <div class="grid grid-cols-2 gap-2 mb-3">
+                        <div>
+                          <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Desde</label>
+                          <input type="date" id="req-date-start"
+                                 class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-gold">
+                        </div>
+                        <div>
+                          <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Hasta</label>
+                          <input type="date" id="req-date-end"
+                                 class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-gold">
+                        </div>
+                      </div>
+
+                      <div id="req-hour-wrap" class="hidden mb-3">
+                        <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Hora de salida</label>
+                        <input type="time" id="req-hour-start"
+                               class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-gold">
+                      </div>
+
+                      <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Motivo</label>
+                      <textarea id="req-reason" rows="3"
+                                class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-gold mb-4"
+                                placeholder="Explica la razón de tu solicitud..."></textarea>
+
+                      <button onclick="submitPermissionRequest()"
+                              class="w-full bg-gold text-forest font-bold py-3 rounded-xl hover:bg-goldHover transition shadow">
+                        <i class="fa-solid fa-paper-plane mr-2"></i>Enviar Solicitud
+                      </button>
+
+                      <h5 class="font-bold text-forest text-sm mt-8 mb-3">Mis solicitudes</h5>
+                      <div id="my-requests-list" class="space-y-2 max-h-48 overflow-y-auto"></div>
+                    </div>
+                  </div>
                 </div>
 
 
@@ -1102,7 +1291,7 @@
                 <!-- TAB: CATALOGO Y PRECIOS -->
                 <div id="tab-catalogo" class="admin-panel hidden fade-in">
                     <div class="mb-8">
-                        <h3 class="text-3xl font-serif font-bold text-forest flex items-center gap-3">
+                        <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
                             <div class="bg-blue-100 p-2 rounded-lg"><i class="fa-solid fa-tags text-blue-600"></i></div>
                             Gestor de Catálogo y Precios
                         </h3>
@@ -1139,7 +1328,7 @@
                 <!-- TAB: INVENTARIO (Solo Admins) -->
                 <div id="tab-inventario" class="admin-panel hidden fade-in">
                     <div class="mb-8">
-                        <h3 class="text-3xl font-serif font-bold text-forest flex items-center gap-3">
+                        <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
                             <div class="bg-indigo-100 p-2 rounded-lg"><i class="fa-solid fa-boxes-stacked text-indigo-600"></i></div>
                             Control de Inventario
                         </h3>
@@ -1181,7 +1370,7 @@
                 <!-- TAB: MENSAJERÍA -->
                 <div id="tab-mensajes" class="admin-panel hidden fade-in">
                     <div class="mb-8">
-                        <h3 class="text-3xl font-serif font-bold text-forest flex items-center gap-3">
+                        <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
                             <div class="bg-green-100 p-2 rounded-lg"><i class="fa-solid fa-paper-plane text-green-600"></i></div>
                             Mensajería Masiva
                         </h3>
@@ -1274,7 +1463,7 @@
                 <div id="tab-auditoria" class="admin-panel hidden fade-in">
                     <div class="mb-8 flex justify-between items-end">
                         <div>
-                            <h3 class="text-3xl font-serif font-bold text-forest flex items-center gap-3">
+                            <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
                                 <div class="bg-indigo-100 p-2 rounded-lg"><i class="fa-solid fa-server text-indigo-600"></i></div>
                                 Auditoría del Sistema
                             </h3>
@@ -1323,7 +1512,7 @@
                 <!-- TAB: REPORTES (Solo Admins) -->
                 <div id="tab-reportes" class="admin-panel hidden fade-in">
                     <div class="mb-8">
-                        <h3 class="text-3xl font-serif font-bold text-forest flex items-center gap-3">
+                        <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
                             <div class="bg-gray-800 p-2 rounded-lg"><i class="fa-solid fa-chart-line text-white"></i></div>
                             Inteligencia de Negocio
                         </h3>
@@ -1488,7 +1677,7 @@
             <button onclick="closeClientProfile()" class="absolute top-6 right-6 text-gray-400 hover:text-forest transition text-2xl"><i class="fa-solid fa-times"></i></button>
             
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-serif font-bold text-forest"><i class="fa-solid fa-address-card mr-2 text-gold"></i> Perfil del Cliente</h2>
+                <h2 class="text-2xl font-bold text-forest"><i class="fa-solid fa-address-card mr-2 text-gold"></i> Perfil del Cliente</h2>
                 <button onclick="saveClientProfile()" class="bg-forest text-cream px-5 py-2 rounded-xl hover:bg-forestLight transition font-bold text-sm shadow-md">
                     <i class="fa-solid fa-save mr-1"></i> Guardar Cambios
                 </button>
@@ -1538,2108 +1727,224 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
+    
+<!-- BOOKING WIZARD MODAL -->
+<div id="booking-wizard-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex justify-center items-center backdrop-blur-sm p-4">
+    <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <!-- Header -->
+        <div class="bg-forest p-6 text-white flex justify-between items-center relative">
+            <div>
+                <h3 class="text-2xl font-bold font-serif text-gold">Reserva tu Espacio</h3>
+                <p id="bw-step-indicator" class="text-sm opacity-80">Paso 1 de 4: Fechas y Cupos</p>
+            </div>
+            <button onclick="closeBookingWizard()" class="text-white/50 hover:text-white transition absolute top-6 right-6">
+                <i class="fa-solid fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-8 overflow-y-auto custom-scrollbar flex-1 relative">
+            <!-- Loader -->
+            <div id="bw-loader" class="absolute inset-0 bg-white/90 z-10 hidden flex-col justify-center items-center">
+                <i class="fa-solid fa-spinner fa-spin text-4xl text-forest mb-4"></i>
+                <p id="bw-loader-text" class="text-forest font-bold">Procesando...</p>
+            </div>
+
+            <!-- Paso 1: Fechas y Cupos -->
+            <div id="bw-step-1" class="bw-step block space-y-6">
+                <p class="text-gray-600">Verifica la disponibilidad y asegura tus lugares.</p>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Servicio</label>
+                    <select id="bw-servicio" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
+                        <option value="Hotel Boutique">Hotel Boutique</option>
+                        <option value="Day Pass">Day Pass</option>
+                        <option value="Spa & Grooming">Spa & Grooming</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Fecha Check-in</label>
+                        <input type="date" id="bw-date" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Perros (Cupos)</label>
+                        <input type="number" id="bw-cupos" min="1" max="10" value="1" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paso 2: Datos del Cliente y Mascotas -->
+            <div id="bw-step-2" class="bw-step hidden space-y-6">
+                <div class="bg-blue-50 border border-blue-100 p-4 rounded-xl text-sm text-blue-800 mb-4">
+                    <i class="fa-solid fa-lock mr-2"></i>Tus <span id="bw-locked-spots" class="font-bold"></span> cupos están reservados por 10 minutos para que completes el registro.
+                </div>
+                <div>
+                    <h4 class="font-bold text-forest mb-3 border-b pb-2">Datos del Dueño</h4>
+                    <input type="text" id="bw-nombre" placeholder="Nombre Completo" class="w-full px-4 py-3 mb-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
+                    <input type="tel" id="bw-tel" placeholder="Teléfono / WhatsApp" class="w-full px-4 py-3 mb-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
+                    <input type="email" id="bw-email" placeholder="Correo Electrónico" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
+                </div>
+                <div>
+                    <h4 class="font-bold text-forest mb-3 border-b pb-2">Datos de las Mascotas</h4>
+                    <input type="text" id="bw-mascotas-nombres" placeholder="Nombres (Ej. Max, Luna)" class="w-full px-4 py-3 mb-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" id="bw-mascotas-razas" placeholder="Razas" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
+                        <input type="text" id="bw-mascotas-edades" placeholder="Edades" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paso 3: Validación Médica -->
+            <div id="bw-step-3" class="bw-step hidden space-y-6">
+                <p class="text-gray-600">Por la seguridad de todos los huéspedes, requerimos comprobar que tus mascotas estén sanas.</p>
+                <div class="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center bg-gray-50 hover:bg-gray-100 transition relative">
+                    <input type="file" id="bw-file-vacunas" accept="image/*,.pdf" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                    <i class="fa-solid fa-file-medical text-4xl text-gray-400 mb-3"></i>
+                    <h4 class="font-bold text-gray-700">Cartilla de Vacunación y Desparasitación</h4>
+                    <p class="text-sm text-gray-500 mt-1">Sube foto(s) de las cartillas de todos los perros. Haz clic o arrastra aquí.</p>
+                    <p id="bw-file-status" class="text-sm font-bold text-forest mt-3 hidden"><i class="fa-solid fa-check text-green-500 mr-1"></i>Archivos seleccionados</p>
+                </div>
+                <div class="bg-yellow-50 p-4 rounded-xl text-sm text-yellow-800 flex flex-col gap-2">
+                    <div class="flex gap-3">
+                        <i class="fa-solid fa-triangle-exclamation mt-0.5 text-xl"></i>
+                        <p class="font-bold">IMPORTANTE: Validación de Vacunas Obligatoria</p>
+                    </div>
+                    <p>Para apartar cualquier servicio es necesario pagar el 50% de anticipo y subir la foto de la cartilla de vacunación y desparasitación de <strong>todas</strong> las mascotas. Nuestro auxiliar validará manualmente esta documentación.</p>
+                    <p class="font-bold text-red-600">Si la documentación enviada no es válida o es rechazada, la reservación será CANCELADA y NO se realizará ninguna devolución del anticipo bajo ninguna circunstancia.</p>
+                </div>
+            </div>
+
+            <!-- Paso 4: T&C y Checkout -->
+            <div id="bw-step-4" class="bw-step hidden space-y-6">
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <h4 class="font-bold text-forest mb-2">Términos y Condiciones</h4>
+                    <div id="bw-tc-text" class="text-xs text-gray-700 h-24 overflow-y-auto custom-scrollbar pr-2 whitespace-pre-wrap">1. Políticas de Reservación y Pago
+- Para reservar cualquier servicio (Hotel, Guardería, Peluquería) es estrictamente obligatorio realizar el pago del 50% del total como anticipo.
+- Toda reservación requiere la carga obligatoria de las fotografías legibles de las cartillas de vacunación y desparasitación actualizadas de TODAS las mascotas a ingresar.
+
+2. Validación Médica y Pérdida de Anticipo
+- Toda documentación será sujeta a revisión manual por nuestro equipo auxiliar.
+- Si las vacunas o desparasitantes están vencidos, son falsos, están incompletos, o si la mascota muestra signos de enfermedad contagiosa que ponga en riesgo a los demás huéspedes, la reservación será rechazada.
+- IMPORTANTE: En caso de rechazo por documentación inválida o incompleta, EL CLIENTE PERDERÁ EL ANTICIPO DEL 50% PAGADO, y no procederá reembolso alguno bajo ninguna circunstancia.
+
+3. Responsabilidades del Propietario
+- El propietario certifica que la mascota goza de buena salud y no ha estado expuesta a enfermedades contagiosas en los últimos 30 días.
+- Cualquier gasto veterinario de emergencia derivado de condiciones preexistentes no notificadas será responsabilidad absoluta del propietario.
+
+Al marcar la casilla inferior, el cliente acepta conocer y estar de acuerdo con todas las condiciones y penalizaciones aquí estipuladas.</div>
+                    <label class="flex items-center gap-2 mt-4 cursor-pointer">
+                        <input type="checkbox" id="bw-accept-tc" class="w-5 h-5 rounded text-forest focus:ring-forest cursor-pointer">
+                        <span class="text-sm font-bold text-forest">Acepto los Términos y Condiciones</span>
+                    </label>
+                </div>
+
+                <div>
+                    <h4 class="font-bold text-forest mb-3">Método de Pago (Anticipo 50%)</h4>
+                    <p class="text-sm text-gray-500 mb-4">Para confirmar tu reserva, debes realizar el pago del 50% de anticipo. Selecciona una opción:</p>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <label class="border-2 border-gray-200 rounded-xl p-4 cursor-pointer hover:border-gold transition flex flex-col items-center text-center gap-2 relative bw-pay-option" onclick="selectPayOption('transfer')">
+                            <input type="radio" name="paymethod" value="transfer" class="absolute top-3 left-3 opacity-0">
+                            <i class="fa-solid fa-money-bill-transfer text-2xl text-gray-400"></i>
+                            <span class="font-bold text-sm">Transferencia / Depósito</span>
+                        </label>
+                        <label class="border-2 border-gray-200 rounded-xl p-4 cursor-pointer hover:border-gold transition flex flex-col items-center text-center gap-2 relative bw-pay-option" onclick="selectPayOption('card')">
+                            <input type="radio" name="paymethod" value="card" class="absolute top-3 left-3 opacity-0">
+                            <i class="fa-solid fa-credit-card text-2xl text-gray-400"></i>
+                            <span class="font-bold text-sm">Tarjeta de Crédito / BI</span>
+                        </label>
+                    </div>
+
+                    <!-- Transferencia UI -->
+                    <div id="bw-pay-transfer" class="hidden mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                        <p class="text-sm font-bold mb-1">Banco Industrial (Monetaria)</p>
+                        <p class="text-lg font-mono mb-3 text-forest">123-456789-0</p>
+                        <p class="text-xs text-gray-500 mb-2">A nombre de Casa Canis S.A.</p>
+                        <label class="block w-full bg-white border border-dashed border-gray-300 rounded-lg p-3 text-center cursor-pointer hover:bg-gray-50">
+                            <input type="file" id="bw-file-comprobante" accept="image/*,.pdf" class="hidden">
+                            <i class="fa-solid fa-upload text-gray-400 mr-2"></i><span class="text-sm font-bold text-gray-600">Subir Comprobante</span>
+                        </label>
+                    </div>
+
+                    <!-- Tarjeta UI -->
+                    <div id="bw-pay-card" class="hidden mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200 text-center">
+                        <i class="fa-solid fa-lock text-green-600 text-2xl mb-2"></i>
+                        <p class="text-sm font-bold mb-2">Pago Seguro con Banco Industrial</p>
+                        <p class="text-xs text-gray-500 mb-4">Serás redirigido a la pasarela segura del BI para procesar tu pago de forma encriptada.</p>
+                        <button class="bg-blue-600 text-white w-full py-3 rounded-lg font-bold shadow-md hover:bg-blue-700 transition">Proceder al Pago con Tarjeta</button>
+                        <p class="text-xs text-gray-400 mt-2 italic">(Nota: Integración BI en desarrollo)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer / Navigation -->
+        <div class="p-6 bg-gray-50 border-t border-gray-100 flex justify-between">
+            <button id="bw-btn-back" onclick="wizardStepBack()" class="px-6 py-2.5 font-bold text-gray-500 hover:text-gray-800 transition hidden">Atrás</button>
+            <div class="flex-1"></div>
+            <button id="bw-btn-next" onclick="wizardStepNext()" class="bg-forest text-gold px-8 py-2.5 rounded-xl font-bold shadow-md hover:bg-gray-900 transition flex items-center gap-2">
+                Siguiente <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
     <!-- SCRIPT MAESTRO (LÓGICA MODULAR Y FIREBASE) -->
     <!-- ========================================== -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserSessionPersistence } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, doc, getDoc, setDoc, updateDoc, deleteDoc, serverTimestamp, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-storage.js";
 
-        // 2. CONFIGURACIÓN FIREBASE
-        const firebaseConfig = {
-            apiKey: "AIzaSyASyXuzH5HvZL0LWsmazvg-6iW4bqO4snk",
-            authDomain: "casacanis-dd642.firebaseapp.com",
-            projectId: "casacanis-dd642",
-            storageBucket: "casacanis-dd642.firebasestorage.app",
-            messagingSenderId: "616453134402",
-            appId: "1:616453134402:web:64fa0850adb6c84a9fb5db"
-        };
-
-        // 3. INICIALIZACIÓN
-        let app, db, storage, auth;
-        try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-            storage = getStorage(app);
-            
-            // Forzar sesión solo en memoria
-            setPersistence(auth, browserSessionPersistence).catch(e => console.error(e));
-            
-            console.log("🔥 Firebase App, Auth, Firestore & Storage Listo");
-        } catch (error) {
-            console.warn("⚠️ Ejecutando en Modo Demo/Local por error en Firebase.");
-        }
-        
-        window.db = db; // Exportamos a window para facilidad temporal
-        window.auth = auth;
-
-        // ==========================================
-        // FUNCIONES DE UTILIDAD (STORAGE)
-        // ==========================================
-        window.uploadImageFile = async (file) => {
-            return new Promise((resolve, reject) => {
-                const fallbackBase64 = () => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => resolve(e.target.result);
-                    reader.onerror = () => reject("Error reading file");
-                    reader.readAsDataURL(file);
-                };
-
-                // Si Firebase config es falsa o storage falla, usamos base64
-                if (storage && firebaseConfig.apiKey !== "AIzaSy_CONFIGURAR_TU_API_KEY") {
-                    const storageRef = ref(storage, 'images/' + Date.now() + '_' + file.name);
-                    uploadBytes(storageRef, file).then((snapshot) => {
-                        getDownloadURL(snapshot.ref).then(resolve).catch(fallbackBase64);
-                    }).catch(fallbackBase64);
-                } else {
-                    fallbackBase64();
-                }
-            });
-        };
-
-        // ==========================================
-        // ESTADO GLOBAL & MOCK DATA (Simulando BDD)
-        // ==========================================
-        window.employeesData = {
-            'fernan151085@gmail.com': { 
-                name: 'Fernando (Admin)', 
-                role: 'Administrador', 
-                photo: '', 
-                tasks: 'Gestión total de la clínica, reportes y aprobaciones.', 
-                schedule: 'Lunes a Viernes (8:00 AM - 5:00 PM)',
-                permissions: []
-            },
-            'alprojects13@gmail.com': { 
-                name: 'Empleado', 
-                role: 'Usuario', 
-                photo: '', 
-                tasks: 'Operaciones diarias y atención.', 
-                schedule: 'Lunes a Sábado (9:00 AM - 6:00 PM)',
-                permissions: []
-            }
-        };
-        window.currentEmployeeEmail = '';
-
-        window.catalogData = [];
-        window.inventoryData = [];
-        window.mockLeads = [];
-        window.auditLogs = [];
-        window.cart = [];
-        window.chartsInitialized = false;
-
-        // Establecer Fecha Actual en Dashboard
-        document.getElementById('current-date-display').innerText = new Date().toLocaleDateString('es-GT', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-        // ==========================================
-        // FUNCIONES DE LA LANDING PAGE PÚBLICA
-        // ==========================================
-        
-        // Efecto scroll en Navbar
-        window.addEventListener('scroll', () => {
-            const nav = document.getElementById('navbar');
-            if(window.scrollY > 50) {
-                nav.classList.add('py-0');
-                nav.classList.replace('bg-transparent', 'glass-panel');
-            } else {
-                nav.classList.remove('py-0');
-            }
-        });
-
-        window.toggleLogin = () => {
-            const modal = document.getElementById('login-modal');
-            modal.classList.toggle('hidden');
-        };
-
-        // ==========================================
-        // SISTEMA DE AUDITORIA Y LOGS
-        // ==========================================
-        window.logEvent = async (action, details) => {
-            const email = window.currentEmployeeEmail;
-            if(!email || !window.db) return; // Si no hay usuario logueado o DB, ignorar
-            try {
-                await addDoc(collection(window.db, 'audit'), {
-                    email: email,
-                    action: action,
-                    timestamp: new Date().toISOString(),
-                    details: details
-                });
-            } catch(e) {
-                console.error("Error guardando log:", e);
-            }
-        };
-
-        // ==========================================
-        // FIREBASE AUTHENTICATION LISTENER
-        // ==========================================
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                const email = user.email;
-                let role = 'user';
-                let name = email.split('@')[0];
-                
-                if (db) {
-                    try {
-                        const userDoc = await getDoc(doc(db, 'users', email));
-                        if (userDoc.exists()) {
-                            role = userDoc.data().rol || 'user';
-                            name = userDoc.data().nombre || name;
-                        } else {
-                            // Auto-create document if missing
-                            await setDoc(doc(db, 'users', email), {
-                                rol: email === 'fernan151085@gmail.com' ? 'admin' : 'user',
-                                nombre: name
-                            });
-                            role = email === 'fernan151085@gmail.com' ? 'admin' : 'user';
-                        }
-                    } catch (e) {
-                        console.error("Error obteniendo rol:", e);
-                    }
-
-                    // Cargar llaves API
-                    try {
-                        const keysDoc = await getDoc(doc(db, 'settings', 'keys'));
-                        if (keysDoc.exists()) {
-                            const data = keysDoc.data();
-                            window.apiKeys = data;
-                            if(document.getElementById('edit-wa-apikey')) document.getElementById('edit-wa-apikey').value = data.waKey || '';
-                            if(document.getElementById('edit-email-apikey')) document.getElementById('edit-email-apikey').value = data.emailKey || '';
-                            if(document.getElementById('config-gcal-id')) document.getElementById('config-gcal-id').value = data.gcalId || '';
-                            if(document.getElementById('edit-wa-phoneid')) document.getElementById('edit-wa-phoneid').value = data.waPhoneId || '';
-                        }
-                    } catch (e) { console.error("Error cargando llaves API", e); }
-                }
-                
-                window.currentUserRole = role;
-                window.currentEmployeeEmail = email;
-
-                if(!window.employeesData[email]) {
-                    window.employeesData[email] = { name: name, role: role === 'admin' ? 'Administrador' : 'Empleado', photo: '', tasks: '', schedule: '', permissions: [] };
-                }
-                
-                document.getElementById('public-view').classList.add('hidden');
-                document.getElementById('login-modal').classList.add('hidden');
-                document.getElementById('admin-view').classList.remove('hidden');
-                
-                const roleEl = document.getElementById('ui-role-name');
-                if(roleEl) roleEl.innerText = window.employeesData[email].name;
-
-                document.querySelectorAll('.admin-only').forEach(el => {
-                    if(window.currentUserRole === 'user') {
-                        el.classList.add('hidden');
-                    } else {
-                        if(!el.classList.contains('admin-panel')) {
-                            el.classList.remove('hidden');
-                        }
-                    }
-                });
-
-                // =====================================
-                // REALTIME LISTENERS (FIREBASE SYNC)
-                // =====================================
-                if (db && !window.listenersAttached) {
-                    window.listenersAttached = true;
-
-                    // Escuchar Clientes (CRM)
-                    onSnapshot(collection(db, 'clients'), (snapshot) => {
-                        window.mockLeads = [];
-                        snapshot.forEach((doc) => {
-                            window.mockLeads.push({ id: doc.id, ...doc.data() });
-                        });
-                        renderLeads();
-                        if(typeof fillPOSClientSelect === 'function') fillPOSClientSelect();
-                    });
-
-                    // Escuchar Auditoría
-                    onSnapshot(query(collection(db, 'audit'), orderBy('timestamp', 'desc')), (snapshot) => {
-                        window.auditLogs = [];
-                        snapshot.forEach((doc) => {
-                            window.auditLogs.push({ id: doc.id, ...doc.data() });
-                        });
-                        if(typeof populateAuditUserSelect === 'function') populateAuditUserSelect();
-                    });
-
-                    // Escuchar Inventario
-                    onSnapshot(collection(db, 'inventory'), (snapshot) => {
-                        window.inventoryData = [];
-                        snapshot.forEach((doc) => {
-                            window.inventoryData.push({ id: doc.id, ...doc.data() });
-                        });
-                        if(typeof renderInventoryViews === 'function') renderInventoryViews();
-                    });
-
-                    // Escuchar Catálogo
-                    onSnapshot(collection(db, 'catalog'), (snapshot) => {
-                        window.catalogData = [];
-                        snapshot.forEach((doc) => {
-                            window.catalogData.push({ id: doc.id, ...doc.data() });
-                        });
-                        if(typeof renderInventoryViews === 'function') renderInventoryViews();
-                    });
-                }
-
-                updateBars();
-                if(typeof initCalendar === 'function') initCalendar();
-                
-                if(!window.chartsInitialized && window.currentUserRole === 'admin') {
-                    initCharts();
-                    window.chartsInitialized = true;
-                }
-                switchTab('tab-leads');
-            } else {
-                document.getElementById('admin-view').classList.add('hidden');
-                document.getElementById('public-view').classList.remove('hidden');
-                window.currentEmployeeEmail = null;
-                window.currentUserRole = null;
-            }
-        });
-
-        window.performLogin = async () => {
-            const email = document.getElementById('login-email').value.toLowerCase();
-            const pass = document.getElementById('login-pass').value;
-
-            if(!auth) {
-                alert("Error conectando a Firebase.");
-                return;
-            }
-
-            try {
-                await signInWithEmailAndPassword(auth, email, pass);
-                logEvent('login', 'Inicio de sesión en el sistema');
-            } catch (error) {
-                alert("Error: Correo o contraseña incorrectos.");
-                console.error("Firebase Login Error:", error);
-            }
-        };
-
-        window.logout = async () => {
-            logEvent('logout', 'Cierre de sesión manual');
-            if(auth) {
-                await signOut(auth);
-            }
-            window.scrollTo(0,0);
-        };
-
-        // Lógica: Motor de Consulta de Disponibilidad
-        window.checkAvailability = () => {
-            const date = document.getElementById('check-date').value;
-            const size = document.getElementById('check-size').value;
-            const resBox = document.getElementById('availability-result');
-            const resIcon = document.getElementById('avail-icon');
-            const resStatus = document.getElementById('avail-status');
-            const resMsg = document.getElementById('avail-msg');
-            const wFlow = document.getElementById('registration-flow');
-
-            if(!date || !size) {
-                alert("Para continuar, selecciona la fecha de ingreso y el tamaño de tu mascota.");
-                return;
-            }
-
-            // Simular carga con animación básica
-            resBox.classList.remove('hidden', 'bg-green-100', 'bg-red-100');
-            resBox.classList.add('bg-white/20');
-            resIcon.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-gold"></i>';
-            resStatus.innerText = 'Consultando sistema...';
-            resStatus.classList.remove('text-green-800', 'text-red-800');
-            resStatus.classList.add('text-white');
-            resMsg.innerText = '';
-            wFlow.classList.add('hidden');
-
-            setTimeout(() => {
-                const data = window.capacityData[size];
-                const disponibles = data.total - data.occ;
-
-                resBox.classList.remove('bg-white/20');
-                resStatus.classList.remove('text-white');
-
-                if(disponibles > 0) {
-                    resBox.classList.add('bg-green-100', 'border-green-500', 'text-green-900');
-                    resIcon.innerHTML = '<i class="fa-solid fa-check-circle text-green-500"></i>';
-                    resStatus.innerText = '¡Tenemos Espacio!';
-                    resStatus.classList.add('text-green-800');
-                    resMsg.innerText = `Se han confirmado ${disponibles} suite(s) disponibles para perros de tamaño ${size.toUpperCase()} en la fecha seleccionada.`;
-                    wFlow.classList.remove('hidden'); // Mostrar botón de WhatsApp
-                } else {
-                    resBox.classList.add('bg-red-100', 'border-red-500', 'text-red-900');
-                    resIcon.innerHTML = '<i class="fa-solid fa-times-circle text-red-500"></i>';
-                    resStatus.innerText = 'Cupo Limitado / Agotado';
-                    resStatus.classList.add('text-red-800');
-                    resMsg.innerText = `Lamentablemente las habitaciones para perros tamaño ${size.toUpperCase()} están completamente reservadas.`;
-                }
-            }, 800); // delay fingido
-};
-
-        window.selectedIndividualId = null;
-
-        window.handleTargetChange = () => {
-            const target = document.getElementById('msg-target').value;
-            const searchContainer = document.getElementById('individual-search-container');
-            const searchInput = document.getElementById('individual-search-input');
-            
-            if(target === 'individual') {
-                searchContainer.classList.remove('hidden');
-                window.selectedIndividualId = null;
-                if(searchInput) searchInput.value = '';
-            } else {
-                searchContainer.classList.add('hidden');
-                window.selectedIndividualId = null;
-            }
-            updateMsgCount();
-        };
-
-        window.filterIndividualClients = () => {
-            const query = document.getElementById('individual-search-input').value.toLowerCase();
-            const resultsContainer = document.getElementById('individual-search-results');
-            
-            if(!query) {
-                resultsContainer.classList.add('hidden');
-                window.selectedIndividualId = null;
-                updateMsgCount();
-                return;
-            }
-            
-            const matches = window.mockLeads.filter(l => 
-                (l.nombre && l.nombre.toLowerCase().includes(query)) ||
-                (l.email && l.email.toLowerCase().includes(query)) ||
-                (l.tel && l.tel.toLowerCase().includes(query))
-            );
-            
-            resultsContainer.innerHTML = '';
-            if(matches.length === 0) {
-                resultsContainer.innerHTML = '<div class="p-3 text-sm text-gray-500">No se encontraron clientes.</div>';
-            } else {
-                matches.forEach(m => {
-                    const div = document.createElement('div');
-                    div.className = "p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer flex flex-col";
-                    div.innerHTML = `
-                        <span class="font-bold text-forest text-sm">${m.nombre}</span>
-                        <span class="text-xs text-gray-500 mt-1"><i class="fa-solid fa-envelope"></i> ${m.email || 'Sin correo'} &nbsp;|&nbsp; <i class="fa-solid fa-phone"></i> ${m.tel || 'Sin teléfono'}</span>
-                    `;
-                    div.onclick = () => {
-                        document.getElementById('individual-search-input').value = `${m.nombre}`;
-                        window.selectedIndividualId = m.id;
-                        resultsContainer.classList.add('hidden');
-                        updateMsgCount();
-                    };
-                    resultsContainer.appendChild(div);
-                });
-            }
-            resultsContainer.classList.remove('hidden');
-        };
-
-        window.updateMsgCount = () => {
-            const target = document.getElementById('msg-target').value;
-            const channel = document.getElementById('msg-channel') ? document.getElementById('msg-channel').value : 'whatsapp';
-            let validLeads = [];
-            
-            if(target === 'todos') {
-                validLeads = window.mockLeads;
-            } else if (target === 'Hotel Boutique' || target === 'Day Pass') {
-                validLeads = window.mockLeads.filter(l => l.servicio === target);
-            } else if (target === 'individual') {
-                if(window.selectedIndividualId) {
-                    validLeads = window.mockLeads.filter(l => l.id === window.selectedIndividualId);
-                } else {
-                    validLeads = []; // Aún no ha seleccionado en el buscador
-                }
-            }
-
-            // UI Toggle para Asunto y Formato
-            const subjectContainer = document.getElementById('msg-subject-container');
-            if(channel === 'email') {
-                if(subjectContainer) subjectContainer.classList.remove('hidden');
-            } else {
-                if(subjectContainer) subjectContainer.classList.add('hidden');
-            }
-            updateMsgPreview();
-
-            // Filtrar opt-outs y sin canal válido
-            validLeads = validLeads.filter(l => {
-                const optOut = l.optOut || { whatsapp: false, email: false };
-                if(channel === 'whatsapp' && (optOut.whatsapp || !l.tel)) return false;
-                if(channel === 'email' && (optOut.email || !l.email)) return false;
-                return true;
-            });
-            window.currentValidLeads = validLeads;
-            document.getElementById('msg-count').innerText = validLeads.length;
-        };
-
-        window.updateMsgPreview = () => {
-            const channel = document.getElementById('msg-channel') ? document.getElementById('msg-channel').value : 'whatsapp';
-            const subject = document.getElementById('msg-subject') ? document.getElementById('msg-subject').value : '';
-            const body = document.getElementById('msg-body').value;
-            const btn1 = document.getElementById('msg-btn-1').value;
-            const btn2 = document.getElementById('msg-btn-2').value;
-            
-            const header = document.getElementById('msg-preview-header');
-            const icon = document.getElementById('msg-preview-icon');
-            const title = document.getElementById('msg-preview-title');
-            const bodyContainer = document.getElementById('msg-preview-body-container');
-            const bubble = document.getElementById('msg-preview-bubble');
-            const subjectElem = document.getElementById('msg-preview-subject');
-            const timeElem = document.getElementById('msg-preview-time');
-            const btnsContainer = document.getElementById('msg-preview-btns');
-
-            let previewText = body.replace('{nombre_cliente}', 'Juan Pérez') || 'Escribe un mensaje para ver la vista previa aquí.';
-            
-            if(channel === 'whatsapp') {
-                header.className = 'bg-[#25D366] px-4 py-3 text-white font-bold flex items-center gap-2';
-                icon.className = 'fa-brands fa-whatsapp text-xl';
-                title.innerText = 'Casa Canis';
-                bodyContainer.className = "p-4 bg-[url('https://i.pinimg.com/736x/8c/98/99/8c98994518b575bfd8c949e91d20548b.jpg')] bg-cover relative";
-                bubble.className = "bg-white rounded-lg p-3 shadow-sm text-sm text-gray-800 relative z-10 break-words mb-2";
-                subjectElem.classList.add('hidden');
-                timeElem.classList.remove('hidden');
-                
-                document.getElementById('msg-preview-text').innerHTML = previewText.replace(/\n/g, '<br>');
-                
-                btnsContainer.innerHTML = '';
-                if(btn1) btnsContainer.innerHTML += `<div class="bg-white text-center text-blue-500 font-medium p-2 rounded-lg text-sm shadow-sm border border-gray-100 cursor-pointer">${btn1}</div>`;
-                if(btn2) btnsContainer.innerHTML += `<div class="bg-white text-center text-blue-500 font-medium p-2 rounded-lg text-sm shadow-sm border border-gray-100 cursor-pointer">${btn2}</div>`;
-            } else {
-                // Email Format
-                header.className = 'bg-forest px-4 py-3 text-gold font-bold flex items-center gap-2';
-                icon.className = 'fa-solid fa-envelope text-xl';
-                title.innerText = 'Correo de Casa Canis';
-                bodyContainer.className = "p-4 bg-gray-50 relative";
-                bubble.className = "bg-white rounded-lg p-4 shadow-sm text-sm text-gray-800 relative z-10 break-words mb-2 border border-gray-200";
-                
-                if(subjectElem) {
-                    subjectElem.classList.remove('hidden');
-                    subjectElem.innerText = "Asunto: " + (subject || "Sin asunto");
-                }
-                timeElem.classList.add('hidden');
-
-                document.getElementById('msg-preview-text').innerHTML = previewText.replace(/\n/g, '<br>');
-                
-                btnsContainer.innerHTML = '';
-                if(btn1) btnsContainer.innerHTML += `<div class="bg-forest text-center text-gold font-bold p-2 rounded-lg text-sm shadow-md cursor-pointer mb-1">${btn1}</div>`;
-                if(btn2) btnsContainer.innerHTML += `<div class="bg-gray-200 text-center text-forest font-bold p-2 rounded-lg text-sm shadow-sm cursor-pointer">${btn2}</div>`;
-            }
-        };
-
-        window.sendMassMessage = async () => {
-            const count = parseInt(document.getElementById('msg-count').innerText);
-            if(count === 0) {
-                alert("No hay clientes válidos para enviar este mensaje (revisa si hicieron Opt-Out o no tienen contacto).");
-                return;
-            }
-            
-            const body = document.getElementById('msg-body').value;
-            const channel = document.getElementById('msg-channel') ? document.getElementById('msg-channel').value : 'whatsapp';
-            
-            if(!body) {
-                alert("Por favor escribe un mensaje.");
-                return;
-            }
-
-            const btn = document.querySelector('button[onclick="sendMassMessage()"]');
-            const originalHtml = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
-            btn.disabled = true;
-
-            if(channel === 'whatsapp') {
-                const waKey = window.apiKeys?.waKey;
-                const waPhoneId = window.apiKeys?.waPhoneId;
-                
-                if(waKey && waPhoneId) {
-                    // API OFICIAL
-                    alert(`Iniciando envío MASIVO AUTOMATIZADO a ${count} clientes a través de la API oficial de Meta WhatsApp.\n\nNota técnica: Asegúrate de que el texto coincida con una plantilla aprobada por Meta, o Meta bloqueará el envío.`);
-                    
-                    // Simulación del tiempo de red para un envío masivo
-                    setTimeout(() => {
-                        alert(`¡Éxito! Se enviaron las instrucciones a la API de WhatsApp para ${count} clientes.`);
-                        btn.innerHTML = originalHtml;
-                        btn.disabled = false;
-                        document.getElementById('msg-body').value = '';
-                        updateMsgPreview();
-                    }, 2000);
-                } else {
-                    // FALLBACK MANUAL WHATSAPP WEB
-                    btn.innerHTML = originalHtml;
-                    btn.disabled = false;
-                    
-                    const clients = window.currentValidLeads || [];
-                    if(clients.length > 20) {
-                        alert(`Tienes ${clients.length} clientes seleccionados. El envío manual a través de WhatsApp Web es complicado para más de 20 personas a la vez, por favor configura tu API Key y Phone ID en Ajustes para automatizarlo.`);
-                        return;
-                    }
-                    
-                    if(!confirm(`No tienes la API Key configurada. Se van a abrir ${clients.length} ventanas de WhatsApp Web automáticamente para que envíes el mensaje manualmente. \n\n¡ASEGÚRATE DE PERMITIR LOS POP-UPS (Ventanas Emergentes) EN TU NAVEGADOR O NO FUNCIONARÁ!\n\n¿Deseas continuar?`)) return;
-                    
-                    document.getElementById('msg-body').value = '';
-                    updateMsgPreview();
-
-                    clients.forEach((client, idx) => {
-                        setTimeout(() => {
-                            const msg = encodeURIComponent(body);
-                            // Se abre WhatsApp Web con el número de teléfono del cliente
-                            window.open(`https://wa.me/${client.tel}?text=${msg}`, '_blank');
-                        }, idx * 1000); // 1 ventana por segundo
-                    });
-                }
-            } else {
-                setTimeout(() => {
-                    alert(`Mensaje enviado exitosamente vía ${channel.toUpperCase()} a la audiencia seleccionada (${count} clientes).`);
-                    btn.innerHTML = originalHtml;
-                    btn.disabled = false;
-                    document.getElementById('msg-body').value = '';
-                    updateMsgPreview();
-                }, 1500);
-            }
-        };
-
-        // Lógica: Integración Webhook -> WhatsApp API
-        window.startWhatsAppBot = async () => {
-            const size = document.getElementById('check-size').value;
-            const btn = document.querySelector('#registration-flow button');
-            const originalText = btn.innerHTML;
-            
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-xl"></i> Conectando...';
-            btn.disabled = true;
-
-            try {
-                // INTENTO DE INYECCIÓN A FIRESTORE
-                if(db) {
-                    await addDoc(collection(db, "leads_contactos"), {
-                        origen: "whatsapp_bot",
-                        tamano_mascota: size,
-                        fecha_registro: serverTimestamp(),
-                        atendido: false,
-                        estado: "Pendiente Bot"
-                    });
-                }
-            } catch(e) {}
-
-            // Simulación Local para Dashboard
-            window.mockLeads.unshift({
-                id: 'LD' + Math.floor(Math.random() * 1000),
-                nombre: 'Lead (vía WhatsApp)',
-                tel: 'Pendiente Bot',
-                mascota: 'Tamaño: ' + size,
-                tamaño: size,
-                servicio: 'Reserva General',
-                origen: 'whatsapp_bot',
-                estado: 'Pendiente'
-            });
-
-            setTimeout(() => {
-                const msg = encodeURIComponent(`Hola Recepción Casa Canis. Deseo pre-registrar a mi mascota (Tamaño: ${size.toUpperCase()}). ¿Me ayudan con los siguientes pasos?`);
-                window.open(`https://wa.me/50212345678?text=${msg}`, '_blank');
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }, 1000);
-        };
-
-        window.toggleWebForm = () => {
-            document.getElementById('web-form-container').classList.toggle('hidden');
-        };
-
-        window.submitWebForm = async () => {
-            const nombre = document.getElementById('wf-nombre').value;
-            const tel = document.getElementById('wf-tel').value;
-            const email = document.getElementById('wf-email').value;
-            const mascota = document.getElementById('wf-mascota').value;
-            const size = document.getElementById('check-size').value || 'Desconocido';
-            const servicio = document.getElementById('wf-servicio').value;
-            const cant = document.getElementById('wf-cant').value;
-            const raza = document.getElementById('wf-raza').value;
-            const edad = document.getElementById('wf-edad').value;
-            const vacunas = document.getElementById('wf-vacunas').checked;
-            const desparacitado = document.getElementById('wf-desparacitado').checked;
-
-            if(!nombre || !tel || !mascota) {
-                alert("Por favor completa los campos principales.");
-                return;
-            }
-
-            const newClientData = {
-                nombre: nombre,
-                tel: tel,
-                email: email,
-                optOut: { whatsapp: false, email: false },
-                mascotas: [{
-                    nombre: mascota,
-                    raza: raza,
-                    tamaño: size,
-                    edad: edad,
-                    vacunas: vacunas,
-                    desparasitado: desparacitado
-                }],
-                servicio: servicio,
-                origen: 'landing_web',
-                estado: 'Pendiente',
-                timestamp: new Date().toISOString()
-            };
-
-            try {
-                if(window.db) {
-                    await addDoc(collection(window.db, "clients"), newClientData);
-                } else {
-                    alert("Modo local: no hay base de datos conectada.");
-                }
-            } catch(e) { 
-                console.error("Firebase error", e); 
-                alert("Error al enviar el formulario.");
-            }
-
-            document.getElementById('web-form-container').innerHTML = `
-                <div class="text-center py-4">
-                    <i class="fa-solid fa-check-circle text-4xl text-[#25D366] mb-3"></i>
-                    <h5 class="font-bold text-lg text-white">¡Registro Exitoso!</h5>
-                    <p class="text-sm text-white/80">Nos pondremos en contacto contigo a la brevedad.</p>
-                </div>
-            `;
-        };
-
-        // ==========================================
-        // FUNCIONES DEL DASHBOARD ADMINISTRATIVO
-        // ==========================================
-
-        // ==========================================
-        // UI & NAVIGATION HELPERS
-        // ==========================================
-        window.toggleNavGroup = (groupId, btnEl) => {
-            const groupEl = document.getElementById(groupId);
-            const icon = btnEl.querySelector('i');
-            if(groupEl.classList.contains('h-0')) {
-                // Expandir
-                groupEl.classList.remove('h-0', 'opacity-0', 'pointer-events-none');
-                groupEl.classList.add('h-auto', 'opacity-100');
-                groupEl.style.height = groupEl.scrollHeight + 'px';
-                setTimeout(() => groupEl.style.height = 'auto', 300);
-                icon.classList.remove('rotate-180');
-            } else {
-                // Colapsar
-                groupEl.style.height = groupEl.scrollHeight + 'px';
-                // Trigger reflow
-                groupEl.offsetHeight; 
-                groupEl.style.height = '0px';
-                groupEl.classList.add('h-0', 'opacity-0', 'pointer-events-none');
-                groupEl.classList.remove('h-auto', 'opacity-100');
-                icon.classList.add('rotate-180');
-            }
-        };
-
-        window.switchTab = (tabId) => {
-            // Ocultar paneles
-            document.querySelectorAll('.admin-panel').forEach(p => p.classList.add('hidden'));
-            document.getElementById(tabId).classList.remove('hidden');
-            
-            // Actualizar diseño de botones en sidebar
-            document.querySelectorAll('.admin-tab').forEach(t => {
-                t.classList.remove('bg-gold/20', 'text-gold');
-                t.classList.add('text-white/80');
-            });
-            const activeTab = document.querySelector(`[data-target="${tabId}"]`);
-            if(activeTab) {
-                activeTab.classList.remove('text-white/80');
-                activeTab.classList.add('bg-gold/20', 'text-gold');
-            }
-            
-            // Disparar renderizados específicos si es necesario
-            if(tabId === 'tab-leads') renderLeads();
-            if(tabId === 'tab-capacidad') updateBars();
-            if(tabId === 'tab-mi-perfil') renderMyProfile();
-            if(tabId === 'tab-reportes') updateFinancialCharts();
-            if(tabId === 'tab-auditoria') renderAuditTab();
-            if(tabId === 'tab-calendario' && window.calendar) {
-                // FullCalendar requires re-render when its container becomes visible
-                setTimeout(() => window.calendar.render(), 100);
-            }
-        };
-
-        // ==========================================
-        // GESTIÓN DE RECURSOS HUMANOS (RRHH)
-        // ==========================================
-        window.renderMyProfile = () => {
-            const email = window.currentEmployeeEmail;
-            const emp = window.employeesData[email];
-            if(!emp) return;
-
-            document.getElementById('my-profile-img').src = emp.photo || 'https://via.placeholder.com/100';
-            document.getElementById('my-profile-role').value = emp.role;
-            document.getElementById('my-profile-tasks').value = emp.tasks;
-            document.getElementById('my-profile-schedule').value = emp.schedule;
-
-            // Renderizar solicitudes
-            const reqList = document.getElementById('my-requests-list');
-            reqList.innerHTML = emp.permissions.length === 0 ? '<p class="text-xs text-gray-400">No tienes solicitudes.</p>' : emp.permissions.map(r => `
-                <div class="bg-gray-50 border border-gray-200 p-2 rounded-lg flex justify-between items-center">
-                    <div>
-                        <p class="text-xs font-bold text-forest">${r.type}</p>
-                        <p class="text-[10px] text-gray-500">${r.date}</p>
-                    </div>
-                    <span class="text-[10px] font-bold px-2 py-1 rounded-full ${r.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : (r.status === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}">
-                        ${r.status === 'pending' ? 'Pendiente' : (r.status === 'approved' ? 'Aprobado' : 'Rechazado')}
-                    </span>
-                </div>
-            `).join('');
-        };
-
-        window.saveMyProfile = async () => {
-            const email = window.currentEmployeeEmail;
-            const fileInput = document.getElementById('my-profile-upload');
-            
-            if(fileInput && fileInput.files[0]) {
-                const url = await window.uploadImageFile(fileInput.files[0]);
-                window.employeesData[email].photo = url;
-            }
-            window.employeesData[email].tasks = document.getElementById('my-profile-tasks').value;
-            window.employeesData[email].schedule = document.getElementById('my-profile-schedule').value;
-            
-            alert('Perfil actualizado con éxito');
-            renderMyProfile();
-        };
-
-        window.submitPermissionRequest = () => {
-            const email = window.currentEmployeeEmail;
-            const type = document.getElementById('req-type').value;
-            const date = document.getElementById('req-dates').value;
-            const reason = document.getElementById('req-reason').value;
-
-            if(!date || !reason) {
-                alert("Por favor llena la fecha y el motivo detallado.");
-                return;
-            }
-
-            window.employeesData[email].permissions.push({
-                id: 'req_' + Date.now(),
-                type, date, reason, status: 'pending'
-            });
-
-            alert("Solicitud enviada al Administrador.");
-            document.getElementById('req-dates').value = '';
-            document.getElementById('req-reason').value = '';
-            renderMyProfile();
-        };
-
-
-
-        // ==========================================
-        // Gestión de Leads
-        // ==========================================
-        window.renderLeads = () => {
-            const tbody = document.getElementById('leads-table-body');
-            const emptyState = document.getElementById('leads-empty');
-            tbody.innerHTML = '';
-            
-            if(window.mockLeads.length === 0) {
-                emptyState.classList.remove('hidden');
-                document.getElementById('leads-badge').classList.add('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-                document.getElementById('leads-badge').classList.remove('hidden');
-                document.getElementById('leads-badge').innerText = window.mockLeads.length;
-                
-                window.mockLeads.forEach(lead => {
-                    const icon = lead.origen === 'whatsapp_bot' ? '<i class="fa-brands fa-whatsapp text-[#25D366] text-lg"></i>' : '<i class="fa-solid fa-globe text-blue-500 text-lg"></i>';
-                    const mascotas = lead.mascotas || [];
-                    const dogNames = mascotas.map(m => m.nombre).join(', ') || 'N/A';
-                    
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-gray-50 transition group">
-                            <td class="p-5 border-b border-gray-100">
-                                <p class="font-bold text-forest">${lead.nombre}</p>
-                                <p class="text-xs text-gray-500"><i class="fa-solid fa-phone mr-1"></i> ${lead.tel}</p>
-                            </td>
-                            <td class="p-5 border-b border-gray-100">
-                                <span class="font-medium text-gray-800">${dogNames}</span> 
-                                <span class="text-[10px] bg-gold/20 text-gold px-2 py-1 rounded font-bold uppercase tracking-wider ml-1">${mascotas.length} Perro(s)</span>
-                            </td>
-                            <td class="p-5 border-b border-gray-100 font-medium text-gray-600">${lead.servicio}</td>
-                            <td class="p-5 border-b border-gray-100 flex items-center gap-2 mt-2">${icon} <span class="text-xs font-bold text-gray-500">${lead.origen.replace('_', ' ').toUpperCase()}</span></td>
-                            <td class="p-5 border-b border-gray-100 text-center">
-                                <span class="bg-yellow-100 text-yellow-800 border border-yellow-200 text-xs px-3 py-1 rounded-full font-bold shadow-sm">Esperando Llamada</span>
-                            </td>
-                            <td class="p-5 border-b border-gray-100 text-right space-x-2">
-                                <button onclick="openClientProfile('${lead.id}')" class="bg-white border border-gray-300 text-forest px-3 py-2 rounded-lg hover:bg-gray-50 transition shadow-sm font-bold text-xs" title="Ver Perfil">
-                                    <i class="fa-solid fa-user-edit"></i>
-                                </button>
-                                <button onclick="atenderLead('${lead.id}')" class="bg-white border border-forest text-forest px-4 py-2 rounded-lg hover:bg-forest hover:text-white hover:border-forest transition shadow-sm font-bold text-xs">
-                                    <i class="fa-solid fa-check"></i> Atender
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            }
-            if(typeof window.fillMsgTargetOptions === 'function') window.fillMsgTargetOptions();
-            if(typeof window.updateMsgCount === 'function') window.updateMsgCount();
-        };
-
-        window.simulateWebhook = () => {
-            const randomId = 'LD' + Math.floor(Math.random() * 1000);
-            window.mockLeads.unshift({
-                id: randomId,
-                nombre: 'Lead Generado Bot',
-                tel: '+502 9988-7766',
-                mascota: 'Max',
-                tamaño: 'grande',
-                servicio: 'Hotel Boutique',
-                origen: 'whatsapp_bot',
-                estado: 'Pendiente'
-            });
-            renderLeads();
-            
-            // Efecto visual en sidebar
-            const badge = document.getElementById('leads-badge');
-            badge.classList.remove('animate-pulse');
-            void badge.offsetWidth; // trigger reflow
-            badge.classList.add('animate-pulse');
-        };
-
-        // ==========================================
-        // Modal Perfil Cliente (Opt-Out y Edición)
-        // ==========================================
-        window.openClientProfile = (id) => {
-            const deleteBtn = document.querySelector('#client-profile-modal .admin-only');
-            if(deleteBtn) {
-                if(window.currentUserRole === 'admin') deleteBtn.classList.remove('hidden');
-                else deleteBtn.classList.add('hidden');
-            }
-
-            if(!id) {
-                // Nuevo cliente manual
-                document.getElementById('cp-id').value = '';
-                document.getElementById('cp-nombre').value = '';
-                document.getElementById('cp-tel').value = '';
-                document.getElementById('cp-email').value = '';
-                document.getElementById('cp-optout-whatsapp').checked = false;
-                document.getElementById('cp-optout-email').checked = false;
-                
-                const petsContainer = document.getElementById('cp-pets-container');
-                petsContainer.innerHTML = '<p class="text-xs text-gray-400 italic">No hay mascotas registradas.</p>';
-                
-                // Ocultar botón de eliminar si es un cliente nuevo
-                if(deleteBtn) deleteBtn.classList.add('hidden');
-                
-                document.getElementById('client-profile-modal').classList.remove('hidden');
-                return;
-            }
-
-            const lead = window.mockLeads.find(l => l.id === id);
-            if(!lead) return;
-            
-            document.getElementById('cp-id').value = lead.id;
-            document.getElementById('cp-nombre').value = lead.nombre || '';
-            document.getElementById('cp-tel').value = lead.tel || '';
-            document.getElementById('cp-email').value = lead.email || '';
-            
-            const optOut = lead.optOut || { whatsapp: false, email: false };
-            document.getElementById('cp-optout-whatsapp').checked = optOut.whatsapp;
-            document.getElementById('cp-optout-email').checked = optOut.email;
-            
-            const petsContainer = document.getElementById('cp-pets-container');
-            petsContainer.innerHTML = '';
-            
-            if(lead.mascotas && lead.mascotas.length > 0) {
-                lead.mascotas.forEach((pet, index) => {
-                    petsContainer.innerHTML += generatePetHTML(pet, index);
-                });
-            } else {
-                petsContainer.innerHTML = '<p class="text-xs text-gray-400 italic">No hay mascotas registradas.</p>';
-            }
-            
-            document.getElementById('client-profile-modal').classList.remove('hidden');
-        };
-
-        window.closeClientProfile = () => {
-            document.getElementById('client-profile-modal').classList.add('hidden');
-        };
-
-        window.generatePetHTML = (pet, index) => {
-            return `
-                <div class="p-4 bg-gray-50 border border-gray-200 rounded-lg relative pet-entry">
-                    <button onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-red-400 hover:text-red-600" title="Eliminar Perro"><i class="fa-solid fa-times"></i></button>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase">Nombre</label>
-                            <input type="text" class="pet-name w-full border border-gray-300 rounded px-2 py-1 text-sm focus:border-gold outline-none" value="${pet.nombre || ''}">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase">Raza</label>
-                            <input type="text" class="pet-breed w-full border border-gray-300 rounded px-2 py-1 text-sm focus:border-gold outline-none" value="${pet.raza || ''}">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase">Edad</label>
-                            <input type="text" class="pet-age w-full border border-gray-300 rounded px-2 py-1 text-sm focus:border-gold outline-none" value="${pet.edad || ''}">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-500 uppercase">Tamaño</label>
-                            <select class="pet-size w-full border border-gray-300 rounded px-2 py-1 text-sm focus:border-gold outline-none">
-                                <option value="pequeno" ${pet.tamaño === 'pequeno' ? 'selected' : ''}>Pequeño</option>
-                                <option value="mediano" ${pet.tamaño === 'mediano' ? 'selected' : ''}>Mediano</option>
-                                <option value="grande" ${pet.tamaño === 'grande' ? 'selected' : ''}>Grande</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="mt-3 flex gap-4">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" class="pet-vacunas w-4 h-4 text-gold border-gray-300 rounded focus:ring-gold" ${pet.vacunas ? 'checked' : ''}>
-                            <span class="text-xs font-bold text-gray-600">Vacunas al día</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" class="pet-desp w-4 h-4 text-gold border-gray-300 rounded focus:ring-gold" ${pet.desparasitado ? 'checked' : ''}>
-                            <span class="text-xs font-bold text-gray-600">Desparasitado</span>
-                        </label>
-                    </div>
-                </div>
-            `;
-        };
-
-        window.addCPPet = () => {
-            const container = document.getElementById('cp-pets-container');
-            if(container.innerHTML.includes('No hay mascotas')) container.innerHTML = '';
-            container.innerHTML += generatePetHTML({}, Date.now());
-        };
-
-        window.saveClientProfile = async () => {
-            const id = document.getElementById('cp-id').value;
-            
-            const updatedData = {
-                nombre: document.getElementById('cp-nombre').value,
-                tel: document.getElementById('cp-tel').value,
-                email: document.getElementById('cp-email').value,
-                optOut: {
-                    whatsapp: document.getElementById('cp-optout-whatsapp').checked,
-                    email: document.getElementById('cp-optout-email').checked
-                },
-                estado: 'Aprobado', // Por defecto si se añade manual
-                origen: 'manual'
-            };
-            
-            // Recoger mascotas
-            const petEntries = document.querySelectorAll('.pet-entry');
-            const newPets = [];
-            petEntries.forEach(entry => {
-                const name = entry.querySelector('.pet-name').value;
-                if(name.trim() !== '') {
-                    newPets.push({
-                        nombre: name,
-                        raza: entry.querySelector('.pet-breed').value,
-                        edad: entry.querySelector('.pet-age').value,
-                        tamaño: entry.querySelector('.pet-size').value,
-                        vacunas: entry.querySelector('.pet-vacunas').checked,
-                        desparasitado: entry.querySelector('.pet-desp').checked
-                    });
-                }
-            });
-            updatedData.mascotas = newPets;
-            
-            try {
-                if(window.db) {
-                    if(!id) {
-                        // Crear nuevo cliente
-                        updatedData.createdAt = serverTimestamp();
-                        await addDoc(collection(window.db, 'clients'), updatedData);
-                        logEvent('create_client', 'Creó un cliente manualmente: ' + updatedData.nombre);
-                    } else {
-                        // Actualizar cliente existente
-                        await updateDoc(doc(window.db, 'clients', id), updatedData);
-                        logEvent('update_client', 'Actualizó perfil del cliente: ' + updatedData.nombre);
-                    }
-                }
-            } catch(e) {
-                console.error("Error guardando cliente:", e);
-                alert("Hubo un error al guardar los cambios en la nube.");
-            }
-            
-            closeClientProfile();
-        };
-
-        window.deleteClientProfile = async () => {
-            if(!confirm('¿Estás seguro de que deseas eliminar este cliente y todo su historial? Esta acción no se puede deshacer.')) return;
-            
-            const id = document.getElementById('cp-id').value;
-            try {
-                if(window.db) {
-                    await deleteDoc(doc(window.db, 'clients', id));
-                    logEvent('delete_client', 'Eliminó al cliente con ID: ' + id);
-                }
-            } catch(e) {
-                console.error("Error eliminando cliente:", e);
-                alert("Hubo un error al eliminar el cliente.");
-            }
-            
-            closeClientProfile();
-        };
-
-        window.atenderLead = async (id) => {
-            const lead = window.mockLeads.find(l => l.id === id);
-            if(lead) {
-                logEvent('lead_attended', 'Atendió Lead (Servicio: ' + lead.servicio + ')');
-                try {
-                    if(window.db) {
-                        // En lugar de borrarlo, lo marcamos como atendido, o si prefieres, lo eliminamos. 
-                        // Según la maqueta original, se filtraba y borraba de la lista de leads.
-                        await deleteDoc(doc(window.db, 'clients', id));
-                    }
-                } catch(e) {
-                    console.error("Error al atender lead:", e);
-                }
-            }
-        };
-
-        // Gestión de Capacidad Hotelera
-        window.updateBars = () => {
-            ['peq', 'med', 'gra'].forEach(size => {
-                const total = parseInt(document.getElementById(`cap-${size}-total`).value) || 1;
-                const occ = parseInt(document.getElementById(`cap-${size}-occ`).value) || 0;
-                let pct = Math.round((occ / total) * 100);
-                if(pct > 100) pct = 100;
-                
-                document.getElementById(`pct-${size}`).innerText = `${pct}%`;
-                document.getElementById(`bar-${size}`).style.width = `${pct}%`;
-                
-                // Cambiar color de la barra visual si está llena
-                const bar = document.getElementById(`bar-${size}`);
-                if(pct >= 100) {
-                    bar.classList.replace('bg-green-500', 'bg-red-500') || bar.classList.replace('bg-yellow-500', 'bg-red-500');
-                    bar.classList.add('animate-pulse');
-                } else {
-                    bar.classList.remove('animate-pulse');
-                }
-                
-                // Actualizar estado global para el simulador frontend
-                const keyMap = {peq: 'pequeno', med: 'mediano', gra: 'grande'};
-                window.capacityData[keyMap[size]] = { total, occ };
-            });
-        };
-
-        window.saveCapacity = () => {
-            updateBars();
-            const btn = document.querySelector('#tab-capacidad button');
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-check"></i> Guardado exitosamente';
-            btn.classList.replace('bg-forest', 'bg-green-600');
-            setTimeout(() => {
-                btn.innerHTML = originalHTML;
-                btn.classList.replace('bg-green-600', 'bg-forest');
-            }, 2000);
-        };
-
-        // Editor Web Landing
-        window.saveWebConfig = async () => {
-            // Reflejar cambios en la UI pública inmediatamente
-            const title = document.getElementById('edit-title').value;
-            const subtitle = document.getElementById('edit-subtitle').value;
-            
-            document.getElementById('landing-title').innerHTML = title.replace(/\n/g, '<br>');
-            document.getElementById('landing-subtitle').innerText = subtitle;
-
-            // Guardar Configuración de APIs
-            if(window.db) {
-                const waKey = document.getElementById('edit-wa-apikey').value;
-                const emailKey = document.getElementById('edit-email-apikey').value;
-                const gcalId = document.getElementById('config-gcal-id').value;
-                const waPhoneId = document.getElementById('edit-wa-phoneid') ? document.getElementById('edit-wa-phoneid').value : '';
-                try {
-                    await setDoc(doc(window.db, 'settings', 'keys'), {
-                        waKey, emailKey, gcalId, waPhoneId
-                    });
-                    window.apiKeys = { waKey, emailKey, gcalId, waPhoneId };
-                } catch(e) { console.error("No se pudieron guardar las llaves API", e); }
-            }
-
-            // Actualizar imágenes si se subieron nuevas
-            const fileHero = document.getElementById('edit-img-hero').files[0];
-            const fileServ1 = document.getElementById('edit-img-serv1').files[0];
-            const fileServ2 = document.getElementById('edit-img-serv2').files[0];
-            const fileServ3 = document.getElementById('edit-img-serv3').files[0];
-            
-            if(fileHero) document.getElementById('img-hero').src = await window.uploadImageFile(fileHero);
-            if(fileServ1) document.getElementById('img-serv-1').src = await window.uploadImageFile(fileServ1);
-            if(fileServ2) document.getElementById('img-serv-2').src = await window.uploadImageFile(fileServ2);
-            if(fileServ3) document.getElementById('img-serv-3').src = await window.uploadImageFile(fileServ3);
-            
-            // Notificación UI animada
-            const btn = document.querySelector('button[onclick="saveWebConfig()"]');
-            if(btn) {
-                const originalHtml = btn.innerHTML;
-                btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i>Publicado';
-                btn.classList.replace('bg-gold', 'bg-green-500');
-                btn.classList.add('text-white');
-                setTimeout(() => {
-                    btn.innerHTML = originalHtml;
-                    btn.classList.replace('bg-green-500', 'bg-gold');
-                    btn.classList.remove('text-white');
-                }, 2000);
-            }
-        };
-
-        window.viewEmployee = (name) => {
-            document.getElementById('employee-detail').classList.remove('hidden');
-            document.getElementById('emp-name').innerText = name;
-            
-            const isGroomer = name.includes('Juan');
-            document.getElementById('emp-role').innerText = isGroomer ? 'Groomer Principal' : 'Recepcionista';
-            
-            const initials = name.split(' ').map(n=>n[0]).join('');
-            const avatar = document.getElementById('emp-avatar');
-            avatar.innerText = initials;
-            avatar.className = `w-20 h-20 rounded-full flex items-center justify-center font-bold text-2xl text-white shadow-md ${isGroomer ? 'bg-forest' : 'bg-gold'}`;
-            
-            const history = document.getElementById('emp-history');
-            if(isGroomer) {
-                history.innerHTML = `
-                    <tr class="hover:bg-gray-50"><td class="p-3 border-b">Hoy</td><td class="p-3 border-b">Grooming Estándar</td><td class="p-3 border-b text-green-600 font-bold">Q 175.00</td><td class="p-3 border-b italic text-gray-500">Corte Schnauzer</td></tr>
-                    <tr class="hover:bg-gray-50"><td class="p-3 border-b">Ayer</td><td class="p-3 border-b">Baño Ozonoterapia</td><td class="p-3 border-b text-green-600 font-bold">Q 120.00</td><td class="p-3 border-b italic text-gray-500">Piel sensible</td></tr>
-                `;
-            } else {
-                history.innerHTML = `
-                    <tr class="hover:bg-gray-50"><td class="p-3 border-b">Hoy</td><td class="p-3 border-b">Noche Hotel Pequeño</td><td class="p-3 border-b text-green-600 font-bold">Q 150.00</td><td class="p-3 border-b italic text-gray-500">Trajo su propia comida</td></tr>
-                    <tr class="hover:bg-gray-50"><td class="p-3 border-b">Hoy</td><td class="p-3 border-b">Day Pass Completo</td><td class="p-3 border-b text-green-600 font-bold">Q 100.00</td><td class="p-3 border-b italic text-gray-500">Recogen a las 6pm</td></tr>
-                `;
-            }
-        };
-
-        // ==========================================
-        // SISTEMA POS Y GENERACIÓN DE RECIBOS (C.F. / NIT)
-        // ==========================================
-        
-        window.addToCart = (item, price) => {
-            window.cart.push({ item, price });
-            renderCart();
-        };
-
-        const renderCart = () => {
-            const div = document.getElementById('cart-items');
-            if(window.cart.length === 0) {
-                div.innerHTML = '<div class="text-center text-gray-400 text-sm mt-10 italic">Añade servicios al ticket...</div>';
-                document.getElementById('cart-total').innerText = 'Q 0.00';
-                return;
-            }
-            
-            div.innerHTML = '';
-            let total = 0;
-            window.cart.forEach((c, index) => {
-                total += c.price;
-                div.innerHTML += `
-                    <div class="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-100 shadow-sm animate-[fadeIn_0.2s_ease-out]">
-                        <span class="text-sm font-bold text-forest">${c.item}</span>
-                        <div class="flex items-center gap-4">
-                            <span class="font-black text-forest">Q ${c.price.toFixed(2)}</span>
-                            <button onclick="removeFromCart(${index})" class="text-red-300 hover:text-red-500 bg-red-50 p-2 rounded transition"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>
-                `;
-            });
-            document.getElementById('cart-total').innerText = `Q ${total.toFixed(2)}`;
-        };
-
-        window.removeFromCart = (index) => {
-            window.cart.splice(index, 1);
-            renderCart();
-        };
-
-        window.generateReceipt = async () => {
-            if(window.cart.length === 0) { 
-                alert("Por favor, agrega servicios o productos al ticket antes de facturar."); 
-                return; 
-            }
-
-            const total = window.cart.reduce((s,i) => s + (i.precio * i.qty), 0);
-            logEvent('sale', 'Ticket facturado. Total: Q ' + total.toFixed(2));
-            
-            const btn = document.querySelector('#tab-caja button.bg-forest');
-            const ogHtml = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando imagen...';
-            btn.disabled = true;
-
-            // Deducir Inventario
-            window.cart.forEach(c => {
-                if(c.type === 'product') {
-                    const prod = window.inventoryData.find(p => p.id === c.id);
-                    if(prod && prod.stock > 0) prod.stock--;
-                }
-            });
-            if(typeof renderInventoryViews === 'function') renderInventoryViews();
-
-            // 1. Preparar DOM del recibo oculto
-            const name = document.getElementById('bill-name').value || "Consumidor Final";
-            const nit = document.getElementById('bill-nit').value || "C.F.";
-            const comment = document.getElementById('bill-comment').value || "Ninguno";
-            const date = new Date().toLocaleString('es-GT');
-            
-            document.getElementById('r-date').innerText = date;
-            document.getElementById('r-name').innerText = name;
-            document.getElementById('r-nit').innerText = nit;
-            document.getElementById('r-comment').innerText = comment;
-            
-            const rItems = document.getElementById('r-items');
-            rItems.innerHTML = '';
-            let totalVal = 0;
-            window.cart.forEach(c => {
-                totalVal += c.price;
-                rItems.innerHTML += `
-                    <tr>
-                        <td class="py-2 text-forest border-b border-gray-50">${c.item || c.name}</td>
-                        <td class="text-right py-2 font-bold text-forest border-b border-gray-50">Q ${c.price.toFixed(2)}</td>
-                    </tr>`;
-            });
-            document.getElementById('r-total').innerText = `Q ${totalVal.toFixed(2)}`;
-
-            // 2. Renderizar con html2canvas
-            const target = document.getElementById('receipt-capture-area');
-            
-            try {
-                const canvas = await html2canvas(target, { 
-                    scale: 2, 
-                    backgroundColor: "#ffffff",
-                    logging: false
-                });
-                
-                const imgData = canvas.toDataURL("image/png");
-                
-                // 3. Mostrar Popup para descarga / envío
-                const w = window.open("", "_blank", "width=600,height=800");
-                w.document.write(`
-                    <html>
-                    <head>
-                        <title>Comprobante Casa Canis</title>
-                        <style>
-                            body { background:#111; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; font-family: sans-serif; }
-                            .container { text-align:center; background:#222; padding:30px; border-radius:15px; }
-                            img { border-radius:8px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); max-height:60vh; margin-bottom:30px; border: 1px solid #444; }
-                            .btn { display:inline-block; padding:12px 24px; text-decoration:none; font-weight:bold; border-radius:8px; margin: 0 10px; transition: transform 0.2s; }
-                            .btn:hover { transform: scale(1.05); }
-                            .btn-gold { background:#C5A059; color:#0B2F1D; }
-                            .btn-wa { background:#25D366; color:white; }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="container">
-                            <h2 style="color:white; margin-bottom:20px;">Recibo Generado Exitosamente</h2>
-                            <img src="${imgData}" />
-                            <br>
-                            <a href="${imgData}" download="Comprobante_CasaCanis.png" class="btn btn-gold">Descargar PNG</a>
-                            <a href="https://wa.me/?text=Gracias%20por%20su%20preferencia.%20Adjunto%20su%20comprobante%20de%20Casa%20Canis." target="_blank" class="btn btn-wa">Compartir por WhatsApp</a>
-                            <br><br>
-                            <a href="mailto:?subject=Tu%20Cita/Servicio%20en%20Casa%20Canis&body=¡Hola!%20Adjunto%20encontrarás%20el%20comprobante%20de%20tu%20servicio.%20¡Te%20esperamos!" target="_blank" class="btn" style="background:#4285F4; color:white; font-size:12px;">Enviar por Correo</a>
-                            <a href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=Cita+Casa+Canis&details=Servicio+Reservado+en+Casa+Canis&location=Casa+Canis+Resort" target="_blank" class="btn" style="background:#F4B400; color:white; font-size:12px;">Añadir a Google Calendar</a>
-                        </div>
-                    </body>
-                    </html>
-                `);
-                
-                // Limpiar sistema
-                window.cart = [];
-                renderCart();
-                document.getElementById('bill-name').value = '';
-                document.getElementById('bill-nit').value = '';
-                document.getElementById('bill-comment').value = '';
-                
-            } catch (error) {
-                console.error("Error html2canvas:", error);
-                alert("Ocurrió un error al procesar el lienzo del recibo.");
-            } finally {
-                btn.innerHTML = ogHtml;
-                btn.disabled = false;
-            }
-        };
-
-        // ==========================================
-        // GRÁFICOS Y MÉTRICAS (Chart.js)
-        // ==========================================
-        
-        window.initCharts = () => {
-            // Tema de colores
-            const colorGold = '#C5A059';
-            const colorForest = '#0B2F1D';
-            const colorWA = '#25D366';
-
-            window.charts = {};
-
-            // Gráfico 1: Ingresos (Barras)
-            const ctxRev = document.getElementById('revenueChart').getContext('2d');
-            window.charts.revenue = new Chart(ctxRev, {
-                type: 'bar',
-                data: {
-                    labels: ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4 (Actual)'],
-                    datasets: [{
-                        label: 'Ingresos (Q)',
-                        data: [15200, 18900, 14500, 22400],
-                        backgroundColor: colorGold,
-                        borderRadius: 6,
-                        barPercentage: 0.5
-                    }]
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { borderDash: [5, 5] } },
-                        x: { grid: { display: false } }
-                    }
-                }
-            });
-
-            // Gráfico 2: Origen de Leads (Dona)
-            const ctxLead = document.getElementById('leadsChart').getContext('2d');
-            window.charts.leads = new Chart(ctxLead, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Bot WhatsApp API', 'Formulario Web', 'Walk-in / Directo'],
-                    datasets: [{
-                        data: [68, 22, 10],
-                        backgroundColor: [colorWA, colorGold, colorForest],
-                        borderWidth: 0,
-                        hoverOffset: 4
-                    }]
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    cutout: '75%',
-                    plugins: { 
-                        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
-                    }
-                }
-            });
-        };
-
-        window.updateFinancialCharts = () => {
-            const startStr = document.getElementById('report-date-start').value;
-            const endStr = document.getElementById('report-date-end').value;
-            
-            let startDate, endDate;
-            const now = new Date();
-            if(startStr) startDate = new Date(startStr + 'T00:00:00');
-            else { startDate = new Date(now); startDate.setDate(now.getDate() - 30); } // Default 30 días
-            
-            if(endStr) endDate = new Date(endStr + 'T23:59:59');
-            else endDate = new Date(now);
-
-            // Filtrar Logs
-            const filteredLogs = window.auditLogs.filter(log => {
-                const logDate = new Date(log.timestamp);
-                return logDate >= startDate && logDate <= endDate;
-            });
-
-            // Agrupar Ventas
-            const salesByDay = {};
-            let totalSalesAmount = 0;
-            let totalSalesCount = 0;
-            let totalLeadsAttended = 0;
-
-            filteredLogs.forEach(log => {
-                if(log.action === 'sale') {
-                    const dateKey = new Date(log.timestamp).toLocaleDateString();
-                    const match = log.details.match(/Q\s*([0-9.]+)/);
-                    let amount = 0;
-                    if(match) amount = parseFloat(match[1]);
-                    
-                    if(!salesByDay[dateKey]) salesByDay[dateKey] = 0;
-                    salesByDay[dateKey] += amount;
-                    totalSalesAmount += amount;
-                    totalSalesCount++;
-                }
-                if(log.action === 'lead_attended') {
-                    totalLeadsAttended++;
-                }
-            });
-
-            // Sort dates
-            const sortedDates = Object.keys(salesByDay).sort((a,b) => new Date(a) - new Date(b));
-            const revLabels = [];
-            const revData = [];
-            
-            if(sortedDates.length === 0) {
-                revLabels.push('Sin Datos');
-                revData.push(0);
-            } else {
-                sortedDates.forEach(date => {
-                    revLabels.push(date);
-                    revData.push(salesByDay[date]);
-                });
-            }
-
-            // Actualizar Gráfica de Ingresos
-            if(window.charts && window.charts.revenue) {
-                window.charts.revenue.data.labels = revLabels;
-                window.charts.revenue.data.datasets[0].data = revData;
-                window.charts.revenue.update();
-            }
-
-            // Actualizar KPIs
-            const conversionRate = totalLeadsAttended > 0 ? ((totalSalesCount / totalLeadsAttended) * 100).toFixed(1) : 0;
-            const ticketPromedio = totalSalesCount > 0 ? (totalSalesAmount / totalSalesCount).toFixed(2) : '0.00';
-            
-            document.getElementById('kpi-revenue').innerText = `Q ${totalSalesAmount.toFixed(2)}`;
-            document.getElementById('kpi-conversion').innerText = `${conversionRate}%`;
-            document.getElementById('kpi-ticket').innerText = `Q ${ticketPromedio}`;
-            document.getElementById('kpi-retention').innerText = totalSalesCount > 0 ? '42%' : '0%'; // Simulado por ahora hasta atar recibos a clientes
-
-            // Actualizar Gráfica de Origen (Solo WhatsApp y Web según instrucciones)
-            let whatsAppLeads = 0;
-            let webLeads = 0;
-            (window.mockLeads || []).forEach(l => {
-                if(l.origen === 'WhatsApp') whatsAppLeads++;
-                else if(l.origen === 'Web') webLeads++;
-            });
-            // Fallback simulado si no hay leads
-            if(whatsAppLeads === 0 && webLeads === 0 && totalSalesCount > 0) {
-                whatsAppLeads = Math.floor(totalSalesCount * 0.7);
-                webLeads = Math.floor(totalSalesCount * 0.3);
-            }
-            if(window.charts && window.charts.leads) {
-                window.charts.leads.data.labels = ['WhatsApp', 'Web'];
-                window.charts.leads.data.datasets[0].data = [whatsAppLeads, webLeads];
-                window.charts.leads.data.datasets[0].backgroundColor = ['#25D366', '#3b82f6']; // WhatsApp Green, Blue Web
-                window.charts.leads.update();
-            }
-
-            // Actualizar Gráfica de Servicios (Simulado Top 5)
-            if(!window.charts.services) {
-                const ctxSrv = document.getElementById('servicesChart');
-                if(ctxSrv) {
-                    window.charts.services = new Chart(ctxSrv, {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['Grooming Básico', 'Hotel x Noche', 'Baño Médico', 'Corte Uñas', 'Day Pass'],
-                            datasets: [{
-                                data: [45, 25, 15, 10, 5],
-                                backgroundColor: ['#2F4F4F', '#D4AF37', '#8FBC8F', '#4682B4', '#CD853F'],
-                                borderWidth: 0
-                            }]
-                        },
-                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-                    });
-                }
-            } else {
-                window.charts.services.update();
-            }
-
-            // Actualizar Gráfica de Productos (Simulado Top 5)
-            if(!window.charts.products) {
-                const ctxProd = document.getElementById('productsChart');
-                if(ctxProd) {
-                    window.charts.products = new Chart(ctxProd, {
-                        type: 'doughnut',
-                        data: {
-                            labels: ['Shampoo Avena', 'Collar Cuero', 'Juguete Kong', 'Premio Res', 'Cepillo'],
-                            datasets: [{
-                                data: [35, 25, 20, 15, 5],
-                                backgroundColor: ['#D4AF37', '#2F4F4F', '#CD853F', '#8FBC8F', '#4682B4'],
-                                borderWidth: 0
-                            }]
-                        },
-                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
-                    });
-                }
-            } else {
-                window.charts.products.update();
-            }
-        };
-
-        // ==========================================
-        // LÓGICA DEL CATÁLOGO Y COTIZADOR
-        // ==========================================
-        
-        window.renderCatalogViews = () => {
-            // Render POS
-            const posContainer = document.getElementById('pos-catalog-container');
-            if(posContainer) {
-                posContainer.innerHTML = window.catalogData.map(c => `
-                    <button onclick="addToCart('${c.name}', ${c.price})" class="p-4 border-2 border-gray-100 rounded-xl hover:border-gold hover:bg-gold/5 text-left transition group bg-white shadow-sm">
-                        <div class="font-bold text-forest group-hover:text-gold transition text-sm">${c.name}</div>
-                        <div class="text-gray-500 text-[10px] mb-2 truncate">${c.desc}</div>
-                        <div class="text-forest font-black bg-gray-50 inline-block px-2 py-1 rounded text-xs">Q ${c.price.toFixed(2)}</div>
-                    </button>
-                `).join('');
-            }
-            
-            // Render Public Cotizador
-            const pubContainer = document.getElementById('public-catalog-container');
-            if(pubContainer) {
-                pubContainer.innerHTML = window.catalogData.map((c, i) => `
-                    <label class="cursor-pointer bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-4 hover:border-gold transition shadow-sm group">
-                        <input type="checkbox" onchange="updateQuote()" class="quote-checkbox w-5 h-5 text-gold rounded border-gray-300 focus:ring-gold" data-price="${c.price}">
-                        <div class="flex-1">
-                            <p class="font-bold text-forest group-hover:text-gold transition text-sm">${c.name}</p>
-                            <p class="text-[10px] text-gray-500 mt-1">${c.desc}</p>
-                        </div>
-                        <div class="font-black text-forest">Q ${c.price.toFixed(2)}</div>
-                    </label>
-                `).join('');
-                updateQuote(); // Reset al renderizar
-            }
-
-            // Render Admin Table
-            const adminTbody = document.getElementById('admin-catalog-tbody');
-            if(adminTbody) {
-                adminTbody.innerHTML = window.catalogData.map((c, i) => `
-                    <tr class="hover:bg-gray-50">
-                        <td class="p-4 border-b">
-                            <input type="text" id="cat-name-${i}" value="${c.name}" class="w-full bg-transparent border-b border-dashed border-gray-300 focus:border-gold outline-none p-1 font-bold text-forest">
-                        </td>
-                        <td class="p-4 border-b">
-                            <input type="text" id="cat-desc-${i}" value="${c.desc}" class="w-full bg-transparent border-b border-dashed border-gray-300 focus:border-gold outline-none p-1 text-gray-500 text-sm">
-                        </td>
-                        <td class="p-4 border-b">
-                            <div class="flex items-center">
-                                <span class="text-gray-400 mr-1">Q</span>
-                                <input type="number" id="cat-price-${i}" value="${c.price}" class="w-20 bg-transparent border-b border-dashed border-gray-300 focus:border-gold outline-none p-1 font-black text-forest">
-                            </div>
-                        </td>
-                        <td class="p-4 border-b text-center">
-                            <button onclick="deleteCatalogItem('${c.id}')" class="text-red-400 hover:text-red-600 p-2"><i class="fa-solid fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `).join('');
-            }
-        };
-
-        window.fillPOSClientSelect = () => {
-            const select = document.getElementById('pos-client-select');
-            if(!select) return;
-            select.innerHTML = '<option value="">-- Cobro Libre (Consumidor Final) --</option>';
-            window.mockLeads.forEach(l => {
-                select.innerHTML += `<option value="${l.id}">${l.nombre} (${l.servicio})</option>`;
-            });
-        };
-
-        window.autoFillPOSClient = () => {
-            const val = document.getElementById('pos-client-select').value;
-            const nameEl = document.getElementById('bill-name');
-            if(!val) {
-                nameEl.value = "";
-                return;
-            }
-            const lead = window.mockLeads.find(l => l.id === val);
-            if(lead) {
-                nameEl.value = lead.nombre;
-            }
-        };
-
-        window.renderInventoryViews = () => {
-            // Render POS
-            const posContainer = document.getElementById('pos-inventory-container');
-            if(posContainer) {
-                posContainer.innerHTML = window.inventoryData.map(p => `
-                    <button onclick="addToCartProduct('${p.id}', '${p.name}', ${p.price})" class="p-3 border-2 border-gray-100 rounded-xl hover:border-gold hover:bg-gold/5 text-left transition group bg-white shadow-sm flex items-center gap-3 ${p.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}" ${p.stock <= 0 ? 'disabled' : ''}>
-                        <img src="${p.img}" class="w-10 h-10 rounded-md object-cover">
-                        <div class="flex-1 overflow-hidden">
-                            <div class="font-bold text-forest group-hover:text-gold transition text-sm truncate">${p.name}</div>
-                            <div class="flex justify-between items-center mt-1">
-                                <div class="text-forest font-black bg-gray-50 inline-block px-1.5 py-0.5 rounded text-[10px]">Q ${p.price.toFixed(2)}</div>
-                                <div class="text-[10px] font-bold ${p.stock > 0 ? 'text-green-600' : 'text-red-500'}">Stock: ${p.stock}</div>
-                            </div>
-                        </div>
-                    </button>
-                `).join('');
-            }
-
-            // Render Admin Table
-            const adminTbody = document.getElementById('admin-inventory-tbody');
-            if(adminTbody) {
-                adminTbody.innerHTML = window.inventoryData.map((p, i) => `
-                    <tr class="hover:bg-gray-50">
-                        <td class="p-4 border-b text-center align-top">
-                            <img src="${p.img}" class="w-12 h-12 rounded-md object-cover mb-2 mx-auto shadow-sm">
-                            <label class="cursor-pointer bg-white hover:bg-gray-50 border border-gray-200 text-gray-600 rounded px-2 py-1 text-[10px] shadow-sm block text-center truncate overflow-hidden">
-                                <i class="fa-solid fa-camera mr-1"></i>Cambiar
-                                <input type="file" id="inv-img-${i}" accept="image/*" class="hidden">
-                            </label>
-                        </td>
-                        <td class="p-4 border-b">
-                            <input type="text" id="inv-name-${i}" value="${p.name}" class="w-full bg-transparent border-b border-dashed border-gray-300 focus:border-gold outline-none p-1 font-medium text-forest">
-                        </td>
-                        <td class="p-4 border-b">
-                            <div class="flex items-center">
-                                <span class="text-gray-400 mr-1">Q</span>
-                                <input type="number" id="inv-price-${i}" value="${p.price}" class="w-20 bg-transparent border-b border-dashed border-gray-300 focus:border-gold outline-none p-1 font-black text-forest">
-                            </div>
-                        </td>
-                        <td class="p-4 border-b text-center">
-                            <input type="number" id="inv-stock-${i}" value="${p.stock}" class="w-16 bg-transparent border-b border-dashed border-gray-300 focus:border-gold outline-none p-1 font-bold text-center ${p.stock <= 0 ? 'text-red-500' : 'text-green-600'}">
-                        </td>
-                        <td class="p-4 border-b text-center">
-                            <button onclick="deleteInventoryItem('${p.id}')" class="text-red-400 hover:text-red-600 p-2"><i class="fa-solid fa-trash"></i></button>
-                        </td>
-                    </tr>
-                `).join('');
-            }
-        };
-
-        window.addToCartProduct = (id, name, price) => {
-            const product = window.inventoryData.find(p => p.id === id);
-            if(product && product.stock > 0) {
-                window.cart.push({ id, item: name, name: name, price, type: 'product' });
-                renderCart();
-            }
-        };
-
-        window.saveInventory = async () => {
-            const btn = document.querySelector('#tab-inventario button.bg-gold');
-            if(!btn) return;
-            const originalHtml = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
-            btn.disabled = true;
-
-            try {
-                if(window.db) {
-                    let i = 0;
-                    while(document.getElementById(`inv-name-${i}`)) {
-                        const name = document.getElementById(`inv-name-${i}`).value;
-                        const fileInput = document.getElementById(`inv-img-${i}`);
-                        let img = window.inventoryData[i] ? window.inventoryData[i].img : 'https://via.placeholder.com/150';
-                        
-                        if (fileInput && fileInput.files[0]) {
-                            img = await window.uploadImageFile(fileInput.files[0]);
-                        }
-
-                        const price = parseFloat(document.getElementById(`inv-price-${i}`).value) || 0;
-                        const stock = parseInt(document.getElementById(`inv-stock-${i}`).value) || 0;
-                        
-                        if(name.trim() !== '') {
-                            const id = window.inventoryData[i] ? window.inventoryData[i].id : ('p' + Date.now() + i);
-                            await setDoc(doc(window.db, 'inventory', id), { name, img, price, stock });
-                        }
-                        i++;
-                    }
-                }
-            } catch(e) { console.error("Error guardando inventario", e); }
-            
-            setTimeout(() => {
-                btn.innerHTML = originalHtml;
-                btn.disabled = false;
-            }, 1000);
-        };
-
-        window.addInventoryProduct = async () => {
-            if(window.db) {
-                await addDoc(collection(window.db, 'inventory'), { name: 'Nuevo Producto', img: '', price: 0, stock: 0 });
-            }
-        };
-
-        window.deleteInventoryItem = async (id) => {
-            if(confirm("¿Eliminar este producto?")) {
-                if(window.db) await deleteDoc(doc(window.db, 'inventory', id));
-            }
-        };
-
-        window.updateQuote = () => {
-            const checkboxes = document.querySelectorAll('.quote-checkbox');
-            let total = 0;
-            checkboxes.forEach(cb => {
-                if(cb.checked) total += parseFloat(cb.dataset.price);
-            });
-            const quoteEl = document.getElementById('quote-total');
-            if(quoteEl) quoteEl.innerText = `Q ${total.toFixed(2)}`;
-        };
-
-        window.saveCatalog = async () => {
-            const btn = document.querySelector('#tab-catalogo button.bg-gold');
-            if(btn) {
-                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
-            }
-            try {
-                if(window.db) {
-                    for(let i=0; i<window.catalogData.length; i++) {
-                        const nameEl = document.getElementById(`cat-name-${i}`);
-                        if(!nameEl) continue;
-                        const id = window.catalogData[i].id;
-                        const name = nameEl.value || 'Servicio Sin Nombre';
-                        const desc = document.getElementById(`cat-desc-${i}`).value || '';
-                        const price = parseFloat(document.getElementById(`cat-price-${i}`).value) || 0;
-                        
-                        await setDoc(doc(window.db, 'catalog', id), { name, desc, price });
-                    }
-                }
-            } catch(e) { console.error("Error guardando catálogo", e); }
-            
-            if(btn) {
-                btn.innerHTML = '<i class="fa-solid fa-check"></i> Guardado';
-                setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-save"></i> Guardar Cambios'; }, 2000);
-            }
-        };
-
-        window.addCatalogService = async () => {
-            if(window.db) {
-                await addDoc(collection(window.db, 'catalog'), { name: '', desc: '', price: 0 });
-            }
-        };
-
-        window.removeCatalogService = async (index) => {
-            if(confirm("¿Eliminar este servicio del catálogo?")) {
-                const id = window.catalogData[index].id;
-                if(window.db) await deleteDoc(doc(window.db, 'catalog', id));
-            }
-        };
-
-        // ==========================================
-        // AUDITORÍA Y RRHH
-        // ==========================================
-        window.populateAuditUserSelect = () => {
-            const select = document.getElementById('audit-user-select');
-            if(!select) return;
-            select.innerHTML = '<option value="all">Todos los Empleados</option>';
-            Object.keys(window.employeesData).forEach(email => {
-                select.innerHTML += `<option value="${email}">${window.employeesData[email].name} (${email})</option>`;
-            });
-        };
-
-        window.handleAuditTimeFilter = () => {
-            const timeFilter = document.getElementById('audit-time-filter').value;
-            const customDates = document.getElementById('audit-custom-dates');
-            if(timeFilter === 'custom') {
-                customDates.classList.remove('hidden');
-            } else {
-                customDates.classList.add('hidden');
-                renderAuditTab();
-            }
-        };
-
-        window.renderAuditTab = () => {
-            const thead = document.getElementById('audit-table-head');
-            const tbody = document.getElementById('audit-table-body');
-            const emptyState = document.getElementById('audit-empty');
-            const timeFilter = document.getElementById('audit-time-filter').value;
-            
-            let filteredLogs = [...window.auditLogs];
-
-            // Filtrar por Tiempo
-            const now = new Date();
-            let customStart, customEnd;
-            if(timeFilter === 'custom') {
-                const sVal = document.getElementById('audit-date-start').value;
-                const eVal = document.getElementById('audit-date-end').value;
-                if(sVal) customStart = new Date(sVal + 'T00:00:00');
-                if(eVal) customEnd = new Date(eVal + 'T23:59:59');
-            }
-
-            filteredLogs = filteredLogs.filter(log => {
-                const logDate = new Date(log.timestamp);
-                if(timeFilter === 'today') {
-                    return logDate.toDateString() === now.toDateString();
-                } else if(timeFilter === 'yesterday') {
-                    const yest = new Date(now);
-                    yest.setDate(yest.getDate() - 1);
-                    return logDate.toDateString() === yest.toDateString();
-                } else if(timeFilter === 'this_week') {
-                    const diffTime = Math.abs(now - logDate);
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                    return diffDays <= 7;
-                } else if(timeFilter === 'this_month') {
-                    return logDate.getMonth() === now.getMonth() && logDate.getFullYear() === now.getFullYear();
-                } else if(timeFilter === 'custom') {
-                    if(customStart && logDate < customStart) return false;
-                    if(customEnd && logDate > customEnd) return false;
-                    return true;
-                }
-                return true; // 'all'
-            });
-
-            // Ordenar de más reciente a más antiguo
-            filteredLogs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
-            // Guardar para exportar
-            window.currentRawAuditLogs = filteredLogs;
-
-            thead.innerHTML = '';
-            tbody.innerHTML = '';
-            
-            if(filteredLogs.length === 0) {
-                emptyState.classList.remove('hidden');
-                document.getElementById('audit-table-body').parentElement.classList.add('hidden');
-            } else {
-                emptyState.classList.add('hidden');
-                document.getElementById('audit-table-body').parentElement.classList.remove('hidden');
-                
-                thead.innerHTML = `
-                    <tr>
-                        <th class="p-5 font-bold">Fecha</th>
-                        <th class="p-5 font-bold">Hora</th>
-                        <th class="p-5 font-bold">Usuario</th>
-                        <th class="p-5 font-bold">Acción</th>
-                        <th class="p-5 font-bold">Detalles</th>
-                    </tr>
-                `;
-
-                filteredLogs.forEach(log => {
-                    const d = new Date(log.timestamp);
-                    const empName = window.employeesData[log.email] ? window.employeesData[log.email].name : log.email;
-                    
-                    tbody.innerHTML += `
-                        <tr class="hover:bg-gray-50 transition group">
-                            <td class="p-5 border-b border-gray-100 font-bold text-gray-700">${d.toLocaleDateString()}</td>
-                            <td class="p-5 border-b border-gray-100 text-gray-500">${d.toLocaleTimeString()}</td>
-                            <td class="p-5 border-b border-gray-100 font-medium text-forest">${empName}</td>
-                            <td class="p-5 border-b border-gray-100 text-gold text-xs uppercase tracking-wider font-bold">${log.action}</td>
-                            <td class="p-5 border-b border-gray-100 text-gray-500 text-sm">${log.details}</td>
-                        </tr>
-                    `;
-                });
-            }
-        };
-
-        window.exportAuditCSV = () => {
-            const logs = window.currentRawAuditLogs || [];
-            if(logs.length === 0) {
-                alert("No hay datos para exportar en el rango seleccionado.");
-                return;
-            }
-
-            let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "Fecha,Hora,Usuario,Accion,Detalles\n";
-            logs.forEach(log => {
-                const d = new Date(log.timestamp);
-                const empName = window.employeesData[log.email] ? window.employeesData[log.email].name : log.email;
-                const safeDetails = log.details.replace(/"/g, '""');
-                csvContent += `${d.toLocaleDateString()},${d.toLocaleTimeString()},"${empName}","${log.action}","${safeDetails}"\n`;
-            });
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `auditoria_casacanis_${Date.now()}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        };
-        
-        // ==========================================
-        // GESTIÓN DE CITAS Y GOOGLE CALENDAR
-        // ==========================================
-        window.openCitaModal = () => {
-            const listContainer = document.getElementById('cita-cliente-list');
-            listContainer.innerHTML = '';
-            window.mockLeads.forEach(cliente => {
-                const div = document.createElement('div');
-                div.className = 'cita-client-option p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0';
-                div.setAttribute('data-id', cliente.id);
-                div.setAttribute('data-nombre', cliente.nombre);
-                div.setAttribute('data-search', `${cliente.nombre} ${cliente.email} ${cliente.tel}`.toLowerCase());
-                div.onclick = () => selectCitaClient(cliente.id, cliente.nombre);
-                div.innerHTML = `
-                    <div class="font-bold text-forest text-sm">${cliente.nombre}</div>
-                    <div class="text-xs text-gray-500 mt-1"><i class="fa-solid fa-phone mr-1"></i>${cliente.tel} <span class="mx-2">|</span> <i class="fa-solid fa-envelope mr-1"></i>${cliente.email}</div>
-                `;
-                listContainer.appendChild(div);
-            });
-            
-            // Reset fields
-            document.getElementById('cita-cliente').value = '';
-            document.getElementById('cita-cliente-search').value = '';
-            document.getElementById('cita-correo').value = '';
-            document.getElementById('cita-mascota').innerHTML = '<option value="">-- Seleccionar Cliente Primero --</option>';
-            document.getElementById('cita-fecha').value = '';
-            document.getElementById('cita-hora-inicio').value = '';
-            document.getElementById('cita-hora-fin').value = '';
-
-            document.getElementById('cita-modal').classList.remove('hidden');
-        };
-
-        window.showCitaClientList = () => {
-            document.getElementById('cita-cliente-list').classList.remove('hidden');
-        };
-
-        document.addEventListener('click', (e) => {
-            const searchInput = document.getElementById('cita-cliente-search');
-            const list = document.getElementById('cita-cliente-list');
-            if(searchInput && list && !searchInput.contains(e.target) && !list.contains(e.target)) {
-                list.classList.add('hidden');
-            }
-        });
-
-        window.filterCitaClients = () => {
-            const term = document.getElementById('cita-cliente-search').value.toLowerCase();
-            const options = document.querySelectorAll('.cita-client-option');
-            options.forEach(opt => {
-                if(opt.getAttribute('data-search').includes(term)) {
-                    opt.style.display = 'block';
-                } else {
-                    opt.style.display = 'none';
-                }
-            });
-        };
-
-        window.selectCitaClient = (id, nombre) => {
-            document.getElementById('cita-cliente').value = id;
-            document.getElementById('cita-cliente-search').value = nombre;
-            document.getElementById('cita-cliente-list').classList.add('hidden');
-            window.updateCitaClientDetails();
-        };
-
-        window.updateCitaClientDetails = () => {
-            const clientId = document.getElementById('cita-cliente').value;
-            const selectMascota = document.getElementById('cita-mascota');
-            const inputCorreo = document.getElementById('cita-correo');
-            
-            const cliente = window.mockLeads.find(l => l.id === clientId);
-            
-            selectMascota.innerHTML = '';
-            
-            if(cliente) {
-                inputCorreo.value = cliente.email;
-                if(cliente.mascotas && cliente.mascotas.length > 0) {
-                    cliente.mascotas.forEach(pet => {
-                        const option = document.createElement('option');
-                        option.value = pet.nombre;
-                        option.textContent = pet.nombre + (pet.raza ? ` (${pet.raza})` : '');
-                        selectMascota.appendChild(option);
-                    });
-                } else {
-                    selectMascota.innerHTML = '<option value="">-- Sin mascotas registradas --</option>';
-                }
-            } else {
-                inputCorreo.value = '';
-                selectMascota.innerHTML = '<option value="">-- Seleccionar Cliente Primero --</option>';
-            }
-        };
-
-        window.closeCitaModal = () => {
-            document.getElementById('cita-modal').classList.add('hidden');
-        };
-
-        window.saveCita = async () => {
-            const clienteId = document.getElementById('cita-cliente').value;
-            const clienteNombre = document.getElementById('cita-cliente-search').value;
-            
-            const correo = document.getElementById('cita-correo').value;
-            const mascota = document.getElementById('cita-mascota').value;
-            const servicio = document.getElementById('cita-servicio').value;
-            const fecha = document.getElementById('cita-fecha').value;
-            const horaInicio = document.getElementById('cita-hora-inicio').value;
-            const horaFin = document.getElementById('cita-hora-fin').value;
-            const googleCalId = document.getElementById('cita-google-cal-id').value.trim();
-
-            if(!clienteId || !fecha || !horaInicio || !horaFin) {
-                alert('Por favor selecciona un cliente y completa las fechas y horas.');
-                return;
-            }
-
-            // Mapeo de colores por servicio
-            const colorMap = {
-                'Grooming': '#a855f7',
-                'Spa': '#3b82f6',
-                'Hotel': '#C5A059',
-                'Evaluacion': '#10b981'
-            };
-            const color = colorMap[servicio] || '#3b82f6';
-            const title = `${servicio} - ${mascota} (${clienteNombre})`;
-
-            // Guardar en Firestore
-            try {
-                if(window.db) {
-                    await addDoc(collection(window.db, 'citas'), {
-                        clienteId,
-                        clienteNombre,
-                        correo,
-                        mascota,
-                        servicio,
-                        fecha,
-                        horaInicio,
-                        horaFin,
-                        googleCalId,
-                        title,
-                        color,
-                        timestamp: serverTimestamp()
-                    });
-                }
-            } catch(e) {
-                console.error("Error al guardar cita:", e);
-                alert("Hubo un error al guardar la cita en la base de datos.");
-            }
-
-            // Insertar en FullCalendar
-            if(window.calendar) {
-                window.calendar.addEvent({
-                    title: title,
-                    start: `${fecha}T${horaInicio}:00`,
-                    end: `${fecha}T${horaFin}:00`,
-                    backgroundColor: color,
-                    borderColor: color
-                });
-            }
-
-            // Generar Links de Google Calendar
-            const dateStr = fecha.replace(/-/g, '');
-            const startStr = horaInicio.replace(/:/g, '') + '00';
-            const endStr = horaFin.replace(/:/g, '') + '00';
-            const dateParam = `${dateStr}T${startStr}/${dateStr}T${endStr}`;
-            
-            const details = `Cliente: ${clienteNombre}%0AMascota: ${mascota}%0AServicio: ${servicio}`;
-            
-            // Link Cliente
-            const baseGcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${dateParam}&details=${details}`;
-            document.getElementById('btn-cliente-gcal').href = baseGcalUrl;
-
-            // Link Negocio
-            let negocioUrl = baseGcalUrl;
-            if(googleCalId !== '') {
-                negocioUrl += `&src=${encodeURIComponent(googleCalId)}`;
-            }
-            document.getElementById('btn-negocio-gcal').href = negocioUrl;
-
-            // Enviar Correo (Mailto Template)
-            const subject = encodeURIComponent(`Confirmación de Cita: ${servicio} para ${mascota}`);
-            const body = encodeURIComponent(`¡Hola ${clienteNombre}!\n\nTu cita para ${servicio} con ${mascota} ha sido confirmada para el día ${fecha} de ${horaInicio} a ${horaFin}.\n\nPuedes agregar esta cita a tu calendario haciendo clic en el siguiente enlace:\n${decodeURIComponent(baseGcalUrl)}\n\n¡Te esperamos en Casa Canis!`);
-            document.getElementById('btn-cliente-mailto').href = `mailto:${correo}?subject=${subject}&body=${body}`;
-
-            // Llenar Modal de Éxito
-            document.getElementById('sim-correo-cliente').innerText = correo || 'N/A';
-            document.getElementById('sim-nombre-cliente').innerText = clienteNombre.split(' ')[0];
-            document.getElementById('sim-servicio').innerText = servicio;
-            document.getElementById('sim-mascota').innerText = mascota;
-
-            closeCitaModal();
-            document.getElementById('cita-success-modal').classList.remove('hidden');
-
-            logEvent('citas', `Se agendó cita: ${title}`);
-        };
-
-        // ==========================================
-        // MODULO CALENDARIO FULLCALENDAR
-        // ==========================================
-        window.initCalendar = () => {
-            const calendarEl = document.getElementById('calendar-container');
-            if(!calendarEl || window.calendar) return; // Ya existe
-
-            const todayStr = new Date().toISOString().split('T')[0];
-            
-            // Crear instancia
-            window.calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'timeGridWeek', // Vista semanal por defecto
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
-                },
-                locale: 'es',
-                buttonText: {
-                    today: 'Hoy',
-                    month: 'Mes',
-                    week: 'Semana',
-                    day: 'Día',
-                    list: 'Agenda'
-                },
-                allDaySlot: false,
-                slotMinTime: '08:00:00',
-                slotMaxTime: '19:00:00', // Horario del spa/grooming
-                height: '100%',
-                events: [
-                    { title: 'Grooming - Max', start: todayStr + 'T09:00:00', end: todayStr + 'T10:30:00', backgroundColor: '#a855f7', borderColor: '#a855f7' },
-                    { title: 'Spa Relajante - Bella', start: todayStr + 'T11:00:00', end: todayStr + 'T13:00:00', backgroundColor: '#3b82f6', borderColor: '#3b82f6' },
-                    { title: 'Corte Específico - Toby', start: todayStr + 'T15:00:00', end: todayStr + 'T16:30:00', backgroundColor: '#a855f7', borderColor: '#a855f7' },
-                    { title: 'Evaluación Hotel', start: todayStr + 'T14:00:00', end: todayStr + 'T14:30:00', backgroundColor: '#C5A059', borderColor: '#C5A059' }
-                ],
-                eventClick: function(info) {
-                    alert('Cita: ' + info.event.title + '\nHora: ' + info.event.start.toLocaleTimeString());
-                }
-            });
-            window.calendar.render();
-        };
-
-        // Renderizado Inicial
-        renderCatalogViews();
-
-    </script>
+<!-- Modal: alta de empleado -->
+<div id="staff-modal" class="hidden fixed inset-0 z-[100] bg-forest/95 backdrop-blur-md flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden">
+    <div class="bg-forest px-8 py-6 flex items-center justify-between">
+      <h3 class="text-xl font-serif font-bold text-gold">Nuevo Empleado</h3>
+      <button onclick="closeStaffModal()" class="text-white/60 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+    </div>
+    <div class="p-8 space-y-4">
+      <div>
+        <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Nombre completo</label>
+        <input type="text" id="ns-name" class="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-gold">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Correo</label>
+        <input type="email" id="ns-email" class="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-gold">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Puesto</label>
+        <input type="text" id="ns-puesto" placeholder="Ej. Groomer Principal"
+               class="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-gold">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Rol de sistema</label>
+        <select id="ns-role" class="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-gold bg-white">
+          <option value="agent">Agente (operación diaria)</option>
+          <option value="admin">Administrador (acceso total)</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Servicios que puede atender</label>
+        <div class="grid grid-cols-2 gap-2 text-sm">
+          <label class="flex items-center gap-2"><input type="checkbox" class="ns-svc" value="grooming" class="rounded"> Grooming</label>
+          <label class="flex items-center gap-2"><input type="checkbox" class="ns-svc" value="hospedaje"> Hospedaje</label>
+          <label class="flex items-center gap-2"><input type="checkbox" class="ns-svc" value="daypass"> Day Pass</label>
+          <label class="flex items-center gap-2"><input type="checkbox" class="ns-svc" value="veterinaria"> Veterinaria</label>
+          <label class="flex items-center gap-2"><input type="checkbox" class="ns-svc" value="fisioterapia"> Fisioterapia</label>
+          <label class="flex items-center gap-2"><input type="checkbox" class="ns-svc" value="transporte"> Transporte</label>
+        </div>
+      </div>
+      <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 text-xs text-blue-800">
+        <i class="fa-solid fa-circle-info mr-1"></i>
+        Se creará la cuenta de acceso y se enviará un correo para que el empleado
+        defina su contraseña. Requiere la Cloud Function <code>onStaffCreate</code>.
+      </div>
+    </div>
+    <div class="px-8 pb-8 flex justify-end gap-3">
+      <button onclick="closeStaffModal()" class="px-6 py-3 font-bold text-gray-500 hover:text-gray-800">Cancelar</button>
+      <button onclick="createStaff()" class="bg-forest text-gold font-bold px-8 py-3 rounded-xl hover:bg-forestLight shadow-lg">Crear</button>
+    </div>
+  </div>
+</div>
+
+    <script type="module" src="app.js"></script>
 </body>
 </html>
-

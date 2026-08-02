@@ -1,0 +1,35 @@
+/* Estilos Base Globales */
+body { 
+    background-color: #F4F1EA; 
+    color: #0B2F1D; 
+    overflow-x: hidden;
+}
+
+/* Glassmorphism panel styling */
+.glass-panel {
+    background: rgba(244, 241, 234, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(197, 160, 89, 0.2);
+}
+
+/* Animaciones utilitarias */
+.fade-in { animation: fadeIn 0.6s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Custom scrollbar para estética premium */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #F4F1EA; }
+::-webkit-scrollbar-thumb { background: #C5A059; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #0B2F1D; }
+
+/* Smooth scrolling en la navegación */
+html { scroll-behavior: smooth; }
+
+/* FullCalendar Custom Theme */
+.fc { font-family: 'Inter', sans-serif !important; }
+.fc .fc-toolbar-title { font-family: 'Playfair Display', serif !important; font-size: 1.5rem !important; color: #0B2F1D !important; font-weight: bold; }
+.fc .fc-button-primary { background-color: #0B2F1D !important; border-color: #0B2F1D !important; border-radius: 8px !important; text-transform: capitalize !important; }
+.fc .fc-button-primary:hover { background-color: #C5A059 !important; border-color: #C5A059 !important; color: #0B2F1D !important; }
+.fc .fc-button-active { background-color: #C5A059 !important; border-color: #C5A059 !important; color: #0B2F1D !important; }
+.fc-theme-standard td, .fc-theme-standard th { border-color: #f3f4f6 !important; }
+.fc-day-today { background-color: #fefce8 !important; }
