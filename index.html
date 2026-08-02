@@ -288,14 +288,14 @@
                             <h4 class="text-xl font-bold mb-2">¡Asegura tu reserva ahora!</h4>
                             <p class="text-sm opacity-90 mb-6 max-w-md mx-auto">Elige cómo prefieres continuar con tu registro:</p>
                             
-                            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
-                                <button onclick="startWhatsAppBot()" class="w-full sm:w-auto bg-[#25D366] text-white font-bold px-6 py-3 rounded-xl hover:bg-[#128C7E] hover:scale-105 transform transition shadow-[0_0_15px_rgba(37,211,102,0.4)] flex items-center justify-center gap-2">
-                                    <i class="fa-brands fa-whatsapp text-2xl"></i> Vía WhatsApp
-                                </button>
-                                <button onclick="toggleWebForm()" class="w-full sm:w-auto bg-gold text-forest font-bold px-6 py-3 rounded-xl hover:bg-goldHover hover:scale-105 transform transition shadow-lg flex items-center justify-center gap-2">
-                                    <i class="fa-solid fa-file-lines text-xl"></i> Formulario Web
+<div class="flex justify-center mb-6">
+                                <button onclick="openBookingWizard()" class="w-full sm:w-auto bg-gold text-forest font-bold px-10 py-4 rounded-xl hover:bg-goldHover hover:scale-105 transform transition shadow-lg flex items-center justify-center gap-3 text-lg">
+                                    <i class="fa-solid fa-calendar-check text-xl"></i> Solicitar Reserva
                                 </button>
                             </div>
+
+
+/*
 
                             <!-- Web Form -->
                             <div id="web-form-container" class="hidden text-left bg-white/10 p-6 rounded-2xl max-w-md mx-auto border border-white/20 h-96 overflow-y-auto custom-scrollbar">
@@ -1121,6 +1121,81 @@
                             </div>
                         </div>
                     </div>
+<!-- Términos y Condiciones -->
+                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 mt-6 admin-only">
+                        <div class="flex items-center justify-between mb-4">
+                            <h4 class="font-bold text-forest text-lg">
+                                <i class="fa-solid fa-scale-balanced text-gold mr-2"></i>Términos y Condiciones
+                            </h4>
+                            <span class="text-xs text-gray-400">Versión actual: <span id="cfg-tc-version-current" class="font-mono font-bold">—</span></span>
+                        </div>
+                        <p class="text-xs text-gray-500 mb-4">
+                            Este es el texto que el cliente debe aceptar antes de pagar. Al guardar se
+                            crea una versión nueva; las reservas anteriores conservan la que aceptaron.
+                        </p>
+                        <textarea id="cfg-tc-text" rows="14"
+                                  class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm outline-none focus:border-gold font-mono leading-relaxed"
+                                  placeholder="1. Políticas de Reservación y Pago&#10;- ..."></textarea>
+                        <div class="flex justify-end mt-4">
+                            <button onclick="saveTerms()" class="bg-forest text-gold font-bold px-8 py-3 rounded-xl hover:bg-forestLight shadow-lg transition">
+                                <i class="fa-solid fa-save mr-2"></i>Publicar Términos
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Datos bancarios -->
+                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 mt-6 admin-only">
+                        <h4 class="font-bold text-forest text-lg mb-4">
+                            <i class="fa-solid fa-building-columns text-gold mr-2"></i>Datos Bancarios
+                        </h4>
+                        <p class="text-xs text-gray-500 mb-6">
+                            Lo que ve el cliente en el último paso de la reserva para hacer el depósito.
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Banco</label>
+                                <input type="text" id="cfg-bank-name" placeholder="Banco Industrial"
+                                       class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-gold">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Tipo de cuenta</label>
+                                <select id="cfg-bank-type" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-gold">
+                                    <option value="Monetaria">Monetaria</option>
+                                    <option value="Ahorro">Ahorro</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Número de cuenta</label>
+                                <input type="text" id="cfg-bank-number" placeholder="123-456789-0"
+                                       class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-gold font-mono">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">A nombre de</label>
+                                <input type="text" id="cfg-bank-owner" placeholder="Casa Canis, S.A."
+                                       class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-gold">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">NIT (opcional)</label>
+                                <input type="text" id="cfg-bank-nit" placeholder="1234567-8"
+                                       class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-gold">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">% a pagar por adelantado</label>
+                                <input type="number" id="cfg-pay-pct" min="1" max="100" value="100"
+                                       class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-gold">
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Instrucciones adicionales</label>
+                            <textarea id="cfg-bank-notes" rows="3" placeholder="Ej. Coloca el nombre de tu mascota en la referencia del depósito."
+                                      class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-gold"></textarea>
+                        </div>
+                        <div class="flex justify-end mt-4">
+                            <button onclick="savePaymentInfo()" class="bg-forest text-gold font-bold px-8 py-3 rounded-xl hover:bg-forestLight shadow-lg transition">
+                                <i class="fa-solid fa-save mr-2"></i>Guardar Datos Bancarios
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- TAB: PERFIL EMPLEADOS -->
@@ -1735,7 +1810,7 @@
         <div class="bg-forest p-6 text-white flex justify-between items-center relative">
             <div>
                 <h3 class="text-2xl font-bold font-serif text-gold">Reserva tu Espacio</h3>
-                <p id="bw-step-indicator" class="text-sm opacity-80">Paso 1 de 4: Fechas y Cupos</p>
+                <p id="bw-step-indicator" class="text-sm opacity-80">Paso 1 de 5: Fechas y Mascotas</p>
             </div>
             <button onclick="closeBookingWizard()" class="text-white/50 hover:text-white transition absolute top-6 right-6">
                 <i class="fa-solid fa-times text-xl"></i>
@@ -1751,128 +1826,170 @@
             </div>
 
             <!-- Paso 1: Fechas y Cupos -->
-            <div id="bw-step-1" class="bw-step block space-y-6">
-                <p class="text-gray-600">Verifica la disponibilidad y asegura tus lugares.</p>
+<div id="bw-step-1" class="bw-step block space-y-6">
+
                 <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Servicio</label>
-                    <select id="bw-servicio" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
-                        <option value="Hotel Boutique">Hotel Boutique</option>
-                        <option value="Day Pass">Day Pass</option>
-                        <option value="Spa & Grooming">Spa & Grooming</option>
+                    <label class="block text-sm font-bold text-forest mb-2">Servicio</label>
+                    <select id="bw-servicio" onchange="onBookingChange()"
+                            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
+                        <option value="">Selecciona un servicio...</option>
                     </select>
                 </div>
+
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Fecha Check-in</label>
-                        <input type="date" id="bw-date" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
+                        <label class="block text-sm font-bold text-forest mb-2">Fecha de entrada</label>
+                        <input type="date" id="bw-date" onchange="onBookingChange()"
+                               class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
+                        <p class="text-[11px] text-gray-400 mt-1">Ingreso de 8:00 a 16:00</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Perros (Cupos)</label>
-                        <input type="number" id="bw-cupos" min="1" max="10" value="1" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
+                        <label class="block text-sm font-bold text-forest mb-2">Fecha de salida</label>
+                        <input type="date" id="bw-date-out" onchange="onBookingChange()"
+                               class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
+                        <p class="text-[11px] text-gray-400 mt-1">Salida de 8:00 a 11:00</p>
                     </div>
                 </div>
+
+                <div id="bw-noches-badge" class="hidden bg-cream border border-gold/30 rounded-xl px-4 py-2 text-sm text-forest font-bold"></div>
+
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="block text-sm font-bold text-forest">Mascotas</label>
+                        <button type="button" onclick="addPetRow()"
+                                class="text-xs bg-forest text-gold font-bold px-4 py-2 rounded-lg hover:bg-forestLight transition">
+                            <i class="fa-solid fa-plus mr-1"></i>Agregar perro
+                        </button>
+                    </div>
+                    <div id="bw-pets" class="space-y-3"></div>
+                    <p class="text-[11px] text-gray-400 mt-2">
+                        El peso define la tarifa: hasta 40 lb pequeño, hasta 60 lb mediano, 61 lb o más grande.
+                    </p>
+                </div>
+
+                <div id="bw-avail-box" class="hidden rounded-xl p-4 text-sm"></div>
             </div>
 
-            <!-- Paso 2: Datos del Cliente y Mascotas -->
+
             <div id="bw-step-2" class="bw-step hidden space-y-6">
-                <div class="bg-blue-50 border border-blue-100 p-4 rounded-xl text-sm text-blue-800 mb-4">
-                    <i class="fa-solid fa-lock mr-2"></i>Tus <span id="bw-locked-spots" class="font-bold"></span> cupos están reservados por 10 minutos para que completes el registro.
+                <div class="bg-blue-50 text-blue-700 p-3 rounded-xl text-sm flex gap-2">
+                    <i class="fa-solid fa-lock mt-0.5"></i>
+                    <span>Tus cupos están apartados por 10 minutos mientras completas el registro.</span>
                 </div>
+
                 <div>
-                    <h4 class="font-bold text-forest mb-3 border-b pb-2">Datos del Dueño</h4>
-                    <input type="text" id="bw-nombre" placeholder="Nombre Completo" class="w-full px-4 py-3 mb-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
-                    <input type="tel" id="bw-tel" placeholder="Teléfono / WhatsApp" class="w-full px-4 py-3 mb-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
-                    <input type="email" id="bw-email" placeholder="Correo Electrónico" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
+                    <h4 class="font-bold text-forest mb-3">Datos del encargado</h4>
+                    <input type="text" id="bw-nombre" placeholder="Nombre completo"
+                           class="w-full px-4 py-3 mb-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
+                    <input type="tel" id="bw-tel" placeholder="Teléfono / WhatsApp"
+                           class="w-full px-4 py-3 mb-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
+                    <input type="email" id="bw-email" placeholder="Correo electrónico"
+                           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
                 </div>
+
                 <div>
-                    <h4 class="font-bold text-forest mb-3 border-b pb-2">Datos de las Mascotas</h4>
-                    <input type="text" id="bw-mascotas-nombres" placeholder="Nombres (Ej. Max, Luna)" class="w-full px-4 py-3 mb-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
-                    <div class="grid grid-cols-2 gap-4">
-                        <input type="text" id="bw-mascotas-razas" placeholder="Razas" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
-                        <input type="text" id="bw-mascotas-edades" placeholder="Edades" class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
-                    </div>
+                    <h4 class="font-bold text-forest mb-3">Detalle de cada mascota</h4>
+                    <div id="bw-pets-detail" class="space-y-4"></div>
                 </div>
             </div>
 
-            <!-- Paso 3: Validación Médica -->
             <div id="bw-step-3" class="bw-step hidden space-y-6">
-                <p class="text-gray-600">Por la seguridad de todos los huéspedes, requerimos comprobar que tus mascotas estén sanas.</p>
-                <div class="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center bg-gray-50 hover:bg-gray-100 transition relative">
-                    <input type="file" id="bw-file-vacunas" accept="image/*,.pdf" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                    <i class="fa-solid fa-file-medical text-4xl text-gray-400 mb-3"></i>
-                    <h4 class="font-bold text-gray-700">Cartilla de Vacunación y Desparasitación</h4>
-                    <p class="text-sm text-gray-500 mt-1">Sube foto(s) de las cartillas de todos los perros. Haz clic o arrastra aquí.</p>
-                    <p id="bw-file-status" class="text-sm font-bold text-forest mt-3 hidden"><i class="fa-solid fa-check text-green-500 mr-1"></i>Archivos seleccionados</p>
-                </div>
-                <div class="bg-yellow-50 p-4 rounded-xl text-sm text-yellow-800 flex flex-col gap-2">
-                    <div class="flex gap-3">
-                        <i class="fa-solid fa-triangle-exclamation mt-0.5 text-xl"></i>
-                        <p class="font-bold">IMPORTANTE: Validación de Vacunas Obligatoria</p>
-                    </div>
-                    <p>Para apartar cualquier servicio es necesario pagar el 50% de anticipo y subir la foto de la cartilla de vacunación y desparasitación de <strong>todas</strong> las mascotas. Nuestro auxiliar validará manualmente esta documentación.</p>
-                    <p class="font-bold text-red-600">Si la documentación enviada no es válida o es rechazada, la reservación será CANCELADA y NO se realizará ninguna devolución del anticipo bajo ninguna circunstancia.</p>
+                <p class="text-gray-600 text-sm">
+                    Por la seguridad de todos los huéspedes necesitamos la cartilla de vacunación
+                    y desparasitación <strong>de cada perro</strong>.
+                </p>
+
+                <div id="bw-pets-medical" class="space-y-4"></div>
+
+                <div class="bg-yellow-50 p-4 rounded-xl text-sm text-yellow-800 space-y-2">
+                    <p class="font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Validación obligatoria</p>
+                    <p>Nuestro auxiliar revisa manualmente cada cartilla. Si la documentación está
+                       vencida, incompleta o no es legible, la reservación será rechazada.</p>
+                    <p class="font-bold text-red-600">En caso de rechazo por documentación inválida
+                       no procede reembolso.</p>
                 </div>
             </div>
 
-            <!-- Paso 4: T&C y Checkout -->
+<!-- Paso 4: Términos y Condiciones -->
             <div id="bw-step-4" class="bw-step hidden space-y-6">
-                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                    <h4 class="font-bold text-forest mb-2">Términos y Condiciones</h4>
-                    <div id="bw-tc-text" class="text-xs text-gray-700 h-24 overflow-y-auto custom-scrollbar pr-2 whitespace-pre-wrap">1. Políticas de Reservación y Pago
-- Para reservar cualquier servicio (Hotel, Guardería, Peluquería) es estrictamente obligatorio realizar el pago del 50% del total como anticipo.
-- Toda reservación requiere la carga obligatoria de las fotografías legibles de las cartillas de vacunación y desparasitación actualizadas de TODAS las mascotas a ingresar.
+                <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-xl flex gap-3">
+                    <i class="fa-solid fa-scale-balanced text-yellow-600 text-xl mt-0.5"></i>
+                    <p class="text-sm text-yellow-800">
+                        Lee con atención antes de continuar. Al aceptar quedas sujeto a las
+                        políticas de cancelación y validación médica.
+                    </p>
+                </div>
 
-2. Validación Médica y Pérdida de Anticipo
-- Toda documentación será sujeta a revisión manual por nuestro equipo auxiliar.
-- Si las vacunas o desparasitantes están vencidos, son falsos, están incompletos, o si la mascota muestra signos de enfermedad contagiosa que ponga en riesgo a los demás huéspedes, la reservación será rechazada.
-- IMPORTANTE: En caso de rechazo por documentación inválida o incompleta, EL CLIENTE PERDERÁ EL ANTICIPO DEL 50% PAGADO, y no procederá reembolso alguno bajo ninguna circunstancia.
+                <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="font-bold text-forest">Términos y Condiciones</h4>
+                        <span id="bw-tc-version" class="text-[10px] text-gray-400 font-mono"></span>
+                    </div>
+                    <div id="bw-tc-text" onscroll="onTermsScroll()"
+                         class="text-xs text-gray-700 h-56 overflow-y-auto custom-scrollbar pr-2 whitespace-pre-wrap leading-relaxed">Cargando términos...</div>
+                    <p id="bw-tc-hint" class="text-[11px] text-gray-400 mt-2 italic">
+                        <i class="fa-solid fa-arrow-down mr-1"></i>Desplázate hasta el final para poder aceptar.
+                    </p>
+                </div>
 
-3. Responsabilidades del Propietario
-- El propietario certifica que la mascota goza de buena salud y no ha estado expuesta a enfermedades contagiosas en los últimos 30 días.
-- Cualquier gasto veterinario de emergencia derivado de condiciones preexistentes no notificadas será responsabilidad absoluta del propietario.
+                <label id="bw-tc-label" class="flex items-start gap-3 cursor-not-allowed opacity-50 bg-white border-2 border-gray-200 rounded-xl p-4 transition">
+                    <input type="checkbox" id="bw-accept-tc" disabled onchange="onTermsToggle()"
+                           class="w-5 h-5 mt-0.5 rounded text-forest focus:ring-forest cursor-pointer">
+                    <span class="text-sm font-bold text-forest">
+                        He leído y acepto los Términos y Condiciones de Casa Canis
+                    </span>
+                </label>
+            </div>
 
-Al marcar la casilla inferior, el cliente acepta conocer y estar de acuerdo con todas las condiciones y penalizaciones aquí estipuladas.</div>
-                    <label class="flex items-center gap-2 mt-4 cursor-pointer">
-                        <input type="checkbox" id="bw-accept-tc" class="w-5 h-5 rounded text-forest focus:ring-forest cursor-pointer">
-                        <span class="text-sm font-bold text-forest">Acepto los Términos y Condiciones</span>
-                    </label>
+            <!-- Paso 5: Pago y comprobante -->
+            <div id="bw-step-5" class="bw-step hidden space-y-6">
+                <div class="bg-forest text-cream p-5 rounded-xl">
+                    <p class="text-xs uppercase tracking-wider text-gold font-bold mb-1">Total a depositar</p>
+                    <p class="text-3xl font-black" id="bw-total">Q 0.00</p>
+                    <p class="text-xs opacity-75 mt-1" id="bw-total-nota">Pago del 100% por adelantado.</p>
                 </div>
 
                 <div>
-                    <h4 class="font-bold text-forest mb-3">Método de Pago (Anticipo 50%)</h4>
-                    <p class="text-sm text-gray-500 mb-4">Para confirmar tu reserva, debes realizar el pago del 50% de anticipo. Selecciona una opción:</p>
-                    
+                    <h4 class="font-bold text-forest mb-3">Método de Pago</h4>
                     <div class="grid grid-cols-2 gap-4">
                         <label class="border-2 border-gray-200 rounded-xl p-4 cursor-pointer hover:border-gold transition flex flex-col items-center text-center gap-2 relative bw-pay-option" onclick="selectPayOption('transfer')">
                             <input type="radio" name="paymethod" value="transfer" class="absolute top-3 left-3 opacity-0">
                             <i class="fa-solid fa-money-bill-transfer text-2xl text-gray-400"></i>
                             <span class="font-bold text-sm">Transferencia / Depósito</span>
                         </label>
-                        <label class="border-2 border-gray-200 rounded-xl p-4 cursor-pointer hover:border-gold transition flex flex-col items-center text-center gap-2 relative bw-pay-option" onclick="selectPayOption('card')">
-                            <input type="radio" name="paymethod" value="card" class="absolute top-3 left-3 opacity-0">
-                            <i class="fa-solid fa-credit-card text-2xl text-gray-400"></i>
-                            <span class="font-bold text-sm">Tarjeta de Crédito / BI</span>
-                        </label>
+                        <div class="border-2 border-gray-100 bg-gray-50 rounded-xl p-4 flex flex-col items-center text-center gap-2 relative opacity-60 cursor-not-allowed">
+                            <i class="fa-solid fa-credit-card text-2xl text-gray-300"></i>
+                            <span class="font-bold text-sm text-gray-400">Tarjeta de Crédito</span>
+                            <span class="text-[10px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full font-bold uppercase">Próximamente</span>
+                        </div>
                     </div>
 
-                    <!-- Transferencia UI -->
-                    <div id="bw-pay-transfer" class="hidden mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                        <p class="text-sm font-bold mb-1">Banco Industrial (Monetaria)</p>
-                        <p class="text-lg font-mono mb-3 text-forest">123-456789-0</p>
-                        <p class="text-xs text-gray-500 mb-2">A nombre de Casa Canis S.A.</p>
-                        <label class="block w-full bg-white border border-dashed border-gray-300 rounded-lg p-3 text-center cursor-pointer hover:bg-gray-50">
-                            <input type="file" id="bw-file-comprobante" accept="image/*,.pdf" class="hidden">
-                            <i class="fa-solid fa-upload text-gray-400 mr-2"></i><span class="text-sm font-bold text-gray-600">Subir Comprobante</span>
-                        </label>
-                    </div>
+                    <div id="bw-pay-transfer" class="hidden mt-4 space-y-4">
+                        <div class="p-5 bg-cream rounded-xl border border-gold/30">
+                            <p class="text-[10px] uppercase tracking-wider text-gold font-bold mb-3">Datos para el depósito</p>
+                            <div class="space-y-1.5 text-sm">
+                                <div class="flex justify-between"><span class="text-gray-500">Banco</span><span class="font-bold text-forest" id="bw-bank-name">—</span></div>
+                                <div class="flex justify-between"><span class="text-gray-500">Tipo</span><span class="font-bold text-forest" id="bw-bank-type">—</span></div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-500">Cuenta</span>
+                                    <span class="flex items-center gap-2">
+                                        <span class="font-mono font-bold text-forest text-base" id="bw-bank-number">—</span>
+                                        <button onclick="copyBankNumber()" class="text-gold hover:text-forest transition" title="Copiar"><i class="fa-regular fa-copy"></i></button>
+                                    </span>
+                                </div>
+                                <div class="flex justify-between"><span class="text-gray-500">A nombre de</span><span class="font-bold text-forest" id="bw-bank-owner">—</span></div>
+                                <div class="flex justify-between" id="bw-bank-nit-row"><span class="text-gray-500">NIT</span><span class="font-bold text-forest" id="bw-bank-nit">—</span></div>
+                            </div>
+                            <p id="bw-bank-notes" class="text-xs text-gray-600 mt-3 pt-3 border-t border-gold/20 whitespace-pre-wrap"></p>
+                        </div>
 
-                    <!-- Tarjeta UI -->
-                    <div id="bw-pay-card" class="hidden mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200 text-center">
-                        <i class="fa-solid fa-lock text-green-600 text-2xl mb-2"></i>
-                        <p class="text-sm font-bold mb-2">Pago Seguro con Banco Industrial</p>
-                        <p class="text-xs text-gray-500 mb-4">Serás redirigido a la pasarela segura del BI para procesar tu pago de forma encriptada.</p>
-                        <button class="bg-blue-600 text-white w-full py-3 rounded-lg font-bold shadow-md hover:bg-blue-700 transition">Proceder al Pago con Tarjeta</button>
-                        <p class="text-xs text-gray-400 mt-2 italic">(Nota: Integración BI en desarrollo)</p>
+                        <label class="block w-full bg-white border-2 border-dashed border-gray-300 rounded-xl p-5 text-center cursor-pointer hover:border-gold hover:bg-gray-50 transition">
+                            <input type="file" id="bw-file-comprobante" accept="image/*,.pdf" class="hidden" onchange="onComprobanteSelected()">
+                            <i class="fa-solid fa-receipt text-3xl text-gray-400 mb-2"></i>
+                            <p class="font-bold text-forest text-sm">Subir comprobante del depósito</p>
+                            <p class="text-xs text-gray-500 mt-1">Obligatorio. Foto o PDF de la boleta.</p>
+                            <p id="bw-comprobante-status" class="text-sm font-bold text-green-600 mt-2 hidden"></p>
+                        </label>
                     </div>
                 </div>
             </div>
