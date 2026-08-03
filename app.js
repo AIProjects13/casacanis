@@ -23,7 +23,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         storageBucket: "casacanis-dd642.firebasestorage.app",
         messagingSenderId: "616453134402",
         appId: "1:616453134402:web:64fa0850adb6c84a9fb5db"
-    };        
+    };
 
     const app = initializeApp(firebaseConfig);
     window.db = getFirestore(app);
@@ -48,7 +48,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     window.closeBookingWizard = () => {
         document.getElementById('booking-wizard-modal').classList.add('hidden');
         document.body.style.overflow = 'auto';
-        if(currentLockId && window.db) {
+        if (currentLockId && window.db) {
             // Liberar el cupo bloqueado si el usuario cancela
             deleteDoc(doc(window.db, 'locks', currentLockId)).catch(e => console.error(e));
             currentLockId = null;
@@ -57,23 +57,23 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
     const showWizardStep = (step) => {
         currentWizardStep = step;
-        for(let i=1; i<=totalWizardSteps; i++) {
+        for (let i = 1; i <= totalWizardSteps; i++) {
             const el = document.getElementById(`bw-step-${i}`);
-            if(el) {
-                if(i === step) el.classList.remove('hidden');
+            if (el) {
+                if (i === step) el.classList.remove('hidden');
                 else el.classList.add('hidden');
             }
         }
-    
+
         // Header info
         const titles = ["Fechas y Cupos", "Datos del Cliente", "Validación Médica", "Confirmación y Pago"];
-        document.getElementById('bw-step-indicator').innerText = `Paso ${step} de ${totalWizardSteps}: ${titles[step-1]}`;
+        document.getElementById('bw-step-indicator').innerText = `Paso ${step} de ${totalWizardSteps}: ${titles[step - 1]}`;
 
         // Buttons
         document.getElementById('bw-btn-back').classList.toggle('hidden', step === 1);
-    
+
         const btnNext = document.getElementById('bw-btn-next');
-        if(step === totalWizardSteps) {
+        if (step === totalWizardSteps) {
             btnNext.innerHTML = '<i class="fa-solid fa-check"></i> Finalizar Reserva';
             btnNext.classList.replace('bg-forest', 'bg-green-600');
         } else {
@@ -83,22 +83,22 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     };
 
     window.wizardStepBack = () => {
-        if(currentWizardStep > 1) showWizardStep(currentWizardStep - 1);
+        if (currentWizardStep > 1) showWizardStep(currentWizardStep - 1);
     };
 
     window.wizardStepNext = async () => {
-        if(currentWizardStep === 1) {
+        if (currentWizardStep === 1) {
             // Validación Paso 1 y Bloqueo de Cupos
             const date = document.getElementById('bw-date').value;
             const cupos = document.getElementById('bw-cupos').value;
-            if(!date || !cupos) {
+            if (!date || !cupos) {
                 alert("Por favor selecciona una fecha y la cantidad de cupos.");
                 return;
             }
-        
+
             showLoader("Verificando disponibilidad...");
             try {
-                if(window.db) {
+                if (window.db) {
                     // Crear lock temporal
                     const lockRef = await addDoc(collection(window.db, 'locks'), {
                         date: date,
@@ -110,27 +110,27 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                 }
                 hideLoader();
                 showWizardStep(2);
-            } catch(e) {
+            } catch (e) {
                 console.error(e);
                 hideLoader();
                 alert("Error al verificar disponibilidad.");
             }
-        } 
-        else if(currentWizardStep === 2) {
+        }
+        else if (currentWizardStep === 2) {
             // Validación Paso 2
             const nombre = document.getElementById('bw-nombre').value;
             const tel = document.getElementById('bw-tel').value;
             const mascotas = document.getElementById('bw-mascotas-nombres').value;
-            if(!nombre || !tel || !mascotas) {
+            if (!nombre || !tel || !mascotas) {
                 alert("Por favor completa los datos requeridos (Nombre, Teléfono y Nombres de Mascotas).");
                 return;
             }
             showWizardStep(3);
         }
-        else if(currentWizardStep === 3) {
+        else if (currentWizardStep === 3) {
             showWizardStep(4);
         }
-        else if(currentWizardStep === 4) {
+        else if (currentWizardStep === 4) {
             await finalizeReservation();
         }
     };
@@ -138,10 +138,10 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     window.selectPayOption = (option) => {
         document.getElementById('bw-pay-transfer').classList.add('hidden');
         document.getElementById('bw-pay-card').classList.add('hidden');
-    
-        if(option === 'transfer') {
+
+        if (option === 'transfer') {
             document.getElementById('bw-pay-transfer').classList.remove('hidden');
-        } else if(option === 'card') {
+        } else if (option === 'card') {
             document.getElementById('bw-pay-card').classList.remove('hidden');
         }
     };
@@ -158,32 +158,32 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
     const finalizeReservation = async () => {
         const acceptedTC = document.getElementById('bw-accept-tc').checked;
-        if(!acceptedTC) {
+        if (!acceptedTC) {
             alert("Debes aceptar los Términos y Condiciones para continuar.");
             return;
         }
 
         const payMethodNodes = document.getElementsByName('paymethod');
         let payMethod = null;
-        for(let node of payMethodNodes) { if(node.checked) payMethod = node.value; }
-    
-        if(!payMethod) {
+        for (let node of payMethodNodes) { if (node.checked) payMethod = node.value; }
+
+        if (!payMethod) {
             alert("Selecciona un método de pago.");
             return;
         }
 
         // Validar que las vacunas sean obligatorias siempre
         const vacunasFiles = document.getElementById('bw-file-vacunas').files;
-        if(!vacunasFiles || vacunasFiles.length === 0) {
+        if (!vacunasFiles || vacunasFiles.length === 0) {
             alert("Las imágenes de la cartilla de vacunación y desparasitación son OBLIGATORIAS para realizar la reserva.");
             return;
         }
 
         // Validar comprobante solo si es transferencia
         let transferFile = null;
-        if(payMethod === 'transfer') {
+        if (payMethod === 'transfer') {
             const transferFiles = document.getElementById('bw-file-comprobante').files;
-            if(!transferFiles || transferFiles.length === 0) {
+            if (!transferFiles || transferFiles.length === 0) {
                 alert("Para pagos por transferencia, debes subir la imagen del comprobante obligatoriamente.");
                 return;
             }
@@ -193,14 +193,14 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         }
 
         showLoader("Subiendo documentos médicos y asegurando tu reserva...");
-    
+
         try {
             let medicalUrls = [];
             let comprobanteUrl = null;
             // Subir fotos a Firebase Storage
-            if(window.storage) {
+            if (window.storage) {
                 // Subir fotos vacunas
-                for(let i=0; i<vacunasFiles.length; i++) {
+                for (let i = 0; i < vacunasFiles.length; i++) {
                     const file = vacunasFiles[i];
                     const storageRef = ref(window.storage, `medical/${Date.now()}_${file.name}`);
                     const snapshot = await uploadBytes(storageRef, file);
@@ -209,7 +209,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                 }
 
                 // Subir comprobante si existe
-                if(transferFile) {
+                if (transferFile) {
                     const storageRef = ref(window.storage, `payments/${Date.now()}_${transferFile.name}`);
                     const snapshot = await uploadBytes(storageRef, transferFile);
                     comprobanteUrl = await getDownloadURL(snapshot.ref);
@@ -239,9 +239,9 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                 comprobanteUrl: comprobanteUrl
             };
 
-            if(window.db) {
+            if (window.db) {
                 await addDoc(collection(window.db, 'clients'), newReservation);
-                if(currentLockId) {
+                if (currentLockId) {
                     await deleteDoc(doc(window.db, 'locks', currentLockId)); // Liberar lock pq ya se pagó
                 }
             }
@@ -249,8 +249,8 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
             hideLoader();
             alert("¡Pago registrado y Reserva enviada! Nuestro equipo validará las cartillas médicas en breve.");
             window.closeBookingWizard();
-        
-        } catch(e) {
+
+        } catch (e) {
             console.error(e);
             hideLoader();
             alert("Ocurrió un error al procesar la reserva.");
@@ -259,9 +259,9 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
     // File input UI update
     // We defer this until the DOM is fully loaded or just attach it to document.
-    document.addEventListener('change', function(e) {
-        if(e.target.id === 'bw-file-vacunas') {
-            if(e.target.files && e.target.files.length > 0) {
+    document.addEventListener('change', function (e) {
+        if (e.target.id === 'bw-file-vacunas') {
+            if (e.target.files && e.target.files.length > 0) {
                 document.getElementById('bw-file-status').classList.remove('hidden');
                 document.getElementById('bw-file-status').innerHTML = `<i class="fa-solid fa-check text-green-500 mr-1"></i>${e.target.files.length} archivo(s) listo(s)`;
             }
@@ -294,15 +294,15 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     };
 
     window.deleteClientProfile = async () => {
-        if(confirm('¿Estás seguro de eliminar este cliente?')) {
+        if (confirm('¿Estás seguro de eliminar este cliente?')) {
             alert('Cliente eliminado.');
             window.closeClientProfile();
         }
     };
 
     window.deleteCatalogItem = async (index) => {
-        if(confirm('¿Eliminar servicio?')) {
-            if(window.removeCatalogService) window.removeCatalogService(index);
+        if (confirm('¿Eliminar servicio?')) {
+            if (window.removeCatalogService) window.removeCatalogService(index);
             else alert('Eliminado localmente');
         }
     };
@@ -341,7 +341,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     window.mockLeads = [];
 
     const dateDisplay = document.getElementById('current-date-display');
-    if(dateDisplay) {
+    if (dateDisplay) {
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         dateDisplay.innerText = new Date().toLocaleDateString('es-ES', options);
     }
@@ -353,14 +353,14 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
             if (window.switchTab) {
                 window.switchTab('tab-leads'); // o el default
             }
-        
+
             // Cargar settings globales (incluye modoPrueba)
             onSnapshot(doc(window.db, "settings", "keys"), (docSnap) => {
-                if(docSnap.exists()) {
+                if (docSnap.exists()) {
                     window.apiKeys = docSnap.data();
-                    if(window.apiKeys.modoPrueba !== undefined) {
+                    if (window.apiKeys.modoPrueba !== undefined) {
                         const toggle = document.getElementById('edit-modo-prueba');
-                        if(toggle) toggle.checked = window.apiKeys.modoPrueba;
+                        if (toggle) toggle.checked = window.apiKeys.modoPrueba;
                     }
                 } else {
                     window.apiKeys = { modoPrueba: true };
@@ -374,7 +374,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                     clients.push({ id: doc.id, ...doc.data() });
                 });
                 window.mockLeads = clients;
-                if(window.renderLeads) window.renderLeads();
+                if (window.renderLeads) window.renderLeads();
             });
 
             // Cargar catálogo desde Firebase
@@ -384,7 +384,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                     catalog.push({ id: doc.id, ...doc.data() });
                 });
                 window.catalogData = catalog;
-                if(window.renderCatalogViews) window.renderCatalogViews();
+                if (window.renderCatalogViews) window.renderCatalogViews();
             });
 
             // Cargar inventario desde Firebase
@@ -394,7 +394,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                     inventory.push({ id: doc.id, ...doc.data() });
                 });
                 window.inventoryData = inventory;
-                if(window.renderInventoryViews) window.renderInventoryViews();
+                if (window.renderInventoryViews) window.renderInventoryViews();
             });
 
             // Cargar auditoria
@@ -421,7 +421,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         const vacunas = document.getElementById('wf-vacunas').checked;
         const desparacitado = document.getElementById('wf-desparacitado').checked;
 
-        if(!nombre || !tel || !mascota) {
+        if (!nombre || !tel || !mascota) {
             alert("Por favor completa los campos principales.");
             return;
         }
@@ -446,13 +446,13 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         };
 
         try {
-            if(window.db) {
+            if (window.db) {
                 await addDoc(collection(window.db, "clients"), newClientData);
             } else {
                 alert("Modo local: no hay base de datos conectada.");
             }
-        } catch(e) { 
-            console.error("Firebase error", e); 
+        } catch (e) {
+            console.error("Firebase error", e);
             alert("Error al enviar el formulario.");
         }
 
@@ -475,7 +475,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     window.toggleNavGroup = (groupId, btnEl) => {
         const groupEl = document.getElementById(groupId);
         const icon = btnEl.querySelector('i');
-        if(groupEl.classList.contains('h-0')) {
+        if (groupEl.classList.contains('h-0')) {
             // Expandir
             groupEl.classList.remove('h-0', 'opacity-0', 'pointer-events-none');
             groupEl.classList.add('h-auto', 'opacity-100');
@@ -486,7 +486,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
             // Colapsar
             groupEl.style.height = groupEl.scrollHeight + 'px';
             // Trigger reflow
-            groupEl.offsetHeight; 
+            groupEl.offsetHeight;
             groupEl.style.height = '0px';
             groupEl.classList.add('h-0', 'opacity-0', 'pointer-events-none');
             groupEl.classList.remove('h-auto', 'opacity-100');
@@ -498,25 +498,25 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         // Ocultar paneles
         document.querySelectorAll('.admin-panel').forEach(p => p.classList.add('hidden'));
         document.getElementById(tabId).classList.remove('hidden');
-    
+
         // Actualizar diseño de botones en sidebar
         document.querySelectorAll('.admin-tab').forEach(t => {
             t.classList.remove('bg-gold/20', 'text-gold');
             t.classList.add('text-white/80');
         });
         const activeTab = document.querySelector(`[data-target="${tabId}"]`);
-        if(activeTab) {
+        if (activeTab) {
             activeTab.classList.remove('text-white/80');
             activeTab.classList.add('bg-gold/20', 'text-gold');
         }
-    
+
         // Disparar renderizados específicos si es necesario
-        if(tabId === 'tab-leads') renderLeads();
-        if(tabId === 'tab-capacidad') updateBars();
-        if(tabId === 'tab-mi-perfil') renderMyProfile();
-        if(tabId === 'tab-reportes') updateFinancialCharts();
-        if(tabId === 'tab-auditoria') renderAuditTab();
-        if(tabId === 'tab-calendario' && window.calendar) {
+        if (tabId === 'tab-leads') renderLeads();
+        if (tabId === 'tab-capacidad') updateBars();
+        if (tabId === 'tab-mi-perfil') renderMyProfile();
+        if (tabId === 'tab-reportes') updateFinancialCharts();
+        if (tabId === 'tab-auditoria') renderAuditTab();
+        if (tabId === 'tab-calendario' && window.calendar) {
             // FullCalendar requires re-render when its container becomes visible
             setTimeout(() => window.calendar.render(), 100);
         }
@@ -528,7 +528,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     window.renderMyProfile = () => {
         const email = window.currentEmployeeEmail;
         const emp = window.employeesData[email];
-        if(!emp) return;
+        if (!emp) return;
 
         document.getElementById('my-profile-img').src = emp.photo || window.PLACEHOLDER_IMG;
         document.getElementById('my-profile-role').value = emp.role;
@@ -553,14 +553,14 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     window.saveMyProfile = async () => {
         const email = window.currentEmployeeEmail;
         const fileInput = document.getElementById('my-profile-upload');
-    
-        if(fileInput && fileInput.files[0]) {
+
+        if (fileInput && fileInput.files[0]) {
             const url = await window.uploadImageFile(fileInput.files[0]);
             window.employeesData[email].photo = url;
         }
         window.employeesData[email].tasks = document.getElementById('my-profile-tasks').value;
         window.employeesData[email].schedule = document.getElementById('my-profile-schedule').value;
-    
+
         alert('Perfil actualizado con éxito');
         renderMyProfile();
     };
@@ -571,7 +571,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         const date = document.getElementById('req-dates').value;
         const reason = document.getElementById('req-reason').value;
 
-        if(!date || !reason) {
+        if (!date || !reason) {
             alert("Por favor llena la fecha y el motivo detallado.");
             return;
         }
@@ -597,7 +597,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     window.filterCRM = (status) => {
         currentCRMFilter = status;
         document.querySelectorAll('.crm-filter-btn').forEach(btn => {
-            if(btn.dataset.filter === status) {
+            if (btn.dataset.filter === status) {
                 btn.classList.remove('bg-white', 'text-forest', 'border-forest/20', 'hover:bg-forest/5');
                 btn.classList.add('bg-forest', 'text-gold', 'border-forest', 'shadow-md');
             } else {
@@ -612,14 +612,14 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         const tbody = document.getElementById('leads-table-body');
         const emptyState = document.getElementById('leads-empty');
         tbody.innerHTML = '';
-    
+
         let filteredLeads = window.mockLeads || [];
-    
+
         // Badge calculation
         const badge = document.getElementById('leads-badge');
-        if(badge) {
+        if (badge) {
             const pendingCount = window.mockLeads.filter(l => l.estado === 'Pendiente Validación Médica').length;
-            if(pendingCount > 0) {
+            if (pendingCount > 0) {
                 badge.classList.remove('hidden');
                 badge.innerText = pendingCount;
             } else {
@@ -627,38 +627,38 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
             }
         }
 
-        if(currentCRMFilter !== 'all') {
+        if (currentCRMFilter !== 'all') {
             filteredLeads = filteredLeads.filter(l => l.estado === currentCRMFilter);
         }
 
-        if(filteredLeads.length === 0) {
+        if (filteredLeads.length === 0) {
             emptyState.classList.remove('hidden');
         } else {
             emptyState.classList.add('hidden');
-        
+
             filteredLeads.forEach(lead => {
                 const icon = lead.origen === 'whatsapp_bot' ? '<i class="fa-brands fa-whatsapp text-[#25D366] text-lg"></i>' : (lead.origen === 'landing_web_wizard' ? '<i class="fa-solid fa-desktop text-blue-500 text-lg"></i>' : '<i class="fa-solid fa-user text-gray-500 text-lg"></i>');
                 const mascotas = lead.mascotas || [];
                 const dogNames = mascotas.map(m => m.nombre).join(', ') || 'N/A';
-            
+
                 let statusColor = "bg-gray-100 text-gray-500 border border-gray-200";
-                if(lead.estado === 'Pendiente Validación Médica') statusColor = "bg-yellow-100 text-yellow-800 border border-yellow-200 animate-pulse";
-                else if(lead.estado === 'Reserva Próxima') statusColor = "bg-blue-100 text-blue-800 border border-blue-200";
-                else if(lead.estado === 'Mascota Adentro') statusColor = "bg-green-100 text-green-800 border border-green-200";
+                if (lead.estado === 'Pendiente Validación Médica') statusColor = "bg-yellow-100 text-yellow-800 border border-yellow-200 animate-pulse";
+                else if (lead.estado === 'Reserva Próxima') statusColor = "bg-blue-100 text-blue-800 border border-blue-200";
+                else if (lead.estado === 'Mascota Adentro') statusColor = "bg-green-100 text-green-800 border border-green-200";
 
                 let actionButton = `<button onclick="openClientProfile('${lead.id}')" class="bg-white border border-gray-300 text-forest px-3 py-2 rounded-lg hover:bg-gray-50 transition shadow-sm font-bold text-xs" title="Ver Perfil"><i class="fa-solid fa-user-edit"></i> Editar</button>`;
-            
-                if(lead.estado === 'Pendiente Validación Médica') {
+
+                if (lead.estado === 'Pendiente Validación Médica') {
                     actionButton = `
                         ${actionButton}
                         <button onclick="reviewMedicalDocs('${lead.id}')" class="bg-yellow-500 text-white px-3 py-2 rounded-lg hover:bg-yellow-600 transition shadow-sm font-bold text-xs"><i class="fa-solid fa-file-medical"></i> Validar</button>
                     `;
-                } else if(lead.estado === 'Reserva Próxima') {
+                } else if (lead.estado === 'Reserva Próxima') {
                     actionButton = `
                         ${actionButton}
                         <button onclick="updateClientStatus('${lead.id}', 'Mascota Adentro')" class="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition shadow-sm font-bold text-xs"><i class="fa-solid fa-door-open"></i> Check-in</button>
                     `;
-                } else if(lead.estado === 'Mascota Adentro') {
+                } else if (lead.estado === 'Mascota Adentro') {
                     actionButton = `
                         ${actionButton}
                         <button onclick="updateClientStatus('${lead.id}', 'Completado')" class="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition shadow-sm font-bold text-xs"><i class="fa-solid fa-door-closed"></i> Check-out</button>
@@ -690,17 +690,17 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                 `;
             });
         }
-        if(typeof window.fillMsgTargetOptions === 'function') window.fillMsgTargetOptions();
-        if(typeof window.updateMsgCount === 'function') window.updateMsgCount();
+        if (typeof window.fillMsgTargetOptions === 'function') window.fillMsgTargetOptions();
+        if (typeof window.updateMsgCount === 'function') window.updateMsgCount();
     };
 
     window.logEvent = (action, desc) => { console.log('[AUDIT] ' + action + ': ' + desc); };
     window.updateClientStatus = async (id, newStatus) => {
-        if(!window.db) return;
+        if (!window.db) return;
         try {
             await updateDoc(doc(window.db, 'clients', id), { estado: newStatus });
             logEvent('status_updated', `Estado de ${id} cambiado a ${newStatus}`);
-        } catch(e) {
+        } catch (e) {
             console.error("Error al actualizar estado:", e);
             alert("Hubo un problema actualizando el estado.");
         }
@@ -708,21 +708,21 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
     window.reviewMedicalDocs = (id) => {
         const lead = window.mockLeads.find(l => l.id === id);
-        if(!lead) return;
-    
+        if (!lead) return;
+
         let urls = [];
-        if(lead.mascotas && lead.mascotas.length > 0 && lead.mascotas[0].medicalUrls) {
+        if (lead.mascotas && lead.mascotas.length > 0 && lead.mascotas[0].medicalUrls) {
             urls = lead.mascotas[0].medicalUrls;
         }
 
         let msg = `Validación para ${lead.nombre}\n\n`;
-        if(urls.length > 0) {
+        if (urls.length > 0) {
             msg += "Documentos subidos (puedes verlos en la consola o descargarlos):\n" + urls.join("\n") + "\n\n¿Deseas APROBAR esta reserva?";
         } else {
             msg += "No subió documentos.\n\n¿Deseas APROBAR de todos modos?";
         }
 
-        if(confirm(msg)) {
+        if (confirm(msg)) {
             window.updateClientStatus(id, 'Reserva Próxima');
         }
     };
@@ -732,22 +732,22 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
             const total = parseInt(document.getElementById(`cap-${size}-total`).value) || 1;
             const occ = parseInt(document.getElementById(`cap-${size}-occ`).value) || 0;
             let pct = Math.round((occ / total) * 100);
-            if(pct > 100) pct = 100;
-        
+            if (pct > 100) pct = 100;
+
             document.getElementById(`pct-${size}`).innerText = `${pct}%`;
             document.getElementById(`bar-${size}`).style.width = `${pct}%`;
-        
+
             // Cambiar color de la barra visual si está llena
             const bar = document.getElementById(`bar-${size}`);
-            if(pct >= 100) {
+            if (pct >= 100) {
                 bar.classList.replace('bg-green-500', 'bg-red-500') || bar.classList.replace('bg-yellow-500', 'bg-red-500');
                 bar.classList.add('animate-pulse');
             } else {
                 bar.classList.remove('animate-pulse');
             }
-        
+
             // Actualizar estado global para el simulador frontend
-            const keyMap = {peq: 'pequeno', med: 'mediano', gra: 'grande'};
+            const keyMap = { peq: 'pequeno', med: 'mediano', gra: 'grande' };
             window.capacityData[keyMap[size]] = { total, occ };
         });
     };
@@ -769,18 +769,18 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         // Reflejar cambios en la UI pública inmediatamente
         const title = document.getElementById('edit-title').value;
         const subtitle = document.getElementById('edit-subtitle').value;
-    
+
         document.getElementById('landing-title').innerHTML = title.replace(/\n/g, '<br>');
         document.getElementById('landing-subtitle').innerText = subtitle;
 
         // Guardar Configuración de APIs
-        if(window.db) {
+        if (window.db) {
             const waKey = document.getElementById('edit-wa-apikey').value;
             const emailKey = document.getElementById('edit-email-apikey').value;
             const gcalId = document.getElementById('config-gcal-id').value;
             const waPhoneId = document.getElementById('edit-wa-phoneid') ? document.getElementById('edit-wa-phoneid').value : '';
             const terms = document.getElementById('edit-terms').value;
-        
+
             // FEL Config
             const felProvider = document.getElementById('edit-fel-provider') ? document.getElementById('edit-fel-provider').value : '';
             const felAlias = document.getElementById('edit-fel-alias') ? document.getElementById('edit-fel-alias').value : '';
@@ -792,7 +792,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
             try {
                 await setDoc(doc(window.db, 'settings', 'legal'), { terms: terms });
                 window.currentTerms = terms;
-            } catch(e) { console.error("No se pudieron guardar los T&C", e); }
+            } catch (e) { console.error("No se pudieron guardar los T&C", e); }
 
             try {
                 await setDoc(doc(window.db, 'settings', 'keys'), {
@@ -801,7 +801,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                     modoPrueba
                 });
                 window.apiKeys = { waKey, emailKey, gcalId, waPhoneId, felProvider, felAlias, felLlave, felAfiliacion, felFrase, modoPrueba };
-            } catch(e) { console.error("No se pudieron guardar las llaves API", e); }
+            } catch (e) { console.error("No se pudieron guardar las llaves API", e); }
         }
 
         // Actualizar imágenes si se subieron nuevas
@@ -809,15 +809,15 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         const fileServ1 = document.getElementById('edit-img-serv1').files[0];
         const fileServ2 = document.getElementById('edit-img-serv2').files[0];
         const fileServ3 = document.getElementById('edit-img-serv3').files[0];
-    
-        if(fileHero) document.getElementById('img-hero').src = await window.uploadImageFile(fileHero);
-        if(fileServ1) document.getElementById('img-serv-1').src = await window.uploadImageFile(fileServ1);
-        if(fileServ2) document.getElementById('img-serv-2').src = await window.uploadImageFile(fileServ2);
-        if(fileServ3) document.getElementById('img-serv-3').src = await window.uploadImageFile(fileServ3);
-    
+
+        if (fileHero) document.getElementById('img-hero').src = await window.uploadImageFile(fileHero);
+        if (fileServ1) document.getElementById('img-serv-1').src = await window.uploadImageFile(fileServ1);
+        if (fileServ2) document.getElementById('img-serv-2').src = await window.uploadImageFile(fileServ2);
+        if (fileServ3) document.getElementById('img-serv-3').src = await window.uploadImageFile(fileServ3);
+
         // Notificación UI animada
         const btn = document.querySelector('button[onclick="saveWebConfig()"]');
-        if(btn) {
+        if (btn) {
             const originalHtml = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i>Publicado';
             btn.classList.replace('bg-gold', 'bg-green-500');
@@ -841,12 +841,12 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
     const renderCart = () => {
         const div = document.getElementById('cart-items');
-        if(window.cart.length === 0) {
+        if (window.cart.length === 0) {
             div.innerHTML = '<div class="text-center text-gray-400 text-sm mt-10 italic">Añade servicios al ticket...</div>';
             document.getElementById('cart-total').innerText = 'Q 0.00';
             return;
         }
-    
+
         div.innerHTML = '';
         let total = 0;
         window.cart.forEach((c, index) => {
@@ -870,14 +870,14 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     };
 
     window.generateReceipt = async () => {
-        if(window.cart.length === 0) { 
-            alert("Por favor, agrega servicios o productos al ticket antes de facturar."); 
-            return; 
+        if (window.cart.length === 0) {
+            alert("Por favor, agrega servicios o productos al ticket antes de facturar.");
+            return;
         }
 
         // El total y el registro de la venta los maneja el wrapper de hotfix.js
         const total = window.cartTotal();
-    
+
         const btn = document.querySelector('#tab-caja button.bg-forest');
         const ogHtml = btn.innerHTML;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generando imagen...';
@@ -885,29 +885,29 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
         // Deducir Inventario
         window.cart.forEach(c => {
-            if(c.type === 'product') {
+            if (c.type === 'product') {
                 const prod = window.inventoryData.find(p => p.id === c.id);
-                if(prod && prod.stock > 0) prod.stock--;
+                if (prod && prod.stock > 0) prod.stock--;
             }
         });
-        if(typeof renderInventoryViews === 'function') renderInventoryViews();
+        if (typeof renderInventoryViews === 'function') renderInventoryViews();
 
         // 1. Preparar DOM del recibo oculto
         const name = document.getElementById('bill-name').value || "Consumidor Final";
         const nit = document.getElementById('bill-nit').value || "C.F.";
         const comment = document.getElementById('bill-comment').value || "Ninguno";
         const date = new Date().toLocaleString('es-GT');
-    
+
         const emitFEL = document.getElementById('emit-fel-checkbox').checked;
 
-        if(emitFEL) {
+        if (emitFEL) {
             try {
                 // Aquí iría la conexión real con el API de Infile u otro usando window.apiKeys.felLlave
                 console.log("Simulando emisión FEL para:", name, "NIT:", nit);
                 // await fetch('https://certificador.api.com/fel/emitir', {...})
                 alert("FEL generada con éxito (Simulación). Número de Autorización (UUID) guardado en la base de datos.");
                 document.getElementById('r-comment').innerText = "Autorización SAT: " + crypto.randomUUID().toUpperCase() + " | " + comment;
-            } catch(e) {
+            } catch (e) {
                 console.error("Error al emitir FEL", e);
                 alert("Hubo un error al emitir la FEL con la SAT.");
                 btn.innerHTML = ogHtml;
@@ -921,7 +921,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         document.getElementById('r-date').innerText = date;
         document.getElementById('r-name').innerText = name;
         document.getElementById('r-nit').innerText = nit;
-    
+
         const rItems = document.getElementById('r-items');
         rItems.innerHTML = '';
         let totalVal = 0;
@@ -937,16 +937,16 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
         // 2. Renderizar con html2canvas
         const target = document.getElementById('receipt-capture-area');
-    
+
         try {
-            const canvas = await html2canvas(target, { 
-                scale: 2, 
+            const canvas = await html2canvas(target, {
+                scale: 2,
                 backgroundColor: "#ffffff",
                 logging: false
             });
-        
+
             const imgData = canvas.toDataURL("image/png");
-        
+
             // 3. Mostrar Popup para descarga / envío
             const w = window.open("", "_blank", "width=600,height=800");
             w.document.write(`
@@ -977,14 +977,14 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                 </body>
                 </html>
             `);
-        
+
             // Limpiar sistema
             window.cart = [];
             renderCart();
             document.getElementById('bill-name').value = '';
             document.getElementById('bill-nit').value = '';
             document.getElementById('bill-comment').value = '';
-        
+
         } catch (error) {
             console.error("Error html2canvas:", error);
             alert("Ocurrió un error al procesar el lienzo del recibo.");
@@ -1020,8 +1020,8 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                     barPercentage: 0.5
                 }]
             },
-            options: { 
-                responsive: true, 
+            options: {
+                responsive: true,
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
@@ -1044,11 +1044,11 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                     hoverOffset: 4
                 }]
             },
-            options: { 
-                responsive: true, 
+            options: {
+                responsive: true,
                 maintainAspectRatio: false,
                 cutout: '75%',
-                plugins: { 
+                plugins: {
                     legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
                 }
             }
@@ -1058,13 +1058,13 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     window.updateFinancialCharts = () => {
         const startStr = document.getElementById('report-date-start').value;
         const endStr = document.getElementById('report-date-end').value;
-    
+
         let startDate, endDate;
         const now = new Date();
-        if(startStr) startDate = new Date(startStr + 'T00:00:00');
+        if (startStr) startDate = new Date(startStr + 'T00:00:00');
         else { startDate = new Date(now); startDate.setDate(now.getDate() - 30); } // Default 30 días
-    
-        if(endStr) endDate = new Date(endStr + 'T23:59:59');
+
+        if (endStr) endDate = new Date(endStr + 'T23:59:59');
         else endDate = new Date(now);
 
         // Filtrar Logs
@@ -1080,28 +1080,28 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         let totalLeadsAttended = 0;
 
         filteredLogs.forEach(log => {
-            if(log.action === 'sale') {
+            if (log.action === 'sale') {
                 const dateKey = new Date(log.timestamp).toLocaleDateString();
                 const match = log.details.match(/Q\s*([0-9.]+)/);
                 let amount = 0;
-                if(match) amount = parseFloat(match[1]);
-            
-                if(!salesByDay[dateKey]) salesByDay[dateKey] = 0;
+                if (match) amount = parseFloat(match[1]);
+
+                if (!salesByDay[dateKey]) salesByDay[dateKey] = 0;
                 salesByDay[dateKey] += amount;
                 totalSalesAmount += amount;
                 totalSalesCount++;
             }
-            if(log.action === 'lead_attended') {
+            if (log.action === 'lead_attended') {
                 totalLeadsAttended++;
             }
         });
 
         // Sort dates
-        const sortedDates = Object.keys(salesByDay).sort((a,b) => new Date(a) - new Date(b));
+        const sortedDates = Object.keys(salesByDay).sort((a, b) => new Date(a) - new Date(b));
         const revLabels = [];
         const revData = [];
-    
-        if(sortedDates.length === 0) {
+
+        if (sortedDates.length === 0) {
             revLabels.push('Sin Datos');
             revData.push(0);
         } else {
@@ -1112,7 +1112,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         }
 
         // Actualizar Gráfica de Ingresos
-        if(window.charts && window.charts.revenue) {
+        if (window.charts && window.charts.revenue) {
             window.charts.revenue.data.labels = revLabels;
             window.charts.revenue.data.datasets[0].data = revData;
             window.charts.revenue.update();
@@ -1121,7 +1121,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         // Actualizar KPIs
         const conversionRate = totalLeadsAttended > 0 ? ((totalSalesCount / totalLeadsAttended) * 100).toFixed(1) : 0;
         const ticketPromedio = totalSalesCount > 0 ? (totalSalesAmount / totalSalesCount).toFixed(2) : '0.00';
-    
+
         document.getElementById('kpi-revenue').innerText = `Q ${totalSalesAmount.toFixed(2)}`;
         document.getElementById('kpi-conversion').innerText = `${conversionRate}%`;
         document.getElementById('kpi-ticket').innerText = `Q ${ticketPromedio}`;
@@ -1131,15 +1131,15 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         let whatsAppLeads = 0;
         let webLeads = 0;
         (window.mockLeads || []).forEach(l => {
-            if(l.origen === 'whatsapp_bot') whatsAppLeads++;
-            else if(l.origen === 'landing_web_wizard') webLeads++;
+            if (l.origen === 'whatsapp_bot') whatsAppLeads++;
+            else if (l.origen === 'landing_web_wizard') webLeads++;
         });
         // Fallback simulado si no hay leads
-        if(whatsAppLeads === 0 && webLeads === 0 && totalSalesCount > 0) {
+        if (whatsAppLeads === 0 && webLeads === 0 && totalSalesCount > 0) {
             whatsAppLeads = Math.floor(totalSalesCount * 0.7);
             webLeads = Math.floor(totalSalesCount * 0.3);
         }
-        if(window.charts && window.charts.leads) {
+        if (window.charts && window.charts.leads) {
             window.charts.leads.data.labels = ['WhatsApp', 'Web'];
             window.charts.leads.data.datasets[0].data = [whatsAppLeads, webLeads];
             window.charts.leads.data.datasets[0].backgroundColor = ['#25D366', '#3b82f6']; // WhatsApp Green, Blue Web
@@ -1147,9 +1147,9 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         }
 
         // Actualizar Gráfica de Servicios (Simulado Top 5)
-        if(!window.charts.services) {
+        if (!window.charts.services) {
             const ctxSrv = document.getElementById('servicesChart');
-            if(ctxSrv) {
+            if (ctxSrv) {
                 window.charts.services = new Chart(ctxSrv, {
                     type: 'doughnut',
                     data: {
@@ -1168,9 +1168,9 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         }
 
         // Actualizar Gráfica de Productos (Simulado Top 5)
-        if(!window.charts.products) {
+        if (!window.charts.products) {
             const ctxProd = document.getElementById('productsChart');
-            if(ctxProd) {
+            if (ctxProd) {
                 window.charts.products = new Chart(ctxProd, {
                     type: 'doughnut',
                     data: {
@@ -1196,7 +1196,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     window.renderCatalogViews = () => {
         // Render POS
         const posContainer = document.getElementById('pos-catalog-container');
-        if(posContainer) {
+        if (posContainer) {
             posContainer.innerHTML = window.catalogData.map(c => `
                 <button onclick="addToCart('${c.name}', ${c.price})" class="p-4 border-2 border-gray-100 rounded-xl hover:border-gold hover:bg-gold/5 text-left transition group bg-white shadow-sm">
                     <div class="font-bold text-forest group-hover:text-gold transition text-sm">${c.name}</div>
@@ -1205,10 +1205,10 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                 </button>
             `).join('');
         }
-    
+
         // Render Public Cotizador
         const pubContainer = document.getElementById('public-catalog-container');
-        if(pubContainer) {
+        if (pubContainer) {
             pubContainer.innerHTML = window.catalogData.map((c, i) => `
                 <label class="cursor-pointer bg-white border border-gray-200 rounded-xl p-4 flex items-center gap-4 hover:border-gold transition shadow-sm group">
                     <input type="checkbox" onchange="updateQuote()" class="quote-checkbox w-5 h-5 text-gold rounded border-gray-300 focus:ring-gold" data-price="${c.price}">
@@ -1224,7 +1224,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
         // Render Admin Table
         const adminTbody = document.getElementById('admin-catalog-tbody');
-        if(adminTbody) {
+        if (adminTbody) {
             adminTbody.innerHTML = window.catalogData.map((c, i) => `
                 <tr class="hover:bg-gray-50">
                     <td class="p-4 border-b">
@@ -1249,7 +1249,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
     window.fillPOSClientSelect = () => {
         const select = document.getElementById('pos-client-select');
-        if(!select) return;
+        if (!select) return;
         select.innerHTML = '<option value="">-- Cobro Libre (Consumidor Final) --</option>';
         window.mockLeads.forEach(l => {
             select.innerHTML += `<option value="${l.id}">${l.nombre} (${l.servicio})</option>`;
@@ -1259,12 +1259,12 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     window.autoFillPOSClient = () => {
         const val = document.getElementById('pos-client-select').value;
         const nameEl = document.getElementById('bill-name');
-        if(!val) {
+        if (!val) {
             nameEl.value = "";
             return;
         }
         const lead = window.mockLeads.find(l => l.id === val);
-        if(lead) {
+        if (lead) {
             nameEl.value = lead.nombre;
         }
     };
@@ -1272,7 +1272,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     window.renderInventoryViews = () => {
         // Render POS
         const posContainer = document.getElementById('pos-inventory-container');
-        if(posContainer) {
+        if (posContainer) {
             posContainer.innerHTML = window.inventoryData.map(p => `
                 <button onclick="addToCartProduct('${p.id}', '${p.name}', ${p.price})" class="p-3 border-2 border-gray-100 rounded-xl hover:border-gold hover:bg-gold/5 text-left transition group bg-white shadow-sm flex items-center gap-3 ${p.stock <= 0 ? 'opacity-50 cursor-not-allowed' : ''}" ${p.stock <= 0 ? 'disabled' : ''}>
                     <img src="${p.img}" class="w-10 h-10 rounded-md object-cover">
@@ -1289,7 +1289,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
         // Render Admin Table
         const adminTbody = document.getElementById('admin-inventory-tbody');
-        if(adminTbody) {
+        if (adminTbody) {
             adminTbody.innerHTML = window.inventoryData.map((p, i) => `
                 <tr class="hover:bg-gray-50">
                     <td class="p-4 border-b text-center align-top">
@@ -1321,7 +1321,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
     window.addToCartProduct = (id, name, price) => {
         const product = window.inventoryData.find(p => p.id === id);
-        if(product && product.stock > 0) {
+        if (product && product.stock > 0) {
             window.cart.push({ id, item: name, name: name, price, type: 'product' });
             renderCart();
         }
@@ -1329,35 +1329,35 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
     window.saveInventory = async () => {
         const btn = document.querySelector('#tab-inventario button.bg-gold');
-        if(!btn) return;
+        if (!btn) return;
         const originalHtml = btn.innerHTML;
         btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
         btn.disabled = true;
 
         try {
-            if(window.db) {
+            if (window.db) {
                 let i = 0;
-                while(document.getElementById(`inv-name-${i}`)) {
+                while (document.getElementById(`inv-name-${i}`)) {
                     const name = document.getElementById(`inv-name-${i}`).value;
                     const fileInput = document.getElementById(`inv-img-${i}`);
                     let img = window.inventoryData[i] ? window.inventoryData[i].img : window.PLACEHOLDER_IMG;
-                
+
                     if (fileInput && fileInput.files[0]) {
                         img = await window.uploadImageFile(fileInput.files[0]);
                     }
 
                     const price = parseFloat(document.getElementById(`inv-price-${i}`).value) || 0;
                     const stock = parseInt(document.getElementById(`inv-stock-${i}`).value) || 0;
-                
-                    if(name.trim() !== '') {
+
+                    if (name.trim() !== '') {
                         const id = window.inventoryData[i] ? window.inventoryData[i].id : ('p' + Date.now() + i);
                         await setDoc(doc(window.db, 'inventory', id), { name, img, price, stock });
                     }
                     i++;
                 }
             }
-        } catch(e) { console.error("Error guardando inventario", e); }
-    
+        } catch (e) { console.error("Error guardando inventario", e); }
+
         setTimeout(() => {
             btn.innerHTML = originalHtml;
             btn.disabled = false;
@@ -1365,14 +1365,14 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     };
 
     window.addInventoryProduct = async () => {
-        if(window.db) {
+        if (window.db) {
             await addDoc(collection(window.db, 'inventory'), { name: 'Nuevo Producto', img: '', price: 0, stock: 0 });
         }
     };
 
     window.deleteInventoryItem = async (id) => {
-        if(confirm("¿Eliminar este producto?")) {
-            if(window.db) await deleteDoc(doc(window.db, 'inventory', id));
+        if (confirm("¿Eliminar este producto?")) {
+            if (window.db) await deleteDoc(doc(window.db, 'inventory', id));
         }
     };
 
@@ -1380,48 +1380,48 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         const checkboxes = document.querySelectorAll('.quote-checkbox');
         let total = 0;
         checkboxes.forEach(cb => {
-            if(cb.checked) total += parseFloat(cb.dataset.price);
+            if (cb.checked) total += parseFloat(cb.dataset.price);
         });
         const quoteEl = document.getElementById('quote-total');
-        if(quoteEl) quoteEl.innerText = `Q ${total.toFixed(2)}`;
+        if (quoteEl) quoteEl.innerText = `Q ${total.toFixed(2)}`;
     };
 
     window.saveCatalog = async () => {
         const btn = document.querySelector('#tab-catalogo button.bg-gold');
-        if(btn) {
+        if (btn) {
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
         }
         try {
-            if(window.db) {
-                for(let i=0; i<window.catalogData.length; i++) {
+            if (window.db) {
+                for (let i = 0; i < window.catalogData.length; i++) {
                     const nameEl = document.getElementById(`cat-name-${i}`);
-                    if(!nameEl) continue;
+                    if (!nameEl) continue;
                     const id = window.catalogData[i].id;
                     const name = nameEl.value || 'Servicio Sin Nombre';
                     const desc = document.getElementById(`cat-desc-${i}`).value || '';
                     const price = parseFloat(document.getElementById(`cat-price-${i}`).value) || 0;
-                
+
                     await setDoc(doc(window.db, 'catalog', id), { name, desc, price });
                 }
             }
-        } catch(e) { console.error("Error guardando catálogo", e); }
-    
-        if(btn) {
+        } catch (e) { console.error("Error guardando catálogo", e); }
+
+        if (btn) {
             btn.innerHTML = '<i class="fa-solid fa-check"></i> Guardado';
             setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-save"></i> Guardar Cambios'; }, 2000);
         }
     };
 
     window.addCatalogService = async () => {
-        if(window.db) {
+        if (window.db) {
             await addDoc(collection(window.db, 'catalog'), { name: '', desc: '', price: 0 });
         }
     };
 
     window.removeCatalogService = async (index) => {
-        if(confirm("¿Eliminar este servicio del catálogo?")) {
+        if (confirm("¿Eliminar este servicio del catálogo?")) {
             const id = window.catalogData[index].id;
-            if(window.db) await deleteDoc(doc(window.db, 'catalog', id));
+            if (window.db) await deleteDoc(doc(window.db, 'catalog', id));
         }
     };
 
@@ -1431,7 +1431,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     window.handleAuditTimeFilter = () => {
         const timeFilter = document.getElementById('audit-time-filter').value;
         const customDates = document.getElementById('audit-custom-dates');
-        if(timeFilter === 'custom') {
+        if (timeFilter === 'custom') {
             customDates.classList.remove('hidden');
         } else {
             customDates.classList.add('hidden');
@@ -1444,36 +1444,36 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         const tbody = document.getElementById('audit-table-body');
         const emptyState = document.getElementById('audit-empty');
         const timeFilter = document.getElementById('audit-time-filter').value;
-    
+
         let filteredLogs = [...window.auditLogs];
 
         // Filtrar por Tiempo
         const now = new Date();
         let customStart, customEnd;
-        if(timeFilter === 'custom') {
+        if (timeFilter === 'custom') {
             const sVal = document.getElementById('audit-date-start').value;
             const eVal = document.getElementById('audit-date-end').value;
-            if(sVal) customStart = new Date(sVal + 'T00:00:00');
-            if(eVal) customEnd = new Date(eVal + 'T23:59:59');
+            if (sVal) customStart = new Date(sVal + 'T00:00:00');
+            if (eVal) customEnd = new Date(eVal + 'T23:59:59');
         }
 
         filteredLogs = filteredLogs.filter(log => {
             const logDate = new Date(log.timestamp);
-            if(timeFilter === 'today') {
+            if (timeFilter === 'today') {
                 return logDate.toDateString() === now.toDateString();
-            } else if(timeFilter === 'yesterday') {
+            } else if (timeFilter === 'yesterday') {
                 const yest = new Date(now);
                 yest.setDate(yest.getDate() - 1);
                 return logDate.toDateString() === yest.toDateString();
-            } else if(timeFilter === 'this_week') {
+            } else if (timeFilter === 'this_week') {
                 const diffTime = Math.abs(now - logDate);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
                 return diffDays <= 7;
-            } else if(timeFilter === 'this_month') {
+            } else if (timeFilter === 'this_month') {
                 return logDate.getMonth() === now.getMonth() && logDate.getFullYear() === now.getFullYear();
-            } else if(timeFilter === 'custom') {
-                if(customStart && logDate < customStart) return false;
-                if(customEnd && logDate > customEnd) return false;
+            } else if (timeFilter === 'custom') {
+                if (customStart && logDate < customStart) return false;
+                if (customEnd && logDate > customEnd) return false;
                 return true;
             }
             return true; // 'all'
@@ -1487,14 +1487,14 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
         thead.innerHTML = '';
         tbody.innerHTML = '';
-    
-        if(filteredLogs.length === 0) {
+
+        if (filteredLogs.length === 0) {
             emptyState.classList.remove('hidden');
             document.getElementById('audit-table-body').parentElement.classList.add('hidden');
         } else {
             emptyState.classList.add('hidden');
             document.getElementById('audit-table-body').parentElement.classList.remove('hidden');
-        
+
             thead.innerHTML = `
                 <tr>
                     <th class="p-5 font-bold">Fecha</th>
@@ -1508,7 +1508,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
             filteredLogs.forEach(log => {
                 const d = new Date(log.timestamp);
                 const empName = window.employeesData[log.email] ? window.employeesData[log.email].name : log.email;
-            
+
                 tbody.innerHTML += `
                     <tr class="hover:bg-gray-50 transition group">
                         <td class="p-5 border-b border-gray-100 font-bold text-gray-700">${d.toLocaleDateString()}</td>
@@ -1524,7 +1524,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
     window.exportAuditCSV = () => {
         const logs = window.currentRawAuditLogs || [];
-        if(logs.length === 0) {
+        if (logs.length === 0) {
             alert("No hay datos para exportar en el rango seleccionado.");
             return;
         }
@@ -1566,7 +1566,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
             `;
             listContainer.appendChild(div);
         });
-    
+
         // Reset fields
         document.getElementById('cita-cliente').value = '';
         document.getElementById('cita-cliente-search').value = '';
@@ -1586,7 +1586,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     document.addEventListener('click', (e) => {
         const searchInput = document.getElementById('cita-cliente-search');
         const list = document.getElementById('cita-cliente-list');
-        if(searchInput && list && !searchInput.contains(e.target) && !list.contains(e.target)) {
+        if (searchInput && list && !searchInput.contains(e.target) && !list.contains(e.target)) {
             list.classList.add('hidden');
         }
     });
@@ -1595,7 +1595,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         const term = document.getElementById('cita-cliente-search').value.toLowerCase();
         const options = document.querySelectorAll('.cita-client-option');
         options.forEach(opt => {
-            if(opt.getAttribute('data-search').includes(term)) {
+            if (opt.getAttribute('data-search').includes(term)) {
                 opt.style.display = 'block';
             } else {
                 opt.style.display = 'none';
@@ -1614,14 +1614,14 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         const clientId = document.getElementById('cita-cliente').value;
         const selectMascota = document.getElementById('cita-mascota');
         const inputCorreo = document.getElementById('cita-correo');
-    
+
         const cliente = window.mockLeads.find(l => l.id === clientId);
-    
+
         selectMascota.innerHTML = '';
-    
-        if(cliente) {
+
+        if (cliente) {
             inputCorreo.value = cliente.email;
-            if(cliente.mascotas && cliente.mascotas.length > 0) {
+            if (cliente.mascotas && cliente.mascotas.length > 0) {
                 cliente.mascotas.forEach(pet => {
                     const option = document.createElement('option');
                     option.value = pet.nombre;
@@ -1644,7 +1644,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     window.saveCita = async () => {
         const clienteId = document.getElementById('cita-cliente').value;
         const clienteNombre = document.getElementById('cita-cliente-search').value;
-    
+
         const correo = document.getElementById('cita-correo').value;
         const mascota = document.getElementById('cita-mascota').value;
         const servicio = document.getElementById('cita-servicio').value;
@@ -1653,7 +1653,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         const horaFin = document.getElementById('cita-hora-fin').value;
         const googleCalId = document.getElementById('cita-google-cal-id').value.trim();
 
-        if(!clienteId || !fecha || !horaInicio || !horaFin) {
+        if (!clienteId || !fecha || !horaInicio || !horaFin) {
             alert('Por favor selecciona un cliente y completa las fechas y horas.');
             return;
         }
@@ -1670,7 +1670,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
         // Guardar en Firestore
         try {
-            if(window.db) {
+            if (window.db) {
                 await addDoc(collection(window.db, 'citas'), {
                     clienteId,
                     clienteNombre,
@@ -1686,13 +1686,13 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                     timestamp: serverTimestamp()
                 });
             }
-        } catch(e) {
+        } catch (e) {
             console.error("Error al guardar cita:", e);
             alert("Hubo un error al guardar la cita en la base de datos.");
         }
 
         // Insertar en FullCalendar
-        if(window.calendar) {
+        if (window.calendar) {
             window.calendar.addEvent({
                 title: title,
                 start: `${fecha}T${horaInicio}:00`,
@@ -1707,16 +1707,16 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         const startStr = horaInicio.replace(/:/g, '') + '00';
         const endStr = horaFin.replace(/:/g, '') + '00';
         const dateParam = `${dateStr}T${startStr}/${dateStr}T${endStr}`;
-    
+
         const details = `Cliente: ${clienteNombre}%0AMascota: ${mascota}%0AServicio: ${servicio}`;
-    
+
         // Link Cliente
         const baseGcalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${dateParam}&details=${details}`;
         document.getElementById('btn-cliente-gcal').href = baseGcalUrl;
 
         // Link Negocio
         let negocioUrl = baseGcalUrl;
-        if(googleCalId !== '') {
+        if (googleCalId !== '') {
             negocioUrl += `&src=${encodeURIComponent(googleCalId)}`;
         }
         document.getElementById('btn-negocio-gcal').href = negocioUrl;
@@ -1743,10 +1743,10 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     // ==========================================
     window.initCalendar = () => {
         const calendarEl = document.getElementById('calendar-container');
-        if(!calendarEl || window.calendar) return; // Ya existe
+        if (!calendarEl || window.calendar) return; // Ya existe
 
         const todayStr = new Date().toISOString().split('T')[0];
-    
+
         // Crear instancia
         window.calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'timeGridWeek', // Vista semanal por defecto
@@ -1773,7 +1773,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                 { title: 'Corte Específico - Toby', start: todayStr + 'T15:00:00', end: todayStr + 'T16:30:00', backgroundColor: '#a855f7', borderColor: '#a855f7' },
                 { title: 'Evaluación Hotel', start: todayStr + 'T14:00:00', end: todayStr + 'T14:30:00', backgroundColor: '#C5A059', borderColor: '#C5A059' }
             ],
-            eventClick: function(info) {
+            eventClick: function (info) {
                 alert('Cita: ' + info.event.title + '\nHora: ' + info.event.start.toLocaleTimeString());
             }
         });
@@ -1783,9 +1783,9 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
 /* ===== hotfix ======================================================== */
 (async function () {
-    const db      = window.db      || getFirestore(getApp());
+    const db = window.db || getFirestore(getApp());
     const storage = window.storage || getStorage(getApp());
-    const auth    = window.auth    || getAuth(getApp());
+    const auth = window.auth || getAuth(getApp());
 
     const SIZES = ['peq', 'med', 'gra'];
     const SIZE_KEY = { peq: 'pequeno', med: 'mediano', gra: 'grande' };
@@ -1806,15 +1806,15 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
      * mantiene el bucket dentro del plan gratuito.
      */
     async function compressImage(file, maxW = 1600, quality = 0.82) {
-      if (!file.type.startsWith('image/')) return file;   // PDFs pasan directo
-      const bitmap = await createImageBitmap(file);
-      const scale  = Math.min(1, maxW / bitmap.width);
-      const canvas = document.createElement('canvas');
-      canvas.width  = Math.round(bitmap.width  * scale);
-      canvas.height = Math.round(bitmap.height * scale);
-      canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', quality));
-      return blob || file;
+        if (!file.type.startsWith('image/')) return file;   // PDFs pasan directo
+        const bitmap = await createImageBitmap(file);
+        const scale = Math.min(1, maxW / bitmap.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(bitmap.width * scale);
+        canvas.height = Math.round(bitmap.height * scale);
+        canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', quality));
+        return blob || file;
     }
 
     /**
@@ -1823,18 +1823,18 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
      * @returns {Promise<string>} URL pública de descarga
      */
     window.uploadImageFile = async (file, folder = 'landing') => {
-      if (!file) return null;
-      if (file.size > 15 * 1024 * 1024) {
-        throw new Error('El archivo supera los 15 MB.');
-      }
-      const payload  = await compressImage(file);
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(-60);
-      const path     = `${folder}/${Date.now()}_${safeName}`;
-      const snap     = await uploadBytes(ref(storage, path), payload, {
-        contentType: payload.type || file.type,
-        cacheControl: 'public,max-age=31536000'
-      });
-      return await getDownloadURL(snap.ref);
+        if (!file) return null;
+        if (file.size > 15 * 1024 * 1024) {
+            throw new Error('El archivo supera los 15 MB.');
+        }
+        const payload = await compressImage(file);
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(-60);
+        const path = `${folder}/${Date.now()}_${safeName}`;
+        const snap = await uploadBytes(ref(storage, path), payload, {
+            contentType: payload.type || file.type,
+            cacheControl: 'public,max-age=31536000'
+        });
+        return await getDownloadURL(snap.ref);
     };
 
 
@@ -1843,24 +1843,24 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
        ------------------------------------------------------------------ */
 
     window.logEvent = async (action, details, extra = {}) => {
-      const u = window.currentUser;
-      if (!u) return;                                   // público no audita
-      try {
-        await addDoc(collection(db, 'audit_logs'), {
-          uid: u.uid,
-          email: u.email,
-          staffName: u.name || u.email,
-          action,
-          details: String(details || ''),
-          entity:   extra.entity   || null,
-          entityId: extra.entityId || null,
-          amount:   typeof extra.amount === 'number' ? extra.amount : null,
-          createdAt: serverTimestamp(),
-          timestamp: new Date().toISOString()            // compat con renderAuditTab
-        });
-      } catch (e) {
-        console.error('[audit] no se pudo registrar el evento', e);
-      }
+        const u = window.currentUser;
+        if (!u) return;                                   // público no audita
+        try {
+            await addDoc(collection(db, 'audit_logs'), {
+                uid: u.uid,
+                email: u.email,
+                staffName: u.name || u.email,
+                action,
+                details: String(details || ''),
+                entity: extra.entity || null,
+                entityId: extra.entityId || null,
+                amount: typeof extra.amount === 'number' ? extra.amount : null,
+                createdAt: serverTimestamp(),
+                timestamp: new Date().toISOString()            // compat con renderAuditTab
+            });
+        } catch (e) {
+            console.error('[audit] no se pudo registrar el evento', e);
+        }
     };
 
 
@@ -1869,42 +1869,44 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
        ------------------------------------------------------------------ */
 
     async function loadCurrentUser(user) {
-      const snap = await getDoc(doc(db, 'staff', user.uid));
+        const snap = await getDoc(doc(db, 'staff', user.uid));
 
-      if (!snap.exists()) {
-        // Usuario autenticado sin ficha de personal: acceso mínimo.
-        // El admin debe crearle su doc en `staff` (ver 06_SETUP.md).
-        console.warn('[auth] sin documento staff/' + user.uid);
-        window.currentUser = { uid: user.uid, email: user.email,
-                               name: user.email, role: 'agent' };
-      } else {
-        window.currentUser = { uid: user.uid, email: user.email, ...snap.data() };
-      }
+        if (!snap.exists()) {
+            // Usuario autenticado sin ficha de personal: acceso mínimo.
+            // El admin debe crearle su doc en `staff` (ver 06_SETUP.md).
+            console.warn('[auth] sin documento staff/' + user.uid);
+            window.currentUser = {
+                uid: user.uid, email: user.email,
+                name: user.email, role: 'agent'
+            };
+        } else {
+            window.currentUser = { uid: user.uid, email: user.email, ...snap.data() };
+        }
 
-      window.currentEmployeeEmail = user.email;
-      document.body.setAttribute('data-role', window.currentUser.role);
+        window.currentEmployeeEmail = user.email;
+        document.body.setAttribute('data-role', window.currentUser.role);
 
-      // Señal para módulos que cargan después (ej. 07_modulo_staff.js)
-      document.dispatchEvent(new CustomEvent('cc:auth-ready',
-        { detail: window.currentUser }));
+        // Señal para módulos que cargan después (ej. 07_modulo_staff.js)
+        document.dispatchEvent(new CustomEvent('cc:auth-ready',
+            { detail: window.currentUser }));
 
-      const label = $('ui-role-name');
-      if (label) label.innerText = window.currentUser.name || user.email;
+        const label = $('ui-role-name');
+        if (label) label.innerText = window.currentUser.name || user.email;
 
-      // Renombrado de tabs pedido en el diagrama de proceso.
-      renameTabs();
-      window.logEvent('login', 'Inicio de sesión');
+        // Renombrado de tabs pedido en el diagrama de proceso.
+        renameTabs();
+        window.logEvent('login', 'Inicio de sesión');
     }
 
     function renameTabs() {
-      const isAdmin = window.currentUser?.role === 'admin';
-      const set = (target, text) => {
-        const btn = document.querySelector(`[data-target="${target}"] span:not(#leads-badge)`);
-        if (btn) btn.innerText = text;
-      };
-      set('tab-mensajes', 'Mensajería');                       // no "masiva"
-      set('tab-mi-perfil', isAdmin ? 'Staff' : 'Mi Perfil');
-      set('tab-config',   'Conectores');
+        const isAdmin = window.currentUser?.role === 'admin';
+        const set = (target, text) => {
+            const btn = document.querySelector(`[data-target="${target}"] span:not(#leads-badge)`);
+            if (btn) btn.innerText = text;
+        };
+        set('tab-mensajes', 'Mensajería');                       // no "masiva"
+        set('tab-mi-perfil', isAdmin ? 'Staff' : 'Mi Perfil');
+        set('tab-config', 'Conectores');
     }
 
 
@@ -1914,86 +1916,86 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
     /** Cuenta mascotas ocupando cupo de `size` en una fecha ISO dada. */
     window.ocupadasEn = (size, fechaISO) => {
-      return (window.clientsData || []).reduce((n, c) => {
-        if (!ESTADOS_OCUPAN.includes(c.estado)) return n;
-        const inicio = c.fecha_checkin;
-        const fin    = c.fecha_checkout || c.fecha_checkin;
-        if (!inicio) return n;
-        if (fechaISO < inicio || fechaISO > fin) return n;
-        const pets = c.mascotas || [];
-        return n + pets.filter(m => (m.tamano || m.tamaño || 'med') === size).length;
-      }, 0);
+        return (window.clientsData || []).reduce((n, c) => {
+            if (!ESTADOS_OCUPAN.includes(c.estado)) return n;
+            const inicio = c.fecha_checkin;
+            const fin = c.fecha_checkout || c.fecha_checkin;
+            if (!inicio) return n;
+            if (fechaISO < inicio || fechaISO > fin) return n;
+            const pets = c.mascotas || [];
+            return n + pets.filter(m => (m.tamano || m.tamaño || 'med') === size).length;
+        }, 0);
     };
 
     window.disponiblesEn = (size, fechaISO) =>
-      Math.max(0, (window.capacityTotals[size] || 0) - window.ocupadasEn(size, fechaISO));
+        Math.max(0, (window.capacityTotals[size] || 0) - window.ocupadasEn(size, fechaISO));
 
     /** Reemplaza updateBars() de la línea 2512. */
     window.updateBars = () => {
-      const hoy = new Date().toISOString().slice(0, 10);
+        const hoy = new Date().toISOString().slice(0, 10);
 
-      SIZES.forEach(size => {
-        const totalEl = $(`cap-${size}-total`);
-        const occEl   = $(`cap-${size}-occ`);
-        const pctEl   = $(`pct-${size}`);
-        const barEl   = $(`bar-${size}`);
-        if (!totalEl || !barEl) return;
+        SIZES.forEach(size => {
+            const totalEl = $(`cap-${size}-total`);
+            const occEl = $(`cap-${size}-occ`);
+            const pctEl = $(`pct-${size}`);
+            const barEl = $(`bar-${size}`);
+            if (!totalEl || !barEl) return;
 
-        const total = window.capacityTotals[size] || parseInt(totalEl.value) || 0;
-        const occ   = window.ocupadasEn(size, hoy);
+            const total = window.capacityTotals[size] || parseInt(totalEl.value) || 0;
+            const occ = window.ocupadasEn(size, hoy);
 
-        totalEl.value = total;
+            totalEl.value = total;
 
-        // El campo "ocupadas" pasa a ser SOLO LECTURA: es un dato calculado.
-        if (occEl) {
-          occEl.value    = occ;
-          occEl.readOnly = true;
-          occEl.classList.add('cc-readonly');
-          occEl.removeAttribute('onchange');
-          occEl.title = 'Calculado automáticamente según las reservas activas';
-        }
+            // El campo "ocupadas" pasa a ser SOLO LECTURA: es un dato calculado.
+            if (occEl) {
+                occEl.value = occ;
+                occEl.readOnly = true;
+                occEl.classList.add('cc-readonly');
+                occEl.removeAttribute('onchange');
+                occEl.title = 'Calculado automáticamente según las reservas activas';
+            }
 
-        const pct = total > 0 ? Math.min(100, Math.round((occ / total) * 100)) : 0;
-        if (pctEl) pctEl.innerText = pct + '%';
+            const pct = total > 0 ? Math.min(100, Math.round((occ / total) * 100)) : 0;
+            if (pctEl) pctEl.innerText = pct + '%';
 
-        barEl.style.width = pct + '%';
-        // Color determinista: se recalcula siempre, así puede volver a verde.
-        barEl.className = barEl.className.replace(/bg-(green|yellow|red)-500/g, '');
-        barEl.classList.add(pct >= 100 ? 'bg-red-500'
-                          : pct >= 70  ? 'bg-yellow-500'
-                                       : 'bg-green-500');
-        barEl.classList.toggle('animate-pulse', pct >= 100);
+            barEl.style.width = pct + '%';
+            // Color determinista: se recalcula siempre, así puede volver a verde.
+            barEl.className = barEl.className.replace(/bg-(green|yellow|red)-500/g, '');
+            barEl.classList.add(pct >= 100 ? 'bg-red-500'
+                : pct >= 70 ? 'bg-yellow-500'
+                    : 'bg-green-500');
+            barEl.classList.toggle('animate-pulse', pct >= 100);
 
-        window.capacityData[SIZE_KEY[size]] = { total, occ };
-      });
+            window.capacityData[SIZE_KEY[size]] = { total, occ };
+        });
     };
 
     /** Reemplaza saveCapacity() — ahora sí persiste. */
     window.saveCapacity = async () => {
-      const payload = {};
-      SIZES.forEach(s => { payload[s] = parseInt($(`cap-${s}-total`).value) || 0; });
+        const payload = {};
+        SIZES.forEach(s => { payload[s] = parseInt($(`cap-${s}-total`).value) || 0; });
 
-      try {
-        await setDoc(doc(db, 'settings', 'capacity'), {
-          ...payload, updatedAt: serverTimestamp(),
-          updatedBy: window.currentUser?.uid || null
-        }, { merge: true });
+        try {
+            await setDoc(doc(db, 'settings', 'capacity'), {
+                ...payload, updatedAt: serverTimestamp(),
+                updatedBy: window.currentUser?.uid || null
+            }, { merge: true });
 
-        window.capacityTotals = payload;
-        window.updateBars();
-        window.logEvent('capacity_updated',
-          `Habitaciones: peq=${payload.peq} med=${payload.med} gra=${payload.gra}`);
+            window.capacityTotals = payload;
+            window.updateBars();
+            window.logEvent('capacity_updated',
+                `Habitaciones: peq=${payload.peq} med=${payload.med} gra=${payload.gra}`);
 
-        const btn = document.querySelector('#tab-capacidad button');
-        if (btn) {
-          const og = btn.innerHTML;
-          btn.innerHTML = '<i class="fa-solid fa-check"></i> Guardado';
-          setTimeout(() => { btn.innerHTML = og; }, 2000);
+            const btn = document.querySelector('#tab-capacidad button');
+            if (btn) {
+                const og = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-check"></i> Guardado';
+                setTimeout(() => { btn.innerHTML = og; }, 2000);
+            }
+        } catch (e) {
+            console.error(e);
+            alert('No se pudo guardar la capacidad.');
         }
-      } catch (e) {
-        console.error(e);
-        alert('No se pudo guardar la capacidad.');
-      }
     };
 
 
@@ -2002,39 +2004,39 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
        ------------------------------------------------------------------ */
 
     window.addToCart = (item, price, meta = {}) => {
-      const existing = window.cart.find(c => c.item === item && c.type === (meta.type || 'service'));
-      if (existing) { existing.qty += 1; }
-      else {
-        window.cart.push({
-          id: meta.id || null, item, name: item,
-          price: Number(price) || 0, qty: 1,
-          type: meta.type || 'service'
-        });
-      }
-      window.renderCart();
+        const existing = window.cart.find(c => c.item === item && c.type === (meta.type || 'service'));
+        if (existing) { existing.qty += 1; }
+        else {
+            window.cart.push({
+                id: meta.id || null, item, name: item,
+                price: Number(price) || 0, qty: 1,
+                type: meta.type || 'service'
+            });
+        }
+        window.renderCart();
     };
 
     window.addToCartProduct = (id, name, price) => {
-      const p = (window.inventoryData || []).find(x => x.id === id);
-      if (!p) return;
-      const enCarrito = window.cart.filter(c => c.id === id)
-                                   .reduce((n, c) => n + c.qty, 0);
-      if (p.stock <= enCarrito) { alert(`Sin stock suficiente de ${name}.`); return; }
-      window.addToCart(name, price, { id, type: 'product' });
+        const p = (window.inventoryData || []).find(x => x.id === id);
+        if (!p) return;
+        const enCarrito = window.cart.filter(c => c.id === id)
+            .reduce((n, c) => n + c.qty, 0);
+        if (p.stock <= enCarrito) { alert(`Sin stock suficiente de ${name}.`); return; }
+        window.addToCart(name, price, { id, type: 'product' });
     };
 
     window.cartTotal = () =>
-      window.cart.reduce((s, c) => s + c.price * c.qty, 0);
+        window.cart.reduce((s, c) => s + c.price * c.qty, 0);
 
     window.renderCart = () => {
-      const div = $('cart-items');
-      if (!div) return;
-      if (window.cart.length === 0) {
-        div.innerHTML = '<div class="text-center text-gray-400 text-sm mt-10 italic">Añade servicios al ticket...</div>';
-        $('cart-total').innerText = money(0);
-        return;
-      }
-      div.innerHTML = window.cart.map((c, i) => `
+        const div = $('cart-items');
+        if (!div) return;
+        if (window.cart.length === 0) {
+            div.innerHTML = '<div class="text-center text-gray-400 text-sm mt-10 italic">Añade servicios al ticket...</div>';
+            $('cart-total').innerText = money(0);
+            return;
+        }
+        div.innerHTML = window.cart.map((c, i) => `
         <div class="flex justify-between items-center bg-white p-3 rounded-lg border border-gray-100 shadow-sm">
           <div>
             <span class="text-sm font-bold text-forest">${c.item}</span>
@@ -2049,15 +2051,15 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
             <button onclick="removeFromCart(${i})" class="text-red-300 hover:text-red-500 bg-red-50 p-2 rounded transition"><i class="fa-solid fa-trash"></i></button>
           </div>
         </div>`).join('');
-      $('cart-total').innerText = money(window.cartTotal());
+        $('cart-total').innerText = money(window.cartTotal());
     };
 
     window.changeQty = (i, delta) => {
-      const c = window.cart[i];
-      if (!c) return;
-      c.qty += delta;
-      if (c.qty <= 0) window.cart.splice(i, 1);
-      window.renderCart();
+        const c = window.cart[i];
+        if (!c) return;
+        c.qty += delta;
+        if (c.qty <= 0) window.cart.splice(i, 1);
+        window.renderCart();
     };
 
     window.removeFromCart = (i) => { window.cart.splice(i, 1); window.renderCart(); };
@@ -2068,67 +2070,67 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
      * onSnapshot lo revertía y el stock nunca bajaba.
      */
     async function commitSale(saleDoc) {
-      const productos = saleDoc.items.filter(i => i.type === 'product' && i.id);
+        const productos = saleDoc.items.filter(i => i.type === 'product' && i.id);
 
-      await runTransaction(db, async (tx) => {
-        // Fase de lectura primero: Firestore lo exige.
-        const refs  = productos.map(p => doc(db, 'inventory', p.id));
-        const snaps = await Promise.all(refs.map(r => tx.get(r)));
+        await runTransaction(db, async (tx) => {
+            // Fase de lectura primero: Firestore lo exige.
+            const refs = productos.map(p => doc(db, 'inventory', p.id));
+            const snaps = await Promise.all(refs.map(r => tx.get(r)));
 
-        snaps.forEach((snap, idx) => {
-          if (!snap.exists()) throw new Error('Producto inexistente');
-          const disponible = snap.data().stock || 0;
-          if (disponible < productos[idx].qty) {
-            throw new Error(`Stock insuficiente: ${productos[idx].name}`);
-          }
+            snaps.forEach((snap, idx) => {
+                if (!snap.exists()) throw new Error('Producto inexistente');
+                const disponible = snap.data().stock || 0;
+                if (disponible < productos[idx].qty) {
+                    throw new Error(`Stock insuficiente: ${productos[idx].name}`);
+                }
+            });
+
+            refs.forEach((r, idx) => tx.update(r, { stock: increment(-productos[idx].qty) }));
+            tx.set(doc(collection(db, 'sales')), saleDoc);
         });
 
-        refs.forEach((r, idx) => tx.update(r, { stock: increment(-productos[idx].qty) }));
-        tx.set(doc(collection(db, 'sales')), saleDoc);
-      });
-
-      for (const p of productos) {
-        await addDoc(collection(db, 'inventory_moves'), {
-          productId: p.id, tipo: 'venta', cantidad: -p.qty,
-          uid: window.currentUser?.uid || null, createdAt: serverTimestamp()
-        });
-      }
+        for (const p of productos) {
+            await addDoc(collection(db, 'inventory_moves'), {
+                productId: p.id, tipo: 'venta', cantidad: -p.qty,
+                uid: window.currentUser?.uid || null, createdAt: serverTimestamp()
+            });
+        }
     }
 
     // Envoltura sobre generateReceipt existente: persiste ANTES de dibujar
     // el PNG, para que un fallo de html2canvas no pierda la venta.
     const _generateReceipt = window.generateReceipt;
     window.generateReceipt = async () => {
-      if (!window.cart.length) { alert('Agrega servicios o productos al ticket.'); return; }
+        if (!window.cart.length) { alert('Agrega servicios o productos al ticket.'); return; }
 
-      const total = window.cartTotal();                 // ← antes daba NaN
-      const saleDoc = {
-        items: window.cart.map(c => ({ ...c, subtotal: c.price * c.qty })),
-        subtotal: total,
-        total,
-        clientId: $('pos-client-select')?.value || null,
-        billName: $('bill-name')?.value || 'Consumidor Final',
-        billNit:  $('bill-nit')?.value  || 'C.F.',
-        comment:  $('bill-comment')?.value || '',
-        fel: { emitida: !!$('emit-fel-checkbox')?.checked, uuid: null },
-        cajero: { uid: window.currentUser?.uid, name: window.currentUser?.name },
-        createdAt: serverTimestamp()
-      };
+        const total = window.cartTotal();                 // ← antes daba NaN
+        const saleDoc = {
+            items: window.cart.map(c => ({ ...c, subtotal: c.price * c.qty })),
+            subtotal: total,
+            total,
+            clientId: $('pos-client-select')?.value || null,
+            billName: $('bill-name')?.value || 'Consumidor Final',
+            billNit: $('bill-nit')?.value || 'C.F.',
+            comment: $('bill-comment')?.value || '',
+            fel: { emitida: !!$('emit-fel-checkbox')?.checked, uuid: null },
+            cajero: { uid: window.currentUser?.uid, name: window.currentUser?.name },
+            createdAt: serverTimestamp()
+        };
 
-      try {
-        await commitSale(saleDoc);
-      } catch (e) {
-        console.error(e);
-        alert('No se pudo registrar la venta: ' + e.message);
-        return;
-      }
+        try {
+            await commitSale(saleDoc);
+        } catch (e) {
+            console.error(e);
+            alert('No se pudo registrar la venta: ' + e.message);
+            return;
+        }
 
-      await window.logEvent('sale', `Ticket facturado por ${money(total)}`,
-                            { entity: 'sale', amount: total });
+        await window.logEvent('sale', `Ticket facturado por ${money(total)}`,
+            { entity: 'sale', amount: total });
 
-      if (typeof _generateReceipt === 'function') {
-        try { await _generateReceipt(); } catch (e) { console.error(e); }
-      }
+        if (typeof _generateReceipt === 'function') {
+            try { await _generateReceipt(); } catch (e) { console.error(e); }
+        }
     };
 
 
@@ -2137,11 +2139,11 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
        ------------------------------------------------------------------ */
 
     window.deleteCatalogItem = async (id) => {
-      if (!confirm('¿Eliminar este servicio del catálogo?')) return;
-      try {
-        await deleteDoc(doc(db, 'catalog', id));
-        window.logEvent('catalog_updated', `Servicio eliminado: ${id}`);
-      } catch (e) { console.error(e); alert('No se pudo eliminar.'); }
+        if (!confirm('¿Eliminar este servicio del catálogo?')) return;
+        try {
+            await deleteDoc(doc(db, 'catalog', id));
+            window.logEvent('catalog_updated', `Servicio eliminado: ${id}`);
+        } catch (e) { console.error(e); alert('No se pudo eliminar.'); }
     };
     window.removeCatalogService = window.deleteCatalogItem;
 
@@ -2153,92 +2155,92 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     let selectedIndividual = null;
 
     window.handleTargetChange = () => {
-      const target = $('msg-target')?.value;
-      $('individual-search-container')?.classList.toggle('hidden', target !== 'individual');
-      if (target !== 'individual') selectedIndividual = null;
-      window.updateMsgCount();
+        const target = $('msg-target')?.value;
+        $('individual-search-container')?.classList.toggle('hidden', target !== 'individual');
+        if (target !== 'individual') selectedIndividual = null;
+        window.updateMsgCount();
     };
 
     window.getMsgRecipients = () => {
-      const channel = $('msg-channel')?.value || 'whatsapp';
-      const target  = $('msg-target')?.value  || 'all';
+        const channel = $('msg-channel')?.value || 'whatsapp';
+        const target = $('msg-target')?.value || 'all';
 
-      if (target === 'individual') return selectedIndividual ? [selectedIndividual] : [];
+        if (target === 'individual') return selectedIndividual ? [selectedIndividual] : [];
 
-      return (window.clientsData || []).filter(c => {
-        const opt = c.optOut || {};
-        if (channel === 'whatsapp' && (opt.whatsapp || !c.tel))   return false;
-        if (channel === 'email'    && (opt.email    || !c.email)) return false;
-        if (target === 'active')   return c.estado === 'Mascota Adentro';
-        if (target === 'upcoming') return ESTADOS_OCUPAN.includes(c.estado);
-        return true;
-      });
+        return (window.clientsData || []).filter(c => {
+            const opt = c.optOut || {};
+            if (channel === 'whatsapp' && (opt.whatsapp || !c.tel)) return false;
+            if (channel === 'email' && (opt.email || !c.email)) return false;
+            if (target === 'active') return c.estado === 'Mascota Adentro';
+            if (target === 'upcoming') return ESTADOS_OCUPAN.includes(c.estado);
+            return true;
+        });
     };
 
     window.updateMsgCount = () => {
-      const el = $('msg-count');
-      if (el) el.innerText = window.getMsgRecipients().length;
-      const subj = $('msg-subject-container');
-      if (subj) subj.classList.toggle('hidden', $('msg-channel')?.value !== 'email');
-      window.updateMsgPreview();
+        const el = $('msg-count');
+        if (el) el.innerText = window.getMsgRecipients().length;
+        const subj = $('msg-subject-container');
+        if (subj) subj.classList.toggle('hidden', $('msg-channel')?.value !== 'email');
+        window.updateMsgPreview();
     };
 
     window.updateMsgPreview = () => {
-      const body    = $('msg-body')?.value || '';
-      const subject = $('msg-subject')?.value || '';
-      const channel = $('msg-channel')?.value || 'whatsapp';
-      const sample  = window.getMsgRecipients()[0];
+        const body = $('msg-body')?.value || '';
+        const subject = $('msg-subject')?.value || '';
+        const channel = $('msg-channel')?.value || 'whatsapp';
+        const sample = window.getMsgRecipients()[0];
 
-      const rendered = body
-        .replace(/\{nombre_cliente\}/g, sample?.nombre || 'Ana Pérez')
-        .replace(/\{nombre_mascota\}/g, sample?.mascotas?.[0]?.nombre || 'Max');
+        const rendered = body
+            .replace(/\{nombre_cliente\}/g, sample?.nombre || 'Ana Pérez')
+            .replace(/\{nombre_mascota\}/g, sample?.mascotas?.[0]?.nombre || 'Max');
 
-      const textEl = $('msg-preview-text');
-      if (textEl) textEl.innerText = rendered || 'Escribe un mensaje para ver la vista previa aquí.';
+        const textEl = $('msg-preview-text');
+        if (textEl) textEl.innerText = rendered || 'Escribe un mensaje para ver la vista previa aquí.';
 
-      const subjEl = $('msg-preview-subject');
-      if (subjEl) {
-        subjEl.innerText = subject;
-        subjEl.classList.toggle('hidden', channel !== 'email' || !subject);
-      }
+        const subjEl = $('msg-preview-subject');
+        if (subjEl) {
+            subjEl.innerText = subject;
+            subjEl.classList.toggle('hidden', channel !== 'email' || !subject);
+        }
 
-      const header = $('msg-preview-header');
-      const icon   = $('msg-preview-icon');
-      if (header && icon) {
-        const isEmail = channel === 'email';
-        header.className = header.className.replace(/bg-\S+/, isEmail ? 'bg-blue-600' : 'bg-green-500');
-        icon.className   = isEmail ? 'fa-solid fa-envelope text-xl' : 'fa-brands fa-whatsapp text-xl';
-      }
+        const header = $('msg-preview-header');
+        const icon = $('msg-preview-icon');
+        if (header && icon) {
+            const isEmail = channel === 'email';
+            header.className = header.className.replace(/bg-\S+/, isEmail ? 'bg-blue-600' : 'bg-green-500');
+            icon.className = isEmail ? 'fa-solid fa-envelope text-xl' : 'fa-brands fa-whatsapp text-xl';
+        }
 
-      const timeEl = $('msg-preview-time');
-      if (timeEl) timeEl.innerText =
-        new Date().toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' });
+        const timeEl = $('msg-preview-time');
+        if (timeEl) timeEl.innerText =
+            new Date().toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' });
     };
 
     window.filterIndividualClients = () => {
-      const term = ($('individual-search-input')?.value || '').toLowerCase().trim();
-      const box  = $('individual-search-results');
-      if (!box) return;
-      if (term.length < 2) { box.classList.add('hidden'); return; }
+        const term = ($('individual-search-input')?.value || '').toLowerCase().trim();
+        const box = $('individual-search-results');
+        if (!box) return;
+        if (term.length < 2) { box.classList.add('hidden'); return; }
 
-      const hits = (window.clientsData || []).filter(c =>
-        `${c.nombre} ${c.email} ${c.tel}`.toLowerCase().includes(term)).slice(0, 12);
+        const hits = (window.clientsData || []).filter(c =>
+            `${c.nombre} ${c.email} ${c.tel}`.toLowerCase().includes(term)).slice(0, 12);
 
-      box.innerHTML = hits.length
-        ? hits.map(c => `
+        box.innerHTML = hits.length
+            ? hits.map(c => `
             <div onclick="pickIndividual('${c.id}')" class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100">
               <div class="font-bold text-forest text-sm">${c.nombre}</div>
               <div class="text-xs text-gray-500">${c.tel || ''} ${c.email ? '· ' + c.email : ''}</div>
             </div>`).join('')
-        : '<div class="p-3 text-xs text-gray-400">Sin resultados</div>';
-      box.classList.remove('hidden');
+            : '<div class="p-3 text-xs text-gray-400">Sin resultados</div>';
+        box.classList.remove('hidden');
     };
 
     window.pickIndividual = (id) => {
-      selectedIndividual = (window.clientsData || []).find(c => c.id === id) || null;
-      if (selectedIndividual) $('individual-search-input').value = selectedIndividual.nombre;
-      $('individual-search-results')?.classList.add('hidden');
-      window.updateMsgCount();
+        selectedIndividual = (window.clientsData || []).find(c => c.id === id) || null;
+        if (selectedIndividual) $('individual-search-input').value = selectedIndividual.nombre;
+        $('individual-search-results')?.classList.add('hidden');
+        window.updateMsgCount();
     };
 
     window.fillMsgTargetOptions = () => window.updateMsgCount();
@@ -2250,29 +2252,29 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
      * evento, para no perder trabajo del staff.
      */
     window.sendMassMessage = async () => {
-      const recipients = window.getMsgRecipients();
-      const body = $('msg-body')?.value?.trim();
-      if (!body)              { alert('Escribe el mensaje.'); return; }
-      if (!recipients.length) { alert('No hay destinatarios que cumplan el filtro.'); return; }
-      if (!confirm(`¿Encolar el mensaje para ${recipients.length} cliente(s)?`)) return;
+        const recipients = window.getMsgRecipients();
+        const body = $('msg-body')?.value?.trim();
+        if (!body) { alert('Escribe el mensaje.'); return; }
+        if (!recipients.length) { alert('No hay destinatarios que cumplan el filtro.'); return; }
+        if (!confirm(`¿Encolar el mensaje para ${recipients.length} cliente(s)?`)) return;
 
-      try {
-        await addDoc(collection(db, 'message_campaigns'), {
-          channel:  $('msg-channel')?.value,
-          subject:  $('msg-subject')?.value || null,
-          body,
-          recipientIds: recipients.map(r => r.id),
-          recipientCount: recipients.length,
-          status: 'queued',                       // la Cloud Function la procesa
-          createdBy: window.currentUser?.uid,
-          createdAt: serverTimestamp()
-        });
-        await window.logEvent('message_campaign',
-          `Campaña encolada para ${recipients.length} cliente(s)`);
-        alert(`Campaña encolada (${recipients.length}). Se enviará cuando el conector esté activo.`);
-        $('msg-body').value = '';
-        window.updateMsgPreview();
-      } catch (e) { console.error(e); alert('No se pudo encolar la campaña.'); }
+        try {
+            await addDoc(collection(db, 'message_campaigns'), {
+                channel: $('msg-channel')?.value,
+                subject: $('msg-subject')?.value || null,
+                body,
+                recipientIds: recipients.map(r => r.id),
+                recipientCount: recipients.length,
+                status: 'queued',                       // la Cloud Function la procesa
+                createdBy: window.currentUser?.uid,
+                createdAt: serverTimestamp()
+            });
+            await window.logEvent('message_campaign',
+                `Campaña encolada para ${recipients.length} cliente(s)`);
+            alert(`Campaña encolada (${recipients.length}). Se enviará cuando el conector esté activo.`);
+            $('msg-body').value = '';
+            window.updateMsgPreview();
+        } catch (e) { console.error(e); alert('No se pudo encolar la campaña.'); }
     };
 
 
@@ -2281,82 +2283,84 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
        ------------------------------------------------------------------ */
 
     function applyLandingConfig(cfg) {
-      if (!cfg) return;
-      if (cfg.title)    $('landing-title').innerHTML  = cfg.title.replace(/\n/g, '<br>');
-      if (cfg.subtitle) $('landing-subtitle').innerText = cfg.subtitle;
-      ['hero', 'serv-1', 'serv-2', 'serv-3'].forEach(k => {
-        const url = cfg.images?.[k];
-        const el  = $('img-' + k);
-        if (url && el) el.src = url;
-      });
-      // Reflejar en el formulario de edición (si el admin está adentro)
-      if ($('edit-title'))    $('edit-title').value    = cfg.title || '';
-      if ($('edit-subtitle')) $('edit-subtitle').value = cfg.subtitle || '';
+        if (!cfg) return;
+        if (cfg.title) $('landing-title').innerHTML = cfg.title.replace(/\n/g, '<br>');
+        if (cfg.subtitle) $('landing-subtitle').innerText = cfg.subtitle;
+        ['hero', 'serv-1', 'serv-2', 'serv-3'].forEach(k => {
+            const url = cfg.images?.[k];
+            const el = $('img-' + k);
+            if (url && el) el.src = url;
+        });
+        // Reflejar en el formulario de edición (si el admin está adentro)
+        if ($('edit-title')) $('edit-title').value = cfg.title || '';
+        if ($('edit-subtitle')) $('edit-subtitle').value = cfg.subtitle || '';
     }
 
     /** Reemplaza saveWebConfig(): ya no revienta por el #edit-terms inexistente. */
     window.saveWebConfig = async () => {
-      const btn = document.querySelector('button[onclick="saveWebConfig()"]');
-      const og  = btn?.innerHTML;
-      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Publicando...'; }
+        const btn = document.querySelector('button[onclick="saveWebConfig()"]');
+        const og = btn?.innerHTML;
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Publicando...'; }
 
-      try {
-        const images = {};
-        const map = { hero: 'edit-img-hero', 'serv-1': 'edit-img-serv1',
-                      'serv-2': 'edit-img-serv2', 'serv-3': 'edit-img-serv3' };
+        try {
+            const images = {};
+            const map = {
+                hero: 'edit-img-hero', 'serv-1': 'edit-img-serv1',
+                'serv-2': 'edit-img-serv2', 'serv-3': 'edit-img-serv3'
+            };
 
-        for (const [key, inputId] of Object.entries(map)) {
-          const f = $(inputId)?.files?.[0];
-          if (f) images[key] = await window.uploadImageFile(f, 'landing');
+            for (const [key, inputId] of Object.entries(map)) {
+                const f = $(inputId)?.files?.[0];
+                if (f) images[key] = await window.uploadImageFile(f, 'landing');
+            }
+
+            const cfg = {
+                title: $('edit-title').value,
+                subtitle: $('edit-subtitle').value,
+                updatedAt: serverTimestamp(),
+                updatedBy: window.currentUser?.uid || null
+            };
+            // merge:true para no borrar imágenes que no se volvieron a subir
+            if (Object.keys(images).length) {
+                Object.entries(images).forEach(([k, v]) => { cfg['images.' + k] = v; });
+            }
+
+            await setDoc(doc(db, 'settings', 'landing'), cfg, { merge: true });
+            if (Object.keys(images).length) {
+                await updateDoc(doc(db, 'settings', 'landing'),
+                    Object.fromEntries(Object.entries(images).map(([k, v]) => ['images.' + k, v])));
+            }
+
+            // Config NO secreta de conectores. Los tokens van por Cloud Function,
+            // NUNCA por aquí (ver 02_MODELO_DATOS.md §5).
+            await setDoc(doc(db, 'settings', 'connectors'), {
+                waPhoneNumberId: $('edit-wa-phoneid')?.value || '',
+                gcalId: $('config-gcal-id')?.value || '',
+                felProvider: $('edit-fel-provider')?.value || '',
+                felAfiliacion: $('edit-fel-afiliacion')?.value || '',
+                felFrase: $('edit-fel-frase')?.value || '',
+                modoPrueba: $('edit-modo-prueba')?.checked ?? true,
+                updatedAt: serverTimestamp()
+            }, { merge: true });
+
+            const secretos = ['edit-wa-apikey', 'edit-email-apikey', 'edit-fel-llave']
+                .filter(id => $(id)?.value?.trim());
+            if (secretos.length) {
+                alert('Los tokens NO se guardaron: requieren la Cloud Function ' +
+                    '`saveConnectorSecret`. Guardar credenciales en Firestore las ' +
+                    'deja legibles desde el navegador. Ver 02_MODELO_DATOS.md §5.');
+                secretos.forEach(id => { $(id).value = ''; });
+            }
+
+            await window.logEvent('config_updated', 'Configuración web actualizada');
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i>Publicado';
+        } catch (e) {
+            console.error(e);
+            alert('No se pudo publicar: ' + e.message);
+            if (btn) btn.innerHTML = og;
+        } finally {
+            setTimeout(() => { if (btn) { btn.disabled = false; btn.innerHTML = og; } }, 2000);
         }
-
-        const cfg = {
-          title:    $('edit-title').value,
-          subtitle: $('edit-subtitle').value,
-          updatedAt: serverTimestamp(),
-          updatedBy: window.currentUser?.uid || null
-        };
-        // merge:true para no borrar imágenes que no se volvieron a subir
-        if (Object.keys(images).length) {
-          Object.entries(images).forEach(([k, v]) => { cfg['images.' + k] = v; });
-        }
-
-        await setDoc(doc(db, 'settings', 'landing'), cfg, { merge: true });
-        if (Object.keys(images).length) {
-          await updateDoc(doc(db, 'settings', 'landing'),
-            Object.fromEntries(Object.entries(images).map(([k, v]) => ['images.' + k, v])));
-        }
-
-        // Config NO secreta de conectores. Los tokens van por Cloud Function,
-        // NUNCA por aquí (ver 02_MODELO_DATOS.md §5).
-        await setDoc(doc(db, 'settings', 'connectors'), {
-          waPhoneNumberId: $('edit-wa-phoneid')?.value || '',
-          gcalId:          $('config-gcal-id')?.value  || '',
-          felProvider:     $('edit-fel-provider')?.value || '',
-          felAfiliacion:   $('edit-fel-afiliacion')?.value || '',
-          felFrase:        $('edit-fel-frase')?.value || '',
-          modoPrueba:      $('edit-modo-prueba')?.checked ?? true,
-          updatedAt: serverTimestamp()
-        }, { merge: true });
-
-        const secretos = ['edit-wa-apikey', 'edit-email-apikey', 'edit-fel-llave']
-          .filter(id => $(id)?.value?.trim());
-        if (secretos.length) {
-          alert('Los tokens NO se guardaron: requieren la Cloud Function ' +
-                '`saveConnectorSecret`. Guardar credenciales en Firestore las ' +
-                'deja legibles desde el navegador. Ver 02_MODELO_DATOS.md §5.');
-          secretos.forEach(id => { $(id).value = ''; });
-        }
-
-        await window.logEvent('config_updated', 'Configuración web actualizada');
-        if (btn) btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i>Publicado';
-      } catch (e) {
-        console.error(e);
-        alert('No se pudo publicar: ' + e.message);
-        if (btn) btn.innerHTML = og;
-      } finally {
-        setTimeout(() => { if (btn) { btn.disabled = false; btn.innerHTML = og; } }, 2000);
-      }
     };
 
 
@@ -2368,28 +2372,28 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
        ------------------------------------------------------------------ */
 
     onSnapshot(collection(db, 'catalog'), (snap) => {
-      window.catalogData = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-                                    .filter(c => c.activo !== false)
-                                    .sort((a, b) => (a.orden || 0) - (b.orden || 0));
-      if (typeof window.renderCatalogViews === 'function') window.renderCatalogViews();
+        window.catalogData = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+            .filter(c => c.activo !== false)
+            .sort((a, b) => (a.orden || 0) - (b.orden || 0));
+        if (typeof window.renderCatalogViews === 'function') window.renderCatalogViews();
     }, (e) => console.error('[catalog]', e));
 
     onSnapshot(doc(db, 'settings', 'landing'),
-      (s) => applyLandingConfig(s.data()),
-      (e) => console.error('[landing]', e));
+        (s) => applyLandingConfig(s.data()),
+        (e) => console.error('[landing]', e));
 
     onSnapshot(doc(db, 'settings', 'legal'), (s) => {
-      const d = s.data() || {};
-      window.currentTerms        = d.terms   || '';
-      window.currentTermsVersion = d.version || 'v1';
-      const box = $('bw-tc-text');
-      if (box && d.terms) box.innerText = d.terms;
+        const d = s.data() || {};
+        window.currentTerms = d.terms || '';
+        window.currentTermsVersion = d.version || 'v1';
+        const box = $('bw-tc-text');
+        if (box && d.terms) box.innerText = d.terms;
     }, (e) => console.error('[legal]', e));
 
     onSnapshot(doc(db, 'settings', 'capacity'), (s) => {
-      const d = s.data() || {};
-      window.capacityTotals = { peq: d.peq || 0, med: d.med || 0, gra: d.gra || 0 };
-      if ($('cap-peq-total')) window.updateBars();
+        const d = s.data() || {};
+        window.capacityTotals = { peq: d.peq || 0, med: d.med || 0, gra: d.gra || 0 };
+        if ($('cap-peq-total')) window.updateBars();
     }, (e) => console.error('[capacity]', e));
 
 
@@ -2402,85 +2406,85 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     let unsubs = [];
 
     onAuthStateChanged(auth, async (user) => {
-      unsubs.forEach(fn => { try { fn(); } catch (_) {} });
-      unsubs = [];
+        unsubs.forEach(fn => { try { fn(); } catch (_) { } });
+        unsubs = [];
 
-      if (!user) {
-        window.currentUser = null;
-        document.body.removeAttribute('data-role');
-        return;
-      }
-
-      await loadCurrentUser(user);
-
-      unsubs.push(onSnapshot(collection(db, 'clients'), (snap) => {
-        window.clientsData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        window.mockLeads   = window.clientsData;
-        if (typeof window.renderLeads === 'function') window.renderLeads();
-        if (typeof window.fillPOSClientSelect === 'function') window.fillPOSClientSelect();
-        window.updateBars();                       // ocupación en vivo
-      }));
-
-      unsubs.push(onSnapshot(collection(db, 'inventory'), (snap) => {
-        window.inventoryData = snap.docs.map(d => ({
-          id: d.id, ...d.data(),
-          img: d.data().img || window.PLACEHOLDER_IMG
-        }));
-        if (typeof window.renderInventoryViews === 'function') window.renderInventoryViews();
-      }));
-
-      unsubs.push(onSnapshot(collection(db, 'citas'), (snap) => {
-        window.citasData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        syncCalendarEvents();
-      }));
-
-      unsubs.push(onSnapshot(collection(db, 'staff'), (snap) => {
-        window.employeesData = {};
-        snap.docs.forEach(d => {
-          const e = { uid: d.id, ...d.data() };
-          window.employeesData[e.email] = {
-            name: e.name, role: e.puesto || e.role, photo: e.photoUrl,
-            tasks: e.tasks || '', schedule: e.schedule || '',
-            permissions: [], uid: d.id
-          };
-        });
-      }));
-
-      unsubs.push(onSnapshot(collection(db, 'time_off'), (snap) => {
-        window.timeOffData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        Object.values(window.employeesData).forEach(e => { e.permissions = []; });
-        window.timeOffData.forEach(r => {
-          const emp = Object.values(window.employeesData).find(e => e.uid === r.uid);
-          if (emp) emp.permissions.push({ type: r.type, date: `${r.dateStart} → ${r.dateEnd}`, status: r.status });
-        });
-        if (typeof window.renderMyProfile === 'function' &&
-            !$('tab-mi-perfil')?.classList.contains('hidden')) {
-          try { window.renderMyProfile(); } catch (_) {}
+        if (!user) {
+            window.currentUser = null;
+            document.body.removeAttribute('data-role');
+            return;
         }
-      }));
 
-      // Auditoría: solo el admin puede leerla (las reglas lo enforce).
-      if (window.currentUser.role === 'admin') {
-        unsubs.push(onSnapshot(
-          query(collection(db, 'audit_logs'), orderBy('createdAt', 'desc'), limit(500)),
-          (snap) => {
-            window.auditLogs = snap.docs.map(d => {
-              const x = d.data();
-              return { ...x, timestamp: x.timestamp || x.createdAt?.toDate?.()?.toISOString() };
+        await loadCurrentUser(user);
+
+        unsubs.push(onSnapshot(collection(db, 'clients'), (snap) => {
+            window.clientsData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            window.mockLeads = window.clientsData;
+            if (typeof window.renderLeads === 'function') window.renderLeads();
+            if (typeof window.fillPOSClientSelect === 'function') window.fillPOSClientSelect();
+            window.updateBars();                       // ocupación en vivo
+        }));
+
+        unsubs.push(onSnapshot(collection(db, 'inventory'), (snap) => {
+            window.inventoryData = snap.docs.map(d => ({
+                id: d.id, ...d.data(),
+                img: d.data().img || window.PLACEHOLDER_IMG
+            }));
+            if (typeof window.renderInventoryViews === 'function') window.renderInventoryViews();
+        }));
+
+        unsubs.push(onSnapshot(collection(db, 'citas'), (snap) => {
+            window.citasData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            syncCalendarEvents();
+        }));
+
+        unsubs.push(onSnapshot(collection(db, 'staff'), (snap) => {
+            window.employeesData = {};
+            snap.docs.forEach(d => {
+                const e = { uid: d.id, ...d.data() };
+                window.employeesData[e.email] = {
+                    name: e.name, role: e.puesto || e.role, photo: e.photoUrl,
+                    tasks: e.tasks || '', schedule: e.schedule || '',
+                    permissions: [], uid: d.id
+                };
             });
-            if (typeof window.renderAuditTab === 'function' &&
-                !$('tab-auditoria')?.classList.contains('hidden')) {
-              try { window.renderAuditTab(); } catch (_) {}
-            }
-          }));
-      }
+        }));
 
-      // initCharts() e initCalendar() existían pero NUNCA se llamaban.
-      setTimeout(() => {
-        try { if (typeof window.initCharts   === 'function') window.initCharts(); }   catch (e) { console.error(e); }
-        try { if (typeof window.initCalendar === 'function') window.initCalendar(); } catch (e) { console.error(e); }
-        syncCalendarEvents();
-      }, 400);
+        unsubs.push(onSnapshot(collection(db, 'time_off'), (snap) => {
+            window.timeOffData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            Object.values(window.employeesData).forEach(e => { e.permissions = []; });
+            window.timeOffData.forEach(r => {
+                const emp = Object.values(window.employeesData).find(e => e.uid === r.uid);
+                if (emp) emp.permissions.push({ type: r.type, date: `${r.dateStart} → ${r.dateEnd}`, status: r.status });
+            });
+            if (typeof window.renderMyProfile === 'function' &&
+                !$('tab-mi-perfil')?.classList.contains('hidden')) {
+                try { window.renderMyProfile(); } catch (_) { }
+            }
+        }));
+
+        // Auditoría: solo el admin puede leerla (las reglas lo enforce).
+        if (window.currentUser.role === 'admin') {
+            unsubs.push(onSnapshot(
+                query(collection(db, 'audit_logs'), orderBy('createdAt', 'desc'), limit(500)),
+                (snap) => {
+                    window.auditLogs = snap.docs.map(d => {
+                        const x = d.data();
+                        return { ...x, timestamp: x.timestamp || x.createdAt?.toDate?.()?.toISOString() };
+                    });
+                    if (typeof window.renderAuditTab === 'function' &&
+                        !$('tab-auditoria')?.classList.contains('hidden')) {
+                        try { window.renderAuditTab(); } catch (_) { }
+                    }
+                }));
+        }
+
+        // initCharts() e initCalendar() existían pero NUNCA se llamaban.
+        setTimeout(() => {
+            try { if (typeof window.initCharts === 'function') window.initCharts(); } catch (e) { console.error(e); }
+            try { if (typeof window.initCalendar === 'function') window.initCalendar(); } catch (e) { console.error(e); }
+            syncCalendarEvents();
+        }, 400);
     });
 
 
@@ -2489,19 +2493,19 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
        ------------------------------------------------------------------ */
 
     function syncCalendarEvents() {
-      if (!window.calendar) return;
-      window.calendar.removeAllEvents();
-      (window.citasData || []).forEach(c => {
-        if (!c.fecha || !c.horaInicio) return;
-        window.calendar.addEvent({
-          id: c.id,
-          title: c.title || `${c.servicio} — ${c.mascota}`,
-          start: `${c.fecha}T${c.horaInicio}:00`,
-          end:   `${c.fecha}T${c.horaFin || c.horaInicio}:00`,
-          backgroundColor: c.color || '#3b82f6',
-          borderColor:     c.color || '#3b82f6'
+        if (!window.calendar) return;
+        window.calendar.removeAllEvents();
+        (window.citasData || []).forEach(c => {
+            if (!c.fecha || !c.horaInicio) return;
+            window.calendar.addEvent({
+                id: c.id,
+                title: c.title || `${c.servicio} — ${c.mascota}`,
+                start: `${c.fecha}T${c.horaInicio}:00`,
+                end: `${c.fecha}T${c.horaFin || c.horaInicio}:00`,
+                backgroundColor: c.color || '#3b82f6',
+                borderColor: c.color || '#3b82f6'
+            });
         });
-      });
     }
     window.syncCalendarEvents = syncCalendarEvents;
 
@@ -2512,18 +2516,18 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
     const _switchTab = window.switchTab;
     window.switchTab = (tabId) => {
-      // Bloqueo de tabs de admin del lado del cliente (las reglas hacen el
-      // bloqueo real del lado del servidor).
-      const ADMIN_ONLY = ['tab-config', 'tab-reportes', 'tab-auditoria', 'tab-capacidad', 'tab-catalogo'];
-      if (ADMIN_ONLY.includes(tabId) && window.currentUser?.role !== 'admin') {
-        alert('No tienes permisos para esta sección.');
-        return;
-      }
-      try { _switchTab(tabId); }
-      catch (e) { console.error('[switchTab] ' + tabId, e); }
+        // Bloqueo de tabs de admin del lado del cliente (las reglas hacen el
+        // bloqueo real del lado del servidor).
+        const ADMIN_ONLY = ['tab-config', 'tab-reportes', 'tab-auditoria', 'tab-capacidad', 'tab-catalogo'];
+        if (ADMIN_ONLY.includes(tabId) && window.currentUser?.role !== 'admin') {
+            alert('No tienes permisos para esta sección.');
+            return;
+        }
+        try { _switchTab(tabId); }
+        catch (e) { console.error('[switchTab] ' + tabId, e); }
 
-      if (tabId === 'tab-mensajes') window.updateMsgCount();
-      if (tabId === 'tab-calendario') setTimeout(syncCalendarEvents, 200);
+        if (tabId === 'tab-mensajes') window.updateMsgCount();
+        if (tabId === 'tab-calendario') setTimeout(syncCalendarEvents, 200);
     };
 
     console.info('%c[Casa Canis] hotfix v1 activo', 'color:#C5A059;font-weight:bold');
@@ -2532,30 +2536,30 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 /* ===== staff ========================================================= */
 (async function () {
     const db = window.db || getFirestore(getApp());
-    const $  = (id) => document.getElementById(id);
+    const $ = (id) => document.getElementById(id);
 
     const DIAS = [
-      { n: 1, label: 'Lunes' }, { n: 2, label: 'Martes' }, { n: 3, label: 'Miércoles' },
-      { n: 4, label: 'Jueves' }, { n: 5, label: 'Viernes' }, { n: 6, label: 'Sábado' },
-      { n: 0, label: 'Domingo' }
+        { n: 1, label: 'Lunes' }, { n: 2, label: 'Martes' }, { n: 3, label: 'Miércoles' },
+        { n: 4, label: 'Jueves' }, { n: 5, label: 'Viernes' }, { n: 6, label: 'Sábado' },
+        { n: 0, label: 'Domingo' }
     ];
 
     const TIPO_LABEL = {
-      vacaciones: 'Vacaciones', dia_completo: 'Día completo',
-      salida_temprana: 'Salida temprana', permiso: 'Permiso especial'
+        vacaciones: 'Vacaciones', dia_completo: 'Día completo',
+        salida_temprana: 'Salida temprana', permiso: 'Permiso especial'
     };
 
     const STATUS_STYLE = {
-      pending:   ['bg-yellow-100 text-yellow-800', 'Pendiente'],
-      approved:  ['bg-green-100 text-green-700',   'Aprobado'],
-      rejected:  ['bg-red-100 text-red-700',       'Rechazado'],
-      cancelled: ['bg-gray-100 text-gray-500',     'Cancelado']
+        pending: ['bg-yellow-100 text-yellow-800', 'Pendiente'],
+        approved: ['bg-green-100 text-green-700', 'Aprobado'],
+        rejected: ['bg-red-100 text-red-700', 'Rechazado'],
+        cancelled: ['bg-gray-100 text-gray-500', 'Cancelado']
     };
 
-    let staffList     = [];   // [{uid, name, email, role, puesto, services, active, photoUrl}]
+    let staffList = [];   // [{uid, name, email, role, puesto, services, active, photoUrl}]
     let schedulesById = {};   // uid -> {week:{...}}
-    let timeOffList   = [];
-    let editingUid    = null;
+    let timeOffList = [];
+    let editingUid = null;
 
 
     /* ---------------------------------------------------------------------
@@ -2563,23 +2567,23 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
        ------------------------------------------------------------------ */
 
     window.initStaffModule = () => {
-      if (!window.currentUser) return;
+        if (!window.currentUser) return;
 
-      onSnapshot(collection(db, 'staff'), (snap) => {
-        staffList = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
-        renderStaffTab();
-      }, (e) => console.error('[staff]', e));
+        onSnapshot(collection(db, 'staff'), (snap) => {
+            staffList = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+            renderStaffTab();
+        }, (e) => console.error('[staff]', e));
 
-      onSnapshot(collection(db, 'staff_schedules'), (snap) => {
-        schedulesById = {};
-        snap.docs.forEach(d => { schedulesById[d.id] = d.data(); });
-        renderStaffTab();
-      }, (e) => console.error('[schedules]', e));
+        onSnapshot(collection(db, 'staff_schedules'), (snap) => {
+            schedulesById = {};
+            snap.docs.forEach(d => { schedulesById[d.id] = d.data(); });
+            renderStaffTab();
+        }, (e) => console.error('[schedules]', e));
 
-      onSnapshot(collection(db, 'time_off'), (snap) => {
-        timeOffList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        renderStaffTab();
-      }, (e) => console.error('[time_off]', e));
+        onSnapshot(collection(db, 'time_off'), (snap) => {
+            timeOffList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+            renderStaffTab();
+        }, (e) => console.error('[time_off]', e));
     };
 
 
@@ -2588,21 +2592,21 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
        ------------------------------------------------------------------ */
 
     window.renderStaffTab = () => {
-      const u = window.currentUser;
-      if (!u) return;
-      const isAdmin = u.role === 'admin';
+        const u = window.currentUser;
+        if (!u) return;
+        const isAdmin = u.role === 'admin';
 
-      $('staff-tab-title').innerText = isAdmin ? 'Staff' : 'Mi Perfil';
-      $('staff-tab-sub').innerText   = isAdmin
-        ? 'Plantilla, horarios y aprobación de ausencias.'
-        : 'Tu información, tu horario y tus solicitudes.';
+        $('staff-tab-title').innerText = isAdmin ? 'Staff' : 'Mi Perfil';
+        $('staff-tab-sub').innerText = isAdmin
+            ? 'Plantilla, horarios y aprobación de ausencias.'
+            : 'Tu información, tu horario y tus solicitudes.';
 
-      $('staff-admin-view').classList.toggle('hidden', !isAdmin);
-      $('staff-agent-view').classList.toggle('hidden', isAdmin);
-      $('btn-add-staff').classList.toggle('hidden', !isAdmin);
+        $('staff-admin-view').classList.toggle('hidden', !isAdmin);
+        $('staff-agent-view').classList.toggle('hidden', isAdmin);
+        $('btn-add-staff').classList.toggle('hidden', !isAdmin);
 
-      if (isAdmin) { renderRoster(); renderTimeOffQueue(); }
-      else         { renderAgentProfile(); }
+        if (isAdmin) { renderRoster(); renderTimeOffQueue(); }
+        else { renderAgentProfile(); }
     };
     // Compatibilidad con el switchTab existente, que llama renderMyProfile()
     window.renderMyProfile = window.renderStaffTab;
@@ -2613,22 +2617,22 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
        ------------------------------------------------------------------ */
 
     function scheduleSummary(uid) {
-      const wk = schedulesById[uid]?.week;
-      if (!wk) return '<span class="text-red-500 font-bold">Sin horario · no genera cupos</span>';
-      const dias = DIAS.filter(d => wk[String(d.n)]?.works);
-      if (!dias.length) return '<span class="text-red-500 font-bold">Sin días hábiles</span>';
-      const d0 = wk[String(dias[0].n)];
-      return `${dias.map(d => d.label.slice(0, 3)).join(', ')} · ${d0.start}–${d0.end}`;
+        const wk = schedulesById[uid]?.week;
+        if (!wk) return '<span class="text-red-500 font-bold">Sin horario · no genera cupos</span>';
+        const dias = DIAS.filter(d => wk[String(d.n)]?.works);
+        if (!dias.length) return '<span class="text-red-500 font-bold">Sin días hábiles</span>';
+        const d0 = wk[String(dias[0].n)];
+        return `${dias.map(d => d.label.slice(0, 3)).join(', ')} · ${d0.start}–${d0.end}`;
     }
 
     function renderRoster() {
-      const box = $('staff-roster');
-      if (!staffList.length) {
-        box.innerHTML = '<div class="p-8 text-center text-gray-400 text-sm">Sin empleados registrados.</div>';
-        return;
-      }
+        const box = $('staff-roster');
+        if (!staffList.length) {
+            box.innerHTML = '<div class="p-8 text-center text-gray-400 text-sm">Sin empleados registrados.</div>';
+            return;
+        }
 
-      box.innerHTML = staffList.map(s => `
+        box.innerHTML = staffList.map(s => `
         <div class="px-8 py-5 flex items-center gap-4 hover:bg-gray-50 transition ${s.active === false ? 'opacity-50' : ''}">
           <img src="${s.photoUrl || window.PLACEHOLDER_IMG}" alt=""
                class="w-12 h-12 rounded-full object-cover border border-gray-200 bg-cream">
@@ -2639,11 +2643,10 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
           </div>
           <div class="flex flex-wrap gap-1 max-w-[180px] justify-end">
             ${(s.services || []).map(sv =>
-              `<span class="text-[10px] bg-cream text-forest px-2 py-0.5 rounded font-bold uppercase">${sv}</span>`
-            ).join('')}
+            `<span class="text-[10px] bg-cream text-forest px-2 py-0.5 rounded font-bold uppercase">${sv}</span>`
+        ).join('')}
           </div>
-          <span class="text-[10px] font-bold px-2 py-1 rounded-full ${
-            s.role === 'admin' ? 'bg-forest text-gold' : 'bg-gray-100 text-gray-600'}">
+          <span class="text-[10px] font-bold px-2 py-1 rounded-full ${s.role === 'admin' ? 'bg-forest text-gold' : 'bg-gray-100 text-gray-600'}">
             ${s.role === 'admin' ? 'ADMIN' : 'AGENTE'}
           </span>
           <div class="flex gap-2">
@@ -2654,8 +2657,8 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
             </button>
             <button onclick="toggleStaffActive('${s.uid}', ${s.active === false})"
                     class="px-3 py-2 rounded-lg text-xs font-bold ${s.active === false
-                      ? 'bg-green-600 text-white hover:bg-green-700'
-                      : 'bg-red-50 text-red-500 hover:bg-red-100'}"
+                ? 'bg-green-600 text-white hover:bg-green-700'
+                : 'bg-red-50 text-red-500 hover:bg-red-100'}"
                     title="${s.active === false ? 'Reactivar' : 'Desactivar acceso'}">
               <i class="fa-solid fa-power-off"></i>
             </button>
@@ -2665,18 +2668,18 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     }
 
     function renderTimeOffQueue() {
-      const box = $('timeoff-queue');
-      const pendientes = timeOffList.filter(r => r.status === 'pending')
-        .sort((a, b) => (a.dateStart || '').localeCompare(b.dateStart || ''));
+        const box = $('timeoff-queue');
+        const pendientes = timeOffList.filter(r => r.status === 'pending')
+            .sort((a, b) => (a.dateStart || '').localeCompare(b.dateStart || ''));
 
-      $('timeoff-pending-count').innerText = `${pendientes.length} pendiente${pendientes.length === 1 ? '' : 's'}`;
+        $('timeoff-pending-count').innerText = `${pendientes.length} pendiente${pendientes.length === 1 ? '' : 's'}`;
 
-      if (!pendientes.length) {
-        box.innerHTML = '<div class="p-8 text-center text-gray-400 text-sm">No hay solicitudes pendientes.</div>';
-        return;
-      }
+        if (!pendientes.length) {
+            box.innerHTML = '<div class="p-8 text-center text-gray-400 text-sm">No hay solicitudes pendientes.</div>';
+            return;
+        }
 
-      box.innerHTML = pendientes.map(r => `
+        box.innerHTML = pendientes.map(r => `
         <div class="px-8 py-5 flex items-start gap-4 hover:bg-gray-50 transition">
           <div class="bg-yellow-100 text-yellow-700 p-3 rounded-xl"><i class="fa-regular fa-calendar-xmark"></i></div>
           <div class="flex-1">
@@ -2703,46 +2706,46 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     }
 
     window.reviewTimeOff = async (id, status) => {
-      const req = timeOffList.find(r => r.id === id);
-      if (!req) return;
-      const verbo = status === 'approved' ? 'aprobar' : 'rechazar';
-      if (!confirm(`¿${verbo.charAt(0).toUpperCase() + verbo.slice(1)} la solicitud de ${req.staffName}?`)) return;
+        const req = timeOffList.find(r => r.id === id);
+        if (!req) return;
+        const verbo = status === 'approved' ? 'aprobar' : 'rechazar';
+        if (!confirm(`¿${verbo.charAt(0).toUpperCase() + verbo.slice(1)} la solicitud de ${req.staffName}?`)) return;
 
-      try {
-        await updateDoc(doc(db, 'time_off', id), {
-          status,
-          reviewedBy: window.currentUser.uid,
-          reviewedAt: serverTimestamp()
-        });
-        await window.logEvent(
-          status === 'approved' ? 'timeoff_approved' : 'timeoff_rejected',
-          `${TIPO_LABEL[req.type]} de ${req.staffName} (${req.dateStart}) → ${status}`,
-          { entity: 'time_off', entityId: id }
-        );
-      } catch (e) {
-        console.error(e);
-        alert('No se pudo procesar la solicitud.');
-      }
+        try {
+            await updateDoc(doc(db, 'time_off', id), {
+                status,
+                reviewedBy: window.currentUser.uid,
+                reviewedAt: serverTimestamp()
+            });
+            await window.logEvent(
+                status === 'approved' ? 'timeoff_approved' : 'timeoff_rejected',
+                `${TIPO_LABEL[req.type]} de ${req.staffName} (${req.dateStart}) → ${status}`,
+                { entity: 'time_off', entityId: id }
+            );
+        } catch (e) {
+            console.error(e);
+            alert('No se pudo procesar la solicitud.');
+        }
     };
 
     window.toggleStaffActive = async (uid, reactivar) => {
-      if (uid === window.currentUser.uid) {
-        alert('No puedes desactivar tu propia cuenta.');
-        return;
-      }
-      const s = staffList.find(x => x.uid === uid);
-      if (!confirm(`¿${reactivar ? 'Reactivar' : 'Desactivar el acceso de'} ${s?.name}?`)) return;
+        if (uid === window.currentUser.uid) {
+            alert('No puedes desactivar tu propia cuenta.');
+            return;
+        }
+        const s = staffList.find(x => x.uid === uid);
+        if (!confirm(`¿${reactivar ? 'Reactivar' : 'Desactivar el acceso de'} ${s?.name}?`)) return;
 
-      try {
-        // Nota: las reglas permiten esto solo al admin. `active:false` corta el
-        // acceso de inmediato sin borrar el historial de auditoría.
-        await updateDoc(doc(db, 'staff', uid), { active: !!reactivar });
-        await window.logEvent('staff_updated',
-          `${s?.name} ${reactivar ? 'reactivado' : 'desactivado'}`, { entity: 'staff', entityId: uid });
-      } catch (e) {
-        console.error(e);
-        alert('No se pudo actualizar. Solo el administrador puede hacerlo.');
-      }
+        try {
+            // Nota: las reglas permiten esto solo al admin. `active:false` corta el
+            // acceso de inmediato sin borrar el historial de auditoría.
+            await updateDoc(doc(db, 'staff', uid), { active: !!reactivar });
+            await window.logEvent('staff_updated',
+                `${s?.name} ${reactivar ? 'reactivado' : 'desactivado'}`, { entity: 'staff', entityId: uid });
+        } catch (e) {
+            console.error(e);
+            alert('No se pudo actualizar. Solo el administrador puede hacerlo.');
+        }
     };
 
 
@@ -2751,20 +2754,19 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
        ------------------------------------------------------------------ */
 
     window.openScheduleEditor = (uid) => {
-      editingUid = uid;
-      const s  = staffList.find(x => x.uid === uid);
-      const wk = schedulesById[uid]?.week || {};
+        editingUid = uid;
+        const s = staffList.find(x => x.uid === uid);
+        const wk = schedulesById[uid]?.week || {};
 
-      $('sched-emp-name').innerText = s?.name || s?.email || '';
-      $('schedule-editor').classList.remove('hidden');
+        $('sched-emp-name').innerText = s?.name || s?.email || '';
+        $('schedule-editor').classList.remove('hidden');
 
-      $('schedule-grid').innerHTML = DIAS.map(d => {
-        const cfg   = wk[String(d.n)] || {};
-        const works = !!cfg.works;
-        const lunch = cfg.lunch || ['12:00', '13:00'];
-        return `
-          <div class="flex flex-wrap items-center gap-3 p-4 rounded-xl border ${
-            works ? 'border-gold/40 bg-gold/5' : 'border-gray-200 bg-gray-50'}">
+        $('schedule-grid').innerHTML = DIAS.map(d => {
+            const cfg = wk[String(d.n)] || {};
+            const works = !!cfg.works;
+            const lunch = cfg.lunch || ['12:00', '13:00'];
+            return `
+          <div class="flex flex-wrap items-center gap-3 p-4 rounded-xl border ${works ? 'border-gold/40 bg-gold/5' : 'border-gray-200 bg-gray-50'}">
             <label class="flex items-center gap-2 w-32 shrink-0 cursor-pointer">
               <input type="checkbox" id="sch-${d.n}-works" ${works ? 'checked' : ''}
                      onchange="toggleDayRow(${d.n})" class="w-4 h-4 rounded text-gold focus:ring-gold">
@@ -2791,64 +2793,64 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
               </div>
             </div>
           </div>`;
-      }).join('');
+        }).join('');
 
-      $('schedule-editor').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        $('schedule-editor').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     };
 
     window.toggleDayRow = (n) => {
-      const works  = $(`sch-${n}-works`).checked;
-      const fields = $(`sch-${n}-fields`);
-      fields.classList.toggle('opacity-40', !works);
-      fields.classList.toggle('pointer-events-none', !works);
-      fields.parentElement.className = fields.parentElement.className
-        .replace(/border-\S+ bg-\S+/, works ? 'border-gold/40 bg-gold/5' : 'border-gray-200 bg-gray-50');
+        const works = $(`sch-${n}-works`).checked;
+        const fields = $(`sch-${n}-fields`);
+        fields.classList.toggle('opacity-40', !works);
+        fields.classList.toggle('pointer-events-none', !works);
+        fields.parentElement.className = fields.parentElement.className
+            .replace(/border-\S+ bg-\S+/, works ? 'border-gold/40 bg-gold/5' : 'border-gray-200 bg-gray-50');
     };
 
     window.closeScheduleEditor = () => {
-      $('schedule-editor').classList.add('hidden');
-      editingUid = null;
+        $('schedule-editor').classList.add('hidden');
+        editingUid = null;
     };
 
     window.saveSchedule = async () => {
-      if (!editingUid) return;
-      const week = {};
+        if (!editingUid) return;
+        const week = {};
 
-      for (const d of DIAS) {
-        const works = $(`sch-${d.n}-works`).checked;
-        if (!works) { week[String(d.n)] = { works: false }; continue; }
+        for (const d of DIAS) {
+            const works = $(`sch-${d.n}-works`).checked;
+            if (!works) { week[String(d.n)] = { works: false }; continue; }
 
-        const start = $(`sch-${d.n}-start`).value;
-        const end   = $(`sch-${d.n}-end`).value;
-        if (!start || !end || start >= end) {
-          alert(`${d.label}: la hora de salida debe ser posterior a la de entrada.`);
-          return;
+            const start = $(`sch-${d.n}-start`).value;
+            const end = $(`sch-${d.n}-end`).value;
+            if (!start || !end || start >= end) {
+                alert(`${d.label}: la hora de salida debe ser posterior a la de entrada.`);
+                return;
+            }
+            const ls = $(`sch-${d.n}-lunch-start`).value;
+            const le = $(`sch-${d.n}-lunch-end`).value;
+            if (ls && le && (ls < start || le > end || ls >= le)) {
+                alert(`${d.label}: el almuerzo debe caer dentro del turno.`);
+                return;
+            }
+            week[String(d.n)] = { works: true, start, end, lunch: (ls && le) ? [ls, le] : null };
         }
-        const ls = $(`sch-${d.n}-lunch-start`).value;
-        const le = $(`sch-${d.n}-lunch-end`).value;
-        if (ls && le && (ls < start || le > end || ls >= le)) {
-          alert(`${d.label}: el almuerzo debe caer dentro del turno.`);
-          return;
+
+        try {
+            await setDoc(doc(db, 'staff_schedules', editingUid), {
+                uid: editingUid, week,
+                effectiveFrom: new Date().toISOString().slice(0, 10),
+                updatedAt: serverTimestamp(),
+                updatedBy: window.currentUser.uid
+            }, { merge: true });
+
+            const s = staffList.find(x => x.uid === editingUid);
+            await window.logEvent('schedule_updated', `Horario actualizado: ${s?.name}`,
+                { entity: 'staff_schedules', entityId: editingUid });
+            window.closeScheduleEditor();
+        } catch (e) {
+            console.error(e);
+            alert('No se pudo guardar el horario.');
         }
-        week[String(d.n)] = { works: true, start, end, lunch: (ls && le) ? [ls, le] : null };
-      }
-
-      try {
-        await setDoc(doc(db, 'staff_schedules', editingUid), {
-          uid: editingUid, week,
-          effectiveFrom: new Date().toISOString().slice(0, 10),
-          updatedAt: serverTimestamp(),
-          updatedBy: window.currentUser.uid
-        }, { merge: true });
-
-        const s = staffList.find(x => x.uid === editingUid);
-        await window.logEvent('schedule_updated', `Horario actualizado: ${s?.name}`,
-                              { entity: 'staff_schedules', entityId: editingUid });
-        window.closeScheduleEditor();
-      } catch (e) {
-        console.error(e);
-        alert('No se pudo guardar el horario.');
-      }
     };
 
 
@@ -2857,126 +2859,124 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
        ------------------------------------------------------------------ */
 
     function renderAgentProfile() {
-      const u  = window.currentUser;
-      const me = staffList.find(s => s.uid === u.uid) || u;
+        const u = window.currentUser;
+        const me = staffList.find(s => s.uid === u.uid) || u;
 
-      $('my-profile-img').src      = me.photoUrl || window.PLACEHOLDER_IMG;
-      $('my-profile-name').innerText = me.name || u.email;
-      $('my-profile-role').innerText = me.puesto || (u.role === 'admin' ? 'Administrador' : 'Agente');
-      $('my-profile-phone').value    = me.phone || '';
+        $('my-profile-img').src = me.photoUrl || window.PLACEHOLDER_IMG;
+        $('my-profile-name').innerText = me.name || u.email;
+        $('my-profile-role').innerText = me.puesto || (u.role === 'admin' ? 'Administrador' : 'Agente');
+        $('my-profile-phone').value = me.phone || '';
 
-      // Horario propio, solo lectura
-      const wk  = schedulesById[u.uid]?.week;
-      const box = $('my-schedule-list');
-      box.innerHTML = !wk
-        ? '<p class="text-xs text-gray-400 italic">Administración aún no ha definido tu horario.</p>'
-        : DIAS.map(d => {
-            const c = wk[String(d.n)];
-            return `
+        // Horario propio, solo lectura
+        const wk = schedulesById[u.uid]?.week;
+        const box = $('my-schedule-list');
+        box.innerHTML = !wk
+            ? '<p class="text-xs text-gray-400 italic">Administración aún no ha definido tu horario.</p>'
+            : DIAS.map(d => {
+                const c = wk[String(d.n)];
+                return `
               <div class="flex justify-between items-center py-1.5 border-b border-gray-50 last:border-0">
                 <span class="font-medium text-forest">${d.label}</span>
                 ${c?.works
-                  ? `<span class="text-gray-600 text-xs">${c.start}–${c.end}${
-                       c.lunch ? ` <span class="text-gray-400">(almuerzo ${c.lunch[0]}–${c.lunch[1]})</span>` : ''}</span>`
-                  : '<span class="text-gray-300 text-xs italic">Descanso</span>'}
+                        ? `<span class="text-gray-600 text-xs">${c.start}–${c.end}${c.lunch ? ` <span class="text-gray-400">(almuerzo ${c.lunch[0]}–${c.lunch[1]})</span>` : ''}</span>`
+                        : '<span class="text-gray-300 text-xs italic">Descanso</span>'}
               </div>`;
-          }).join('');
+            }).join('');
 
-      // Mis solicitudes
-      const mine = timeOffList.filter(r => r.uid === u.uid)
-        .sort((a, b) => (b.dateStart || '').localeCompare(a.dateStart || ''));
-      const list = $('my-requests-list');
-      list.innerHTML = !mine.length
-        ? '<p class="text-xs text-gray-400 italic">No tienes solicitudes.</p>'
-        : mine.map(r => {
-            const [cls, label] = STATUS_STYLE[r.status] || STATUS_STYLE.pending;
-            return `
+        // Mis solicitudes
+        const mine = timeOffList.filter(r => r.uid === u.uid)
+            .sort((a, b) => (b.dateStart || '').localeCompare(a.dateStart || ''));
+        const list = $('my-requests-list');
+        list.innerHTML = !mine.length
+            ? '<p class="text-xs text-gray-400 italic">No tienes solicitudes.</p>'
+            : mine.map(r => {
+                const [cls, label] = STATUS_STYLE[r.status] || STATUS_STYLE.pending;
+                return `
               <div class="bg-gray-50 border border-gray-200 p-3 rounded-lg flex justify-between items-center gap-2">
                 <div class="min-w-0">
                   <p class="text-xs font-bold text-forest">${TIPO_LABEL[r.type] || r.type}</p>
-                  <p class="text-[10px] text-gray-500">${r.dateStart}${
-                    r.dateEnd && r.dateEnd !== r.dateStart ? ' → ' + r.dateEnd : ''}</p>
+                  <p class="text-[10px] text-gray-500">${r.dateStart}${r.dateEnd && r.dateEnd !== r.dateStart ? ' → ' + r.dateEnd : ''}</p>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
                   <span class="text-[10px] font-bold px-2 py-1 rounded-full ${cls}">${label}</span>
                   ${r.status === 'pending'
-                    ? `<button onclick="cancelMyRequest('${r.id}')" class="text-gray-400 hover:text-red-500" title="Cancelar"><i class="fa-solid fa-xmark"></i></button>`
-                    : ''}
+                        ? `<button onclick="cancelMyRequest('${r.id}')" class="text-gray-400 hover:text-red-500" title="Cancelar"><i class="fa-solid fa-xmark"></i></button>`
+                        : ''}
                 </div>
               </div>`;
-          }).join('');
+            }).join('');
 
-      updateBreakButton();
+        updateBreakButton();
     }
 
     window.onReqTypeChange = () => {
-      const t = $('req-type').value;
-      $('req-hour-wrap').classList.toggle('hidden', t !== 'salida_temprana');
+        const t = $('req-type').value;
+        $('req-hour-wrap').classList.toggle('hidden', t !== 'salida_temprana');
     };
 
     window.submitPermissionRequest = async () => {
-      const type      = $('req-type').value;
-      const dateStart = $('req-date-start').value;
-      const dateEnd   = $('req-date-end').value || dateStart;
-      const hourStart = $('req-hour-start').value || null;
-      const reason    = $('req-reason').value.trim();
+        const type = $('req-type').value;
+        const dateStart = $('req-date-start').value;
+        const dateEnd = $('req-date-end').value || dateStart;
+        const hourStart = $('req-hour-start').value || null;
+        const reason = $('req-reason').value.trim();
 
-      if (!dateStart)          { alert('Selecciona la fecha de inicio.'); return; }
-      if (dateEnd < dateStart) { alert('La fecha final no puede ser anterior a la inicial.'); return; }
-      if (!reason)             { alert('Explica el motivo de la solicitud.'); return; }
-      if (type === 'salida_temprana' && !hourStart) { alert('Indica la hora de salida.'); return; }
+        if (!dateStart) { alert('Selecciona la fecha de inicio.'); return; }
+        if (dateEnd < dateStart) { alert('La fecha final no puede ser anterior a la inicial.'); return; }
+        if (!reason) { alert('Explica el motivo de la solicitud.'); return; }
+        if (type === 'salida_temprana' && !hourStart) { alert('Indica la hora de salida.'); return; }
 
-      const u = window.currentUser;
-      try {
-        await addDoc(collection(db, 'time_off'), {
-          uid: u.uid,
-          staffName: u.name || u.email,
-          type, dateStart, dateEnd,
-          hourStart: type === 'salida_temprana' ? hourStart : null,
-          reason,
-          status: 'pending',            // las reglas exigen 'pending' al crear
-          reviewedBy: null, reviewedAt: null,
-          createdAt: serverTimestamp()
-        });
-        await window.logEvent('timeoff_requested',
-          `${TIPO_LABEL[type]} solicitada: ${dateStart}${dateEnd !== dateStart ? ' → ' + dateEnd : ''}`);
+        const u = window.currentUser;
+        try {
+            await addDoc(collection(db, 'time_off'), {
+                uid: u.uid,
+                staffName: u.name || u.email,
+                type, dateStart, dateEnd,
+                hourStart: type === 'salida_temprana' ? hourStart : null,
+                reason,
+                status: 'pending',            // las reglas exigen 'pending' al crear
+                reviewedBy: null, reviewedAt: null,
+                createdAt: serverTimestamp()
+            });
+            await window.logEvent('timeoff_requested',
+                `${TIPO_LABEL[type]} solicitada: ${dateStart}${dateEnd !== dateStart ? ' → ' + dateEnd : ''}`);
 
-        $('req-date-start').value = '';
-        $('req-date-end').value   = '';
-        $('req-reason').value     = '';
-        alert('Solicitud enviada. Administración la revisará.');
-      } catch (e) {
-        console.error(e);
-        alert('No se pudo enviar la solicitud.');
-      }
+            $('req-date-start').value = '';
+            $('req-date-end').value = '';
+            $('req-reason').value = '';
+            alert('Solicitud enviada. Administración la revisará.');
+        } catch (e) {
+            console.error(e);
+            alert('No se pudo enviar la solicitud.');
+        }
     };
 
     window.cancelMyRequest = async (id) => {
-      if (!confirm('¿Cancelar esta solicitud?')) return;
-      try {
-        await updateDoc(doc(db, 'time_off', id), { status: 'cancelled' });
-      } catch (e) {
-        console.error(e);
-        alert('No se pudo cancelar.');
-      }
+        if (!confirm('¿Cancelar esta solicitud?')) return;
+        try {
+            await updateDoc(doc(db, 'time_off', id), { status: 'cancelled' });
+        } catch (e) {
+            console.error(e);
+            alert('No se pudo cancelar.');
+        }
     };
 
     window.saveMyProfile = async () => {
-      const u = window.currentUser;
-      const patch = { phone: $('my-profile-phone').value.trim() };
+        const u = window.currentUser;
+        const patch = { phone: $('my-profile-phone').value.trim() };
 
-      try {
-        const f = $('my-profile-upload')?.files?.[0];
-        if (f) patch.photoUrl = await window.uploadImageFile(f, `staff/${u.uid}`);
+        try {
+            const f = $('my-profile-upload')?.files?.[0];
+            if (f) patch.photoUrl = await window.uploadImageFile(f, `staff/${u.uid}`);
 
-        // Las reglas solo permiten photoUrl / phone / notes en el propio doc.
-        await updateDoc(doc(db, 'staff', u.uid), patch);
-        await window.logEvent('profile_updated', 'Perfil actualizado');
-        alert('Perfil actualizado.');
-      } catch (e) {
-        console.error(e);
-        alert('No se pudo actualizar el perfil.');
-      }
+            // Las reglas solo permiten photoUrl / phone / notes en el propio doc.
+            await updateDoc(doc(db, 'staff', u.uid), patch);
+            await window.logEvent('profile_updated', 'Perfil actualizado');
+            alert('Perfil actualizado.');
+        } catch (e) {
+            console.error(e);
+            alert('No se pudo actualizar el perfil.');
+        }
     };
 
 
@@ -2987,27 +2987,27 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     let breakStartedAt = null;
 
     function updateBreakButton() {
-      const btn = $('btn-break');
-      if (!btn) return;
-      if (breakStartedAt) {
-        btn.innerHTML = '<i class="fa-solid fa-play mr-2"></i>Terminar descanso';
-        btn.className = 'w-full bg-red-50 text-red-600 font-bold py-3 rounded-xl hover:bg-red-100 transition border border-red-200';
-      } else {
-        btn.innerHTML = '<i class="fa-solid fa-mug-hot mr-2"></i>Iniciar descanso';
-        btn.className = 'w-full bg-cream text-forest font-bold py-3 rounded-xl hover:bg-gold/20 transition border border-gold/30';
-      }
+        const btn = $('btn-break');
+        if (!btn) return;
+        if (breakStartedAt) {
+            btn.innerHTML = '<i class="fa-solid fa-play mr-2"></i>Terminar descanso';
+            btn.className = 'w-full bg-red-50 text-red-600 font-bold py-3 rounded-xl hover:bg-red-100 transition border border-red-200';
+        } else {
+            btn.innerHTML = '<i class="fa-solid fa-mug-hot mr-2"></i>Iniciar descanso';
+            btn.className = 'w-full bg-cream text-forest font-bold py-3 rounded-xl hover:bg-gold/20 transition border border-gold/30';
+        }
     }
 
     window.toggleBreak = async () => {
-      if (!breakStartedAt) {
-        breakStartedAt = Date.now();
-        await window.logEvent('break_start', 'Inicio de descanso');
-      } else {
-        const mins = Math.round((Date.now() - breakStartedAt) / 60000);
-        await window.logEvent('break_end', `Fin de descanso · ${mins} min`);
-        breakStartedAt = null;
-      }
-      updateBreakButton();
+        if (!breakStartedAt) {
+            breakStartedAt = Date.now();
+            await window.logEvent('break_start', 'Inicio de descanso');
+        } else {
+            const mins = Math.round((Date.now() - breakStartedAt) / 60000);
+            await window.logEvent('break_end', `Fin de descanso · ${mins} min`);
+            breakStartedAt = null;
+        }
+        updateBreakButton();
     };
 
 
@@ -3015,34 +3015,34 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
        Alta de empleado
        ------------------------------------------------------------------ */
 
-    window.openStaffModal  = () => $('staff-modal').classList.remove('hidden');
+    window.openStaffModal = () => $('staff-modal').classList.remove('hidden');
     window.closeStaffModal = () => $('staff-modal').classList.add('hidden');
 
     window.createStaff = async () => {
-      const name   = $('ns-name').value.trim();
-      const email  = $('ns-email').value.trim();
-      const puesto = $('ns-puesto').value.trim();
-      const role   = $('ns-role').value;
-      const services = [...document.querySelectorAll('.ns-svc:checked')].map(c => c.value);
+        const name = $('ns-name').value.trim();
+        const email = $('ns-email').value.trim();
+        const puesto = $('ns-puesto').value.trim();
+        const role = $('ns-role').value;
+        const services = [...document.querySelectorAll('.ns-svc:checked')].map(c => c.value);
 
-      if (!name || !email) { alert('Nombre y correo son obligatorios.'); return; }
+        if (!name || !email) { alert('Nombre y correo son obligatorios.'); return; }
 
-      // El alta requiere crear el usuario en Auth Y el doc en `staff` con el
-      // MISMO uid. Solo el Admin SDK puede hacerlo, por eso va por callable:
-      // las reglas bloquean `create` sobre staff/{uid} desde el navegador,
-      // justo para que nadie pueda auto-asignarse role:'admin'.
-      try {
-        const fn = httpsCallable(getFunctions(getApp()), 'onStaffCreate');
-        await fn({ name, email, puesto, role, services });
-        await window.logEvent('staff_created', `Empleado creado: ${name} (${role})`);
-        alert('Empleado creado. Se le envió un correo para definir su contraseña.');
-        window.closeStaffModal();
-      } catch (e) {
-        console.error(e);
-        alert('No se pudo crear el empleado.\n\nSi el error es "not-found", falta ' +
-              'desplegar la Cloud Function onStaffCreate (ver 05_GUIA_SETUP.md paso 7). ' +
-              'Mientras tanto, créalo a mano en Authentication + Firestore.');
-      }
+        // El alta requiere crear el usuario en Auth Y el doc en `staff` con el
+        // MISMO uid. Solo el Admin SDK puede hacerlo, por eso va por callable:
+        // las reglas bloquean `create` sobre staff/{uid} desde el navegador,
+        // justo para que nadie pueda auto-asignarse role:'admin'.
+        try {
+            const fn = httpsCallable(getFunctions(getApp()), 'onStaffCreate');
+            await fn({ name, email, puesto, role, services });
+            await window.logEvent('staff_created', `Empleado creado: ${name} (${role})`);
+            alert('Empleado creado. Se le envió un correo para definir su contraseña.');
+            window.closeStaffModal();
+        } catch (e) {
+            console.error(e);
+            alert('No se pudo crear el empleado.\n\nSi el error es "not-found", falta ' +
+                'desplegar la Cloud Function onStaffCreate (ver 05_GUIA_SETUP.md paso 7). ' +
+                'Mientras tanto, créalo a mano en Authentication + Firestore.');
+        }
     };
 
 
@@ -3053,13 +3053,13 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
     /** ¿El empleado tiene ausencia APROBADA que cubra esa fecha/hora? */
     function tieneAusencia(uid, fechaISO, hora) {
-      return timeOffList.some(r => {
-        if (r.uid !== uid || r.status !== 'approved') return false;
-        if (fechaISO < r.dateStart || fechaISO > (r.dateEnd || r.dateStart)) return false;
-        // Salida temprana: solo bloquea a partir de esa hora
-        if (r.type === 'salida_temprana' && r.hourStart) return hora >= r.hourStart;
-        return true;
-      });
+        return timeOffList.some(r => {
+            if (r.uid !== uid || r.status !== 'approved') return false;
+            if (fechaISO < r.dateStart || fechaISO > (r.dateEnd || r.dateStart)) return false;
+            // Salida temprana: solo bloquea a partir de esa hora
+            if (r.type === 'salida_temprana' && r.hourStart) return hora >= r.hourStart;
+            return true;
+        });
     }
 
     /**
@@ -3068,20 +3068,20 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
      * @returns {number}
      */
     window.capacidadServicio = (servicio, fechaISO, hora) => {
-      const weekday = String(new Date(fechaISO + 'T12:00:00').getDay());
+        const weekday = String(new Date(fechaISO + 'T12:00:00').getDay());
 
-      return staffList.filter(s => {
-        if (s.active === false) return false;
-        if (!(s.services || []).includes(servicio)) return false;
+        return staffList.filter(s => {
+            if (s.active === false) return false;
+            if (!(s.services || []).includes(servicio)) return false;
 
-        const dia = schedulesById[s.uid]?.week?.[weekday];
-        if (!dia?.works) return false;
-        if (hora < dia.start || hora >= dia.end) return false;
-        if (dia.lunch && hora >= dia.lunch[0] && hora < dia.lunch[1]) return false;
-        if (tieneAusencia(s.uid, fechaISO, hora)) return false;
+            const dia = schedulesById[s.uid]?.week?.[weekday];
+            if (!dia?.works) return false;
+            if (hora < dia.start || hora >= dia.end) return false;
+            if (dia.lunch && hora >= dia.lunch[0] && hora < dia.lunch[1]) return false;
+            if (tieneAusencia(s.uid, fechaISO, hora)) return false;
 
-        return true;
-      }).length;
+            return true;
+        }).length;
     };
 
     /**
@@ -3091,21 +3091,21 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
      * Hasta entonces, dos usuarios simultáneos pueden tomar el mismo cupo.
      */
     window.slotsLibres = (servicio, fechaISO, hora) => {
-      const cap = window.capacidadServicio(servicio, fechaISO, hora);
-      const ocupados = (window.citasData || []).filter(c =>
-        c.fecha === fechaISO && c.horaInicio <= hora && (c.horaFin || c.horaInicio) > hora
-      ).length;
-      return Math.max(0, cap - ocupados);
+        const cap = window.capacidadServicio(servicio, fechaISO, hora);
+        const ocupados = (window.citasData || []).filter(c =>
+            c.fecha === fechaISO && c.horaInicio <= hora && (c.horaFin || c.horaInicio) > hora
+        ).length;
+        return Math.max(0, cap - ocupados);
     };
 
     /** Slots de un día completo, en pasos de `duracionMin`. */
     window.slotsDelDia = (servicio, fechaISO, duracionMin = 60) => {
-      const out = [];
-      for (let m = 8 * 60; m + duracionMin <= 19 * 60; m += duracionMin) {
-        const hora = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
-        out.push({ hora, libres: window.slotsLibres(servicio, fechaISO, hora) });
-      }
-      return out;
+        const out = [];
+        for (let m = 8 * 60; m + duracionMin <= 19 * 60; m += duracionMin) {
+            const hora = `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+            out.push({ hora, libres: window.slotsLibres(servicio, fechaISO, hora) });
+        }
+        return out;
     };
 
     // Arranque
@@ -3122,11 +3122,11 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     const { getApp } = await import("https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js");
 
     const db = window.db || getFirestore(getApp());
-    const $  = (id) => document.getElementById(id);
+    const $ = (id) => document.getElementById(id);
 
     // El <select> de la landing usa pequeno/mediano/grande;
     // el motor interno usa peq/med/gra.
-    const SIZE_MAP   = { pequeno: 'peq', mediano: 'med', grande: 'gra' };
+    const SIZE_MAP = { pequeno: 'peq', mediano: 'med', grande: 'gra' };
     const SIZE_LABEL = { peq: 'pequeño', med: 'mediano', gra: 'grande' };
     const DIAS_HORIZONTE = 180;
 
@@ -3143,9 +3143,9 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     /* ---------------- botón "Consultar Sistema" -------------------- */
 
     window.checkAvailability = () => {
-        const fecha   = $('check-date')?.value;
+        const fecha = $('check-date')?.value;
         const sizeRaw = $('check-size')?.value;
-        const box     = $('availability-result');
+        const box = $('availability-result');
         if (!box) return;
 
         if (!fecha || !sizeRaw) {
@@ -3159,47 +3159,47 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
             return;
         }
 
-        const size     = SIZE_MAP[sizeRaw] || 'med';
-        const cap      = window.availabilitySummary.capacity?.[size] || 0;
+        const size = SIZE_MAP[sizeRaw] || 'med';
+        const cap = window.availabilitySummary.capacity?.[size] || 0;
         const ocupadas = window.availabilitySummary.days?.[fecha]?.[size] || 0;
-        const libres   = Math.max(0, cap - ocupadas);
+        const libres = Math.max(0, cap - ocupadas);
 
-        const icon   = $('avail-icon');
+        const icon = $('avail-icon');
         const status = $('avail-status');
-        const msg    = $('avail-msg');
-        const flow   = $('registration-flow');
+        const msg = $('avail-msg');
+        const flow = $('registration-flow');
 
         box.classList.remove('hidden');
         box.className = box.className.replace(/border-\S+|bg-\S+/g, '').trim();
 
         if (cap === 0) {
             // Capacidad sin configurar: no mentir diciendo "no hay cupo".
-            icon.innerHTML   = '<i class="fa-solid fa-circle-info text-blue-300"></i>';
+            icon.innerHTML = '<i class="fa-solid fa-circle-info text-blue-300"></i>';
             status.innerText = 'Consúltanos directamente';
-            msg.innerText    = 'Estamos terminando de habilitar la consulta en línea. '
-                             + 'Escríbenos por WhatsApp y te confirmamos al momento.';
+            msg.innerText = 'Estamos terminando de habilitar la consulta en línea. '
+                + 'Escríbenos por WhatsApp y te confirmamos al momento.';
             box.classList.add('mt-10', 'text-center', 'p-8', 'rounded-2xl', 'border-2',
-                              'fade-in', 'shadow-inner', 'bg-blue-500/10', 'border-blue-300/40');
+                'fade-in', 'shadow-inner', 'bg-blue-500/10', 'border-blue-300/40');
             flow?.classList.remove('hidden');
 
         } else if (libres > 0) {
-            icon.innerHTML   = '<i class="fa-solid fa-circle-check text-green-400"></i>';
+            icon.innerHTML = '<i class="fa-solid fa-circle-check text-green-400"></i>';
             status.innerText = '¡Tenemos espacio disponible!';
-            msg.innerText    = `Quedan ${libres} ${libres === 1 ? 'espacio' : 'espacios'} `
-                             + `para perros de tamaño ${SIZE_LABEL[size]} el `
-                             + `${formatoFecha(fecha)}.`;
+            msg.innerText = `Quedan ${libres} ${libres === 1 ? 'espacio' : 'espacios'} `
+                + `para perros de tamaño ${SIZE_LABEL[size]} el `
+                + `${formatoFecha(fecha)}.`;
             box.classList.add('mt-10', 'text-center', 'p-8', 'rounded-2xl', 'border-2',
-                              'fade-in', 'shadow-inner', 'bg-green-500/10', 'border-green-400/40');
+                'fade-in', 'shadow-inner', 'bg-green-500/10', 'border-green-400/40');
             flow?.classList.remove('hidden');
 
         } else {
-            icon.innerHTML   = '<i class="fa-solid fa-circle-xmark text-red-400"></i>';
+            icon.innerHTML = '<i class="fa-solid fa-circle-xmark text-red-400"></i>';
             status.innerText = 'Sin cupo para esa fecha';
-            msg.innerText    = `Ya no tenemos espacio para perros de tamaño `
-                             + `${SIZE_LABEL[size]} el ${formatoFecha(fecha)}. `
-                             + `Prueba con otra fecha o escríbenos para buscar alternativas.`;
+            msg.innerText = `Ya no tenemos espacio para perros de tamaño `
+                + `${SIZE_LABEL[size]} el ${formatoFecha(fecha)}. `
+                + `Prueba con otra fecha o escríbenos para buscar alternativas.`;
             box.classList.add('mt-10', 'text-center', 'p-8', 'rounded-2xl', 'border-2',
-                              'fade-in', 'shadow-inner', 'bg-red-500/10', 'border-red-400/40');
+                'fade-in', 'shadow-inner', 'bg-red-500/10', 'border-red-400/40');
             flow?.classList.add('hidden');
             sugerirFechas(size, fecha);
         }
@@ -3214,7 +3214,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
     /** Busca las 3 fechas libres más cercanas y las muestra bajo el mensaje. */
     function sugerirFechas(size, desde) {
-        const cap   = window.availabilitySummary.capacity?.[size] || 0;
+        const cap = window.availabilitySummary.capacity?.[size] || 0;
         const libres = [];
         const d = new Date(desde + 'T12:00:00');
 
@@ -3232,7 +3232,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                 `<button onclick="document.getElementById('check-date').value='${f}';checkAvailability();"
                          class="inline-block mt-2 mx-1 bg-white/15 hover:bg-white/25 px-4 py-2 rounded-lg
                                 text-sm font-bold transition">${formatoFecha(f)}</button>`
-              ).join('');
+            ).join('');
     }
 
 
@@ -3240,7 +3240,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
     window.startWhatsAppBot = () => {
         const fecha = $('check-date')?.value;
-        const size  = $('check-size')?.value;
+        const size = $('check-size')?.value;
         const texto = encodeURIComponent(
             '¡Hola Casa Canis! Quiero consultar disponibilidad'
             + (fecha ? ` para el ${formatoFecha(fecha)}` : '')
@@ -3260,18 +3260,18 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         if (!window.currentUser) return;               // solo con sesión de staff
 
         const days = {};
-        const hoy  = new Date();
+        const hoy = new Date();
 
         (window.clientsData || []).forEach(c => {
             if (!ESTADOS_OCUPAN.includes(c.estado)) return;
             if (!c.fecha_checkin) return;
 
             const inicio = new Date(c.fecha_checkin + 'T12:00:00');
-            const fin    = new Date((c.fecha_checkout || c.fecha_checkin) + 'T12:00:00');
+            const fin = new Date((c.fecha_checkout || c.fecha_checkin) + 'T12:00:00');
 
             for (const m of (c.mascotas || [])) {
                 const size = m.tamano || m.tamaño || 'med';
-                const key  = SIZE_MAP[size] || size;
+                const key = SIZE_MAP[size] || size;
                 if (!['peq', 'med', 'gra'].includes(key)) continue;
 
                 // La noche de salida NO ocupa: la habitación se libera a las 11 am
@@ -3338,16 +3338,16 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 (async function () {
 
     const { getFirestore, collection, addDoc, doc, setDoc, deleteDoc, onSnapshot,
-            serverTimestamp } =
+        serverTimestamp } =
         await import("https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js");
     const { getApp } = await import("https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js");
 
     const db = window.db || getFirestore(getApp());
-    const $  = (id) => document.getElementById(id);
+    const $ = (id) => document.getElementById(id);
     const money = (n) => 'Q ' + (Number(n) || 0).toFixed(2);
 
     const PASOS = ['Fechas y Mascotas', 'Datos del Cliente', 'Validación Médica',
-                   'Términos y Condiciones', 'Pago y Comprobante'];
+        'Términos y Condiciones', 'Pago y Comprobante'];
     const TOTAL = PASOS.length;
     const SIZE_LABEL = { peq: 'Pequeño', med: 'Mediano', gra: 'Grande' };
 
@@ -3365,7 +3365,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     /** Rangos de peso de la tabla de precios de Casa Canis. */
     function tamanoPorPeso(lb) {
         const n = Number(lb) || 0;
-        if (n <= 0)  return null;
+        if (n <= 0) return null;
         if (n <= 40) return 'peq';
         if (n <= 60) return 'med';
         return 'gra';
@@ -3396,7 +3396,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
     onSnapshot(doc(db, 'settings', 'legal'), (snap) => {
         const d = snap.data() || {};
-        window.currentTerms        = d.terms   || '';
+        window.currentTerms = d.terms || '';
         window.currentTermsVersion = d.version || 'v0';
         if ($('bw-tc-text')) $('bw-tc-text').innerText = d.terms || 'Aún no se han publicado los términos.';
         if ($('bw-tc-version')) $('bw-tc-version').innerText = d.version || '';
@@ -3414,23 +3414,23 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     function pintarDatosBancarios() {
         const p = window.paymentConfig;
         const set = (id, v) => { const el = $(id); if (el) el.innerText = v || '—'; };
-        set('bw-bank-name', p.banco);   set('bw-bank-type', p.tipoCuenta);
+        set('bw-bank-name', p.banco); set('bw-bank-type', p.tipoCuenta);
         set('bw-bank-number', p.numero); set('bw-bank-owner', p.aNombre);
         set('bw-bank-nit', p.nit);
         if ($('bw-bank-nit-row')) $('bw-bank-nit-row').style.display = p.nit ? '' : 'none';
-        if ($('bw-bank-notes'))   $('bw-bank-notes').innerText = p.notas || '';
-        if ($('bw-total-nota'))   $('bw-total-nota').innerText =
+        if ($('bw-bank-notes')) $('bw-bank-notes').innerText = p.notas || '';
+        if ($('bw-total-nota')) $('bw-total-nota').innerText =
             `Pago del ${p.porcentaje || 100}% por adelantado.`;
     }
 
     function pintarFormularioConfig() {
         const p = window.paymentConfig;
         const set = (id, v) => { const el = $(id); if (el && !el.value) el.value = v || ''; };
-        set('cfg-bank-name', p.banco);   set('cfg-bank-number', p.numero);
+        set('cfg-bank-name', p.banco); set('cfg-bank-number', p.numero);
         set('cfg-bank-owner', p.aNombre); set('cfg-bank-nit', p.nit);
         set('cfg-bank-notes', p.notas);
         if ($('cfg-bank-type')) $('cfg-bank-type').value = p.tipoCuenta || 'Monetaria';
-        if ($('cfg-pay-pct'))   $('cfg-pay-pct').value   = p.porcentaje || 100;
+        if ($('cfg-pay-pct')) $('cfg-pay-pct').value = p.porcentaje || 100;
     }
 
     window.copyBankNumber = () => {
@@ -3450,8 +3450,10 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
             ? `${hoy}-${(parseInt(previa.split('-')[3]) || 1) + 1}` : hoy;
         try {
             await setDoc(doc(db, 'settings', 'legal'),
-                { terms: texto, version, updatedAt: serverTimestamp(),
-                  updatedBy: window.currentUser?.uid || null }, { merge: true });
+                {
+                    terms: texto, version, updatedAt: serverTimestamp(),
+                    updatedBy: window.currentUser?.uid || null
+                }, { merge: true });
             await setDoc(doc(db, 'settings', 'legal_versions'), { [version]: texto }, { merge: true });
             await window.logEvent('terms_updated', `Términos publicados, versión ${version}`);
             alert(`Términos publicados. Versión ${version}.`);
@@ -3482,8 +3484,10 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     /* ---------------- mascotas: lista dinámica --------------------- */
 
     window.addPetRow = () => {
-        pets.push({ id: nextPetId++, nombre: '', pesoLb: '', tamano: null,
-                    raza: '', edad: '', files: null });
+        pets.push({
+            id: nextPetId++, nombre: '', pesoLb: '', tamano: null,
+            raza: '', edad: '', files: null
+        });
         renderPets();
         onBookingChange();
     };
@@ -3526,9 +3530,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                            class="w-full px-3 py-2 pr-8 bg-white border border-gray-200 rounded-lg text-sm outline-none focus:border-gold">
                     <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-400">lb</span>
                 </div>
-                <span id="bw-pet-size-${p.id}" class="text-[10px] font-bold px-2 py-1 rounded-full shrink-0 ${
-                    p.tamano ? 'bg-gold/20 text-forest' : 'bg-gray-100 text-gray-400'}">${
-                    p.tamano ? SIZE_LABEL[p.tamano] : '—'}</span>
+                <span id="bw-pet-size-${p.id}" class="text-[10px] font-bold px-2 py-1 rounded-full shrink-0 ${p.tamano ? 'bg-gold/20 text-forest' : 'bg-gray-100 text-gray-400'}">${p.tamano ? SIZE_LABEL[p.tamano] : '—'}</span>
                 <button type="button" onclick="removePetRow(${p.id})"
                         class="text-gray-300 hover:text-red-500 transition shrink-0 px-1">
                     <i class="fa-solid fa-trash"></i>
@@ -3569,9 +3571,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                         <p class="font-bold text-forest text-sm">${p.nombre || 'Mascota'}</p>
                         <p class="text-xs text-gray-500">Cartilla de vacunación y desparasitación</p>
                     </div>
-                    <span id="bw-pet-files-${p.id}" class="text-xs font-bold ${
-                        p.files?.length ? 'text-green-600' : 'text-gray-300'}">${
-                        p.files?.length ? '✓ ' + p.files.length + ' archivo(s)' : 'Pendiente'}</span>
+                    <span id="bw-pet-files-${p.id}" class="text-xs font-bold ${p.files?.length ? 'text-green-600' : 'text-gray-300'}">${p.files?.length ? '✓ ' + p.files.length + ' archivo(s)' : 'Pendiente'}</span>
                 </div>
             </label>`).join('');
     }
@@ -3741,7 +3741,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
     function prepararTerminos() {
         const box = $('bw-tc-text'), chk = $('bw-accept-tc'),
-              lbl = $('bw-tc-label'), hint = $('bw-tc-hint');
+            lbl = $('bw-tc-label'), hint = $('bw-tc-hint');
         if (!box || !chk) return;
         if (box.scrollHeight <= box.clientHeight + 4) terminosLeidos = true;
         chk.disabled = !terminosLeidos;
@@ -3800,14 +3800,14 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
             if (!co || co <= ci) { alert('La fecha de salida debe ser posterior a la de entrada.'); return; }
 
             const sinNombre = pets.some(p => !p.nombre.trim());
-            const sinPeso   = pets.some(p => !p.tamano);
+            const sinPeso = pets.some(p => !p.tamano);
             if (sinNombre) { alert('Cada mascota necesita nombre.'); return; }
-            if (sinPeso)   { alert('Indica el peso de cada mascota.'); return; }
+            if (sinPeso) { alert('Indica el peso de cada mascota.'); return; }
             if (!revisarDisponibilidad()) { alert('No hay cupo suficiente para esas fechas.'); return; }
 
             loader('Apartando tus cupos...');
             try {
-                if (lockId) await deleteDoc(doc(db, 'locks', lockId)).catch(() => {});
+                if (lockId) await deleteDoc(doc(db, 'locks', lockId)).catch(() => { });
                 const ref = await addDoc(collection(db, 'locks'), {
                     date: ci, dateEnd: co,
                     size: pets[0].tamano,
@@ -3876,13 +3876,13 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
             await addDoc(collection(db, 'clients'), {
                 nombre: $('bw-nombre').value.trim(),
-                tel:    $('bw-tel').value.trim(),
-                email:  $('bw-email').value.trim(),
+                tel: $('bw-tel').value.trim(),
+                email: $('bw-email').value.trim(),
                 optOut: { whatsapp: false, email: false },
                 mascotas,
                 servicioId: svc?.id || null,
-                servicio:   svc?.name || '',
-                fecha_checkin:  $('bw-date').value,
+                servicio: svc?.name || '',
+                fecha_checkin: $('bw-date').value,
                 fecha_checkout: $('bw-date-out').value,
                 noches: n,
                 cupos: mascotas.length,
@@ -3898,7 +3898,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                 timestamp: new Date().toISOString()
             });
 
-            if (lockId) { await deleteDoc(doc(db, 'locks', lockId)).catch(() => {}); lockId = null; }
+            if (lockId) { await deleteDoc(doc(db, 'locks', lockId)).catch(() => { }); lockId = null; }
 
             sinLoader();
             $('booking-wizard-modal').classList.add('hidden');
@@ -3913,4 +3913,25 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     }
 
     console.info('%c[Casa Canis] flujo de reserva v3 activo', 'color:#C5A059;font-weight:bold');
+})();
+/* ===== sesión anónima para subidas públicas ======================== */
+(async function () {
+    const { getAuth, signInAnonymously } =
+        await import("https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js");
+    const { getApp } = await import("https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js");
+
+    const auth = window.auth || getAuth(getApp());
+    const subirOriginal = window.uploadImageFile;
+
+    // Garantiza una sesión antes de subir. Si ya hay staff conectado,
+    // se respeta esa sesión y no se crea ninguna anónima.
+    window.uploadImageFile = async (file, folder = 'landing') => {
+        if (!auth.currentUser) {
+            try { await signInAnonymously(auth); }
+            catch (e) { console.error('[anon]', e); }
+        }
+        return await subirOriginal(file, folder);
+    };
+
+    console.info('%c[Casa Canis] sesión anónima lista', 'color:#C5A059;font-weight:bold');
 })();
