@@ -3923,13 +3923,14 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     const auth = window.auth || getAuth(getApp());
     const subirOriginal = window.uploadImageFile;
 
-    // Garantiza una sesión antes de subir. Si ya hay staff conectado,
-    // se respeta esa sesión y no se crea ninguna anónima.
     window.uploadImageFile = async (file, folder = 'landing') => {
         if (!auth.currentUser) {
-            try { await signInAnonymously(auth); }
-            catch (e) { console.error('[anon]', e); }
+            // Sin catch silencioso: si esto falla, la subida no puede
+            // funcionar y el error tiene que llegar al usuario.
+            await signInAnonymously(auth);
         }
+        console.log('[subida]', folder, '· uid:', auth.currentUser?.uid,
+            '· anónimo:', auth.currentUser?.isAnonymous);
         return await subirOriginal(file, folder);
     };
 
