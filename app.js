@@ -7,7 +7,7 @@
    ===================================================================== */
 
 import { getApp, initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-import { browserLocalPersistence, browserSessionPersistence, getAuth, onAuthStateChanged, setPersistence, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+import { browserLocalPersistence, browserSessionPersistence, getAuth, onAuthStateChanged, setPersistence, signInAnonymously, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
 import { Timestamp, addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, getFirestore, increment, limit, onSnapshot, orderBy, query, runTransaction, serverTimestamp, setDoc, updateDoc, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-functions.js";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-storage.js";
@@ -358,7 +358,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                     const file = vacunasFiles[i];
                     const storageRef = ref(window.storage, `medical/${Date.now()}_${file.name}`);
                     const snapshot = await uploadBytes(storageRef, file);
-                    const downloadURL = await getDownloadURL(snapshot.ref);
+                    const downloadURL = `https://firebasestorage.googleapis.com/v0/b/${window.storage.bucket}/o/${encodeURIComponent(snapshot.ref.fullPath)}?alt=media`;
                     medicalUrls.push(downloadURL);
                 }
 
@@ -366,7 +366,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                 if (transferFile) {
                     const storageRef = ref(window.storage, `payments/${Date.now()}_${transferFile.name}`);
                     const snapshot = await uploadBytes(storageRef, transferFile);
-                    comprobanteUrl = await getDownloadURL(snapshot.ref);
+                    comprobanteUrl = `https://firebasestorage.googleapis.com/v0/b/${window.storage.bucket}/o/${encodeURIComponent(snapshot.ref.fullPath)}?alt=media`;
                 }
             }
 
@@ -1991,11 +1991,11 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         const payload = await compressImage(file);
         const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(-60);
         const path = `${folder}/${Date.now()}_${safeName}`;
-        const snap = await uploadBytes(ref(storage, path), payload, {
+        const snap = await uploadBytes(ref(window.storage, path), payload, {
             contentType: payload.type || file.type,
             cacheControl: 'public,max-age=31536000'
         });
-        return await getDownloadURL(snap.ref);
+        return `https://firebasestorage.googleapis.com/v0/b/${window.storage.bucket}/o/${encodeURIComponent(snap.ref.fullPath)}?alt=media`;
     };
 
 
