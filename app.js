@@ -464,6 +464,250 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     };
 
     // ==========================================
+    // GESTIÓN DE PRODUCTOS: CATEGORÍAS
+    // ==========================================
+
+    window.createProductCategory = async (name, description = '', icon = '📦') => {
+        try {
+            const docRef = await addDoc(collection(window.db, 'productCategories'), {
+                name,
+                description,
+                icon,
+                order: 0,
+                isActive: true,
+                createdBy: window.auth.currentUser.uid,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+            console.log('[Categories] Categoría creada:', docRef.id);
+            return docRef.id;
+        } catch (error) {
+            console.error('[Categories] Error:', error);
+            throw error;
+        }
+    };
+
+    window.updateProductCategory = async (categoryId, data) => {
+        try {
+            await updateDoc(doc(window.db, 'productCategories', categoryId), {
+                ...data,
+                updatedAt: serverTimestamp()
+            });
+            console.log('[Categories] Categoría actualizada:', categoryId);
+        } catch (error) {
+            console.error('[Categories] Error:', error);
+            throw error;
+        }
+    };
+
+    window.deleteProductCategory = async (categoryId) => {
+        try {
+            await deleteDoc(doc(window.db, 'productCategories', categoryId));
+            console.log('[Categories] Categoría eliminada:', categoryId);
+        } catch (error) {
+            console.error('[Categories] Error:', error);
+            throw error;
+        }
+    };
+
+    window.loadProductCategories = async () => {
+        try {
+            const snapshot = await getDocs(collection(window.db, 'productCategories'));
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error('[Categories] Error:', error);
+            return [];
+        }
+    };
+
+    // ==========================================
+    // GESTIÓN DE PRODUCTOS
+    // ==========================================
+
+    window.createProduct = async (name, categoryId, price, quantity = 0, minStock = 10, supplier = '') => {
+        try {
+            const docRef = await addDoc(collection(window.db, 'products'), {
+                name,
+                categoryId,
+                description: '',
+                price,
+                quantity,
+                minStock,
+                supplier,
+                lastRestocked: serverTimestamp(),
+                createdBy: window.auth.currentUser.uid,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+            console.log('[Products] Producto creado:', docRef.id);
+            return docRef.id;
+        } catch (error) {
+            console.error('[Products] Error:', error);
+            throw error;
+        }
+    };
+
+    window.updateProduct = async (productId, data) => {
+        try {
+            await updateDoc(doc(window.db, 'products', productId), {
+                ...data,
+                updatedAt: serverTimestamp()
+            });
+            console.log('[Products] Producto actualizado:', productId);
+        } catch (error) {
+            console.error('[Products] Error:', error);
+            throw error;
+        }
+    };
+
+    window.deleteProduct = async (productId) => {
+        try {
+            await deleteDoc(doc(window.db, 'products', productId));
+            console.log('[Products] Producto eliminado:', productId);
+        } catch (error) {
+            console.error('[Products] Error:', error);
+            throw error;
+        }
+    };
+
+    window.loadProducts = async (categoryId = null) => {
+        try {
+            let q;
+            if (categoryId) {
+                q = query(collection(window.db, 'products'), where('categoryId', '==', categoryId));
+            } else {
+                q = collection(window.db, 'products');
+            }
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error('[Products] Error:', error);
+            return [];
+        }
+    };
+
+    window.checkLowStock = async () => {
+        try {
+            const products = await window.loadProducts();
+            return products.filter(p => p.quantity <= p.minStock);
+        } catch (error) {
+            console.error('[Inventory] Error:', error);
+            return [];
+        }
+    };
+
+    // ==========================================
+    // GESTIÓN DE SERVICIOS
+    // ==========================================
+
+    window.createService = async (name, category, durationMinutes, priceBySize) => {
+        try {
+            const docRef = await addDoc(collection(window.db, 'services'), {
+                name,
+                description: '',
+                category,
+                durationMinutes,
+                basePrice: priceBySize.medium || 0,
+                priceBySize,
+                isActive: true,
+                createdBy: window.auth.currentUser.uid,
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+            console.log('[Services] Servicio creado:', docRef.id);
+            return docRef.id;
+        } catch (error) {
+            console.error('[Services] Error:', error);
+            throw error;
+        }
+    };
+
+    window.updateService = async (serviceId, data) => {
+        try {
+            await updateDoc(doc(window.db, 'services', serviceId), {
+                ...data,
+                updatedAt: serverTimestamp()
+            });
+            console.log('[Services] Servicio actualizado:', serviceId);
+        } catch (error) {
+            console.error('[Services] Error:', error);
+            throw error;
+        }
+    };
+
+    window.deleteService = async (serviceId) => {
+        try {
+            await deleteDoc(doc(window.db, 'services', serviceId));
+            console.log('[Services] Servicio eliminado:', serviceId);
+        } catch (error) {
+            console.error('[Services] Error:', error);
+            throw error;
+        }
+    };
+
+    window.loadServices = async () => {
+        try {
+            const snapshot = await getDocs(collection(window.db, 'services'));
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error('[Services] Error:', error);
+            return [];
+        }
+    };
+
+    // ==========================================
+    // GESTIÓN DE INVENTARIO
+    // ==========================================
+
+    window.recordInventoryMovement = async (productId, quantity, type, reason) => {
+        try {
+            // type: "entrada", "salida", "ajuste"
+            const docRef = await addDoc(collection(window.db, 'inventory'), {
+                productId,
+                quantity,
+                type,
+                reason,
+                createdBy: window.auth.currentUser.uid,
+                createdAt: serverTimestamp()
+            });
+
+            // Actualizar cantidad en producto
+            const product = await getDoc(doc(window.db, 'products', productId));
+            if (product.exists()) {
+                const newQuantity = product.data().quantity + (type === 'salida' ? -quantity : quantity);
+                await updateProduct(productId, { quantity: newQuantity });
+
+                // Alertar si stock bajo
+                if (newQuantity <= product.data().minStock) {
+                    console.warn('[Inventory] ⚠️ STOCK BAJO:', product.data().name, '(' + newQuantity + '/' + product.data().minStock + ')');
+                }
+            }
+
+            console.log('[Inventory] Movimiento registrado:', docRef.id);
+            return docRef.id;
+        } catch (error) {
+            console.error('[Inventory] Error:', error);
+            throw error;
+        }
+    };
+
+    window.loadInventoryMovements = async (productId = null) => {
+        try {
+            let q;
+            if (productId) {
+                q = query(collection(window.db, 'inventory'), where('productId', '==', productId), orderBy('createdAt', 'desc'));
+            } else {
+                q = query(collection(window.db, 'inventory'), orderBy('createdAt', 'desc'));
+            }
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } catch (error) {
+            console.error('[Inventory] Error:', error);
+            return [];
+        }
+    };
+
+    // ==========================================
     // BOOKING WIZARD LOGIC (RESERVATIONS & LOCKS)
     // ==========================================
     let currentWizardStep = 1;
