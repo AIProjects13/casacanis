@@ -17,12 +17,12 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 (async function () {
     // 2. CONFIGURACIÓN FIREBASE
     const firebaseConfig = {
-        apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-        authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-        projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-        storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-        messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-        appId: import.meta.env.VITE_FIREBASE_APP_ID
+        apiKey: "AIzaSyASyXuzH5HvZL0LWsmazvg-6iW4bqO4snk",
+        authDomain: "casacanis-dd642.firebaseapp.com",
+        projectId: "casacanis-dd642",
+        storageBucket: "casacanis-dd642.firebasestorage.app",
+        messagingSenderId: "616453134402",
+        appId: "1:616453134402:web:64fa0850adb6c84a9fb5db"
     };
 
     const app = initializeApp(firebaseConfig);
