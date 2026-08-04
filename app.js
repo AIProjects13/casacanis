@@ -708,6 +708,310 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     };
 
     // ==========================================
+    // UI: MODALES Y CARGA DE DATOS
+    // ==========================================
+
+    // CATEGORÍAS
+    window.openCategoryModal = (categoryId = null) => {
+        if (categoryId) {
+            // Editar
+            // TODO: Cargar datos de categoría
+        }
+        document.getElementById('category-modal').classList.remove('hidden');
+    };
+
+    window.closeCategoryModal = () => {
+        document.getElementById('category-modal').classList.add('hidden');
+        document.getElementById('category-id').value = '';
+        document.getElementById('category-name').value = '';
+        document.getElementById('category-desc').value = '';
+        document.getElementById('category-icon').value = '';
+    };
+
+    window.saveCategoryModal = async () => {
+        const id = document.getElementById('category-id').value;
+        const name = document.getElementById('category-name').value.trim();
+        const desc = document.getElementById('category-desc').value.trim();
+        const icon = document.getElementById('category-icon').value.trim();
+
+        if (!name) {
+            alert('El nombre es obligatorio');
+            return;
+        }
+
+        try {
+            if (id) {
+                await window.updateProductCategory(id, { name, description: desc, icon });
+            } else {
+                await window.createProductCategory(name, desc, icon);
+            }
+            window.closeCategoryModal();
+            await window.loadAndShowCategories();
+        } catch (error) {
+            console.error('[UI] Error:', error);
+            alert('Error al guardar categoría');
+        }
+    };
+
+    window.loadAndShowCategories = async () => {
+        try {
+            const categories = await window.loadProductCategories();
+            const tbody = document.getElementById('categories-tbody');
+            tbody.innerHTML = categories.map(cat => `
+                <tr>
+                    <td class="p-4">${cat.icon} ${window.SecurityUtils.escapeHTML(cat.name)}</td>
+                    <td class="p-4 text-gray-600">${window.SecurityUtils.escapeHTML(cat.description || '')}</td>
+                    <td class="p-4 text-center">
+                        <button onclick="window.openCategoryModal('${cat.id}')" class="text-gold hover:underline text-sm font-bold">Editar</button>
+                        <button onclick="window.deleteProductCategory('${cat.id}').then(() => window.loadAndShowCategories())" class="text-red-500 hover:underline text-sm font-bold ml-2">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td class="p-4 text-gray-500" colspan="3">Sin categorías</td></tr>';
+        } catch (error) {
+            console.error('[UI] Error:', error);
+        }
+    };
+
+    // PRODUCTOS
+    window.openProductModal = (productId = null) => {
+        if (productId) {
+            // Editar
+            // TODO: Cargar datos de producto
+        }
+        document.getElementById('product-modal').classList.remove('hidden');
+        window.loadCategoriesForSelect();
+    };
+
+    window.closeProductModal = () => {
+        document.getElementById('product-modal').classList.add('hidden');
+        document.getElementById('product-id').value = '';
+        document.getElementById('product-name').value = '';
+        document.getElementById('product-category').value = '';
+        document.getElementById('product-price').value = '';
+        document.getElementById('product-quantity').value = '';
+        document.getElementById('product-minstock').value = '10';
+        document.getElementById('product-supplier').value = '';
+    };
+
+    window.loadCategoriesForSelect = async () => {
+        const categories = await window.loadProductCategories();
+        const select = document.getElementById('product-category');
+        select.innerHTML = '<option value="">Selecciona categoría</option>' +
+            categories.map(cat => `<option value="${cat.id}">${cat.icon} ${window.SecurityUtils.escapeHTML(cat.name)}</option>`).join('');
+    };
+
+    window.saveProductModal = async () => {
+        const id = document.getElementById('product-id').value;
+        const name = document.getElementById('product-name').value.trim();
+        const categoryId = document.getElementById('product-category').value;
+        const price = parseFloat(document.getElementById('product-price').value);
+        const quantity = parseInt(document.getElementById('product-quantity').value);
+        const minStock = parseInt(document.getElementById('product-minstock').value);
+        const supplier = document.getElementById('product-supplier').value.trim();
+
+        if (!name || !categoryId || !price) {
+            alert('Completa los campos obligatorios');
+            return;
+        }
+
+        try {
+            if (id) {
+                await window.updateProduct(id, { name, categoryId, price, quantity, minStock, supplier });
+            } else {
+                await window.createProduct(name, categoryId, price, quantity, minStock, supplier);
+            }
+            window.closeProductModal();
+            await window.loadAndShowProducts();
+            await window.loadAndShowInventoryMovements();
+        } catch (error) {
+            console.error('[UI] Error:', error);
+            alert('Error al guardar producto');
+        }
+    };
+
+    window.loadAndShowProducts = async () => {
+        try {
+            const products = await window.loadProducts();
+            const tbody = document.getElementById('products-tbody');
+            tbody.innerHTML = products.map(prod => {
+                const lowStock = prod.quantity <= prod.minStock;
+                return `
+                    <tr ${lowStock ? 'class="bg-red-50"' : ''}>
+                        <td class="p-4">${window.SecurityUtils.escapeHTML(prod.name)}</td>
+                        <td class="p-4 text-gray-600" id="cat-${prod.id}">-</td>
+                        <td class="p-4">Q ${prod.price.toFixed(2)}</td>
+                        <td class="p-4">${prod.quantity}</td>
+                        <td class="p-4">${prod.minStock}</td>
+                        <td class="p-4 text-center">
+                            ${lowStock ? '<span class="text-red-600 font-bold">⚠️ BAJO</span>' : '<span class="text-green-600">✓ OK</span>'}
+                        </td>
+                        <td class="p-4 text-center text-sm">
+                            <button onclick="window.openProductModal('${prod.id}')" class="text-gold hover:underline font-bold">Editar</button>
+                            <button onclick="window.deleteProduct('${prod.id}').then(() => window.loadAndShowProducts())" class="text-red-500 hover:underline font-bold ml-2">Eliminar</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('') || '<tr><td class="p-4 text-gray-500" colspan="7">Sin productos</td></tr>';
+
+            // Llenar categorías en tabla
+            const categories = await window.loadProductCategories();
+            const catMap = Object.fromEntries(categories.map(c => [c.id, c.name]));
+            products.forEach(prod => {
+                const el = document.getElementById(`cat-${prod.id}`);
+                if (el) el.textContent = catMap[prod.categoryId] || '-';
+            });
+        } catch (error) {
+            console.error('[UI] Error:', error);
+        }
+    };
+
+    // SERVICIOS
+    window.openServiceModal = (serviceId = null) => {
+        if (serviceId) {
+            // Editar
+            // TODO: Cargar datos de servicio
+        }
+        document.getElementById('service-modal').classList.remove('hidden');
+    };
+
+    window.closeServiceModal = () => {
+        document.getElementById('service-modal').classList.add('hidden');
+        document.getElementById('service-id').value = '';
+        document.getElementById('service-name').value = '';
+        document.getElementById('service-category').value = 'alojamiento';
+        document.getElementById('service-duration').value = '';
+        document.getElementById('service-price-small').value = '';
+        document.getElementById('service-price-medium').value = '';
+        document.getElementById('service-price-large').value = '';
+    };
+
+    window.saveServiceModal = async () => {
+        const id = document.getElementById('service-id').value;
+        const name = document.getElementById('service-name').value.trim();
+        const category = document.getElementById('service-category').value;
+        const duration = parseInt(document.getElementById('service-duration').value);
+        const priceBySize = {
+            small: parseFloat(document.getElementById('service-price-small').value),
+            medium: parseFloat(document.getElementById('service-price-medium').value),
+            large: parseFloat(document.getElementById('service-price-large').value)
+        };
+
+        if (!name || !duration || !priceBySize.small || !priceBySize.medium || !priceBySize.large) {
+            alert('Completa todos los precios');
+            return;
+        }
+
+        try {
+            if (id) {
+                await window.updateService(id, { name, category, durationMinutes: duration, priceBySize });
+            } else {
+                await window.createService(name, category, duration, priceBySize);
+            }
+            window.closeServiceModal();
+            await window.loadAndShowServices();
+        } catch (error) {
+            console.error('[UI] Error:', error);
+            alert('Error al guardar servicio');
+        }
+    };
+
+    window.loadAndShowServices = async () => {
+        try {
+            const services = await window.loadServices();
+            const tbody = document.getElementById('services-tbody');
+            tbody.innerHTML = services.map(svc => `
+                <tr>
+                    <td class="p-4">${window.SecurityUtils.escapeHTML(svc.name)}</td>
+                    <td class="p-4">${window.SecurityUtils.escapeHTML(svc.category)}</td>
+                    <td class="p-4">${svc.durationMinutes} min</td>
+                    <td class="p-4">Q${svc.priceBySize.small}/Q${svc.priceBySize.medium}/Q${svc.priceBySize.large}</td>
+                    <td class="p-4 text-center text-sm">
+                        <button onclick="window.openServiceModal('${svc.id}')" class="text-gold hover:underline font-bold">Editar</button>
+                        <button onclick="window.deleteService('${svc.id}').then(() => window.loadAndShowServices())" class="text-red-500 hover:underline font-bold ml-2">Eliminar</button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td class="p-4 text-gray-500" colspan="5">Sin servicios</td></tr>';
+        } catch (error) {
+            console.error('[UI] Error:', error);
+        }
+    };
+
+    // INVENTARIO
+    window.openInventoryMovementModal = () => {
+        document.getElementById('inventory-modal').classList.remove('hidden');
+        window.loadProductsForInventory();
+    };
+
+    window.closeInventoryModal = () => {
+        document.getElementById('inventory-modal').classList.add('hidden');
+        document.getElementById('inventory-product').value = '';
+        document.getElementById('inventory-type').value = 'entrada';
+        document.getElementById('inventory-quantity').value = '';
+        document.getElementById('inventory-reason').value = '';
+    };
+
+    window.loadProductsForInventory = async () => {
+        const products = await window.loadProducts();
+        const select = document.getElementById('inventory-product');
+        select.innerHTML = '<option value="">Selecciona producto</option>' +
+            products.map(prod => `<option value="${prod.id}">${window.SecurityUtils.escapeHTML(prod.name)}</option>`).join('');
+    };
+
+    window.saveInventoryModal = async () => {
+        const productId = document.getElementById('inventory-product').value;
+        const type = document.getElementById('inventory-type').value;
+        const quantity = parseInt(document.getElementById('inventory-quantity').value);
+        const reason = document.getElementById('inventory-reason').value.trim();
+
+        if (!productId || !quantity || !reason) {
+            alert('Completa todos los campos');
+            return;
+        }
+
+        try {
+            await window.recordInventoryMovement(productId, quantity, type, reason);
+            window.closeInventoryModal();
+            await window.loadAndShowProducts();
+            await window.loadAndShowInventoryMovements();
+        } catch (error) {
+            console.error('[UI] Error:', error);
+            alert('Error al registrar movimiento');
+        }
+    };
+
+    window.loadAndShowInventoryMovements = async () => {
+        try {
+            const movements = await window.loadInventoryMovements();
+            const products = await window.loadProducts();
+            const prodMap = Object.fromEntries(products.map(p => [p.id, p.name]));
+
+            const tbody = document.getElementById('inventory-movements-tbody');
+            tbody.innerHTML = movements.slice(0, 50).map(mov => `
+                <tr>
+                    <td class="p-4">${window.SecurityUtils.escapeHTML(prodMap[mov.productId] || '-')}</td>
+                    <td class="p-4"><span class="px-2 py-1 rounded text-xs font-bold ${mov.type === 'entrada' ? 'bg-green-100 text-green-800' : mov.type === 'salida' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'}">${mov.type}</span></td>
+                    <td class="p-4">${mov.quantity}</td>
+                    <td class="p-4 text-gray-600">${window.SecurityUtils.escapeHTML(mov.reason)}</td>
+                    <td class="p-4 text-sm text-gray-500">Staff</td>
+                    <td class="p-4 text-sm text-gray-500">${new Date(mov.createdAt?.toDate?.() || mov.createdAt).toLocaleDateString()}</td>
+                </tr>
+            `).join('') || '<tr><td class="p-4 text-gray-500" colspan="6">Sin movimientos</td></tr>';
+        } catch (error) {
+            console.error('[UI] Error:', error);
+        }
+    };
+
+    // Cargar datos al abrir tabs (será llamado por switchTab)
+    window.loadStaffDashboard = async () => {
+        await Promise.all([
+            window.loadAndShowCategories(),
+            window.loadAndShowProducts(),
+            window.loadAndShowServices(),
+            window.loadAndShowInventoryMovements()
+        ]);
+    };
+
+    // ==========================================
     // BOOKING WIZARD LOGIC (RESERVATIONS & LOCKS)
     // ==========================================
     let currentWizardStep = 1;
