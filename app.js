@@ -265,7 +265,8 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                 window.closeAuthModal();
             }
         } catch (error) {
-            errorEl.textContent = 'Error: ' + error.message;
+            console.error('[Auth] Error de login:', error);
+            errorEl.textContent = 'Email o contraseña inválidos. Por favor, intenta de nuevo.';
             errorEl.classList.remove('hidden');
         }
     };
@@ -314,7 +315,11 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
             document.getElementById('client-profile-view').classList.remove('hidden');
             window.closeAuthModal();
         } catch (error) {
-            errorEl.textContent = 'Error: ' + error.message;
+            console.error('[Auth] Error de signup:', error);
+            const errorMsg = error.code === 'auth/email-already-in-use'
+                ? 'Este email ya está registrado.'
+                : 'No se pudo crear la cuenta. Por favor, intenta de nuevo.';
+            errorEl.textContent = errorMsg;
             errorEl.classList.remove('hidden');
         }
     };
