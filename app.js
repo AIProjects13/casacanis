@@ -212,10 +212,10 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
     window.closeAuthModal = () => {
         document.getElementById('auth-modal').classList.add('hidden');
-        document.getElementById('login-email').value = '';
-        document.getElementById('login-password').value = '';
-        document.getElementById('signup-email').value = '';
-        document.getElementById('signup-password').value = '';
+        document.getElementById('auth-login-email').value = '';
+        document.getElementById('auth-login-password').value = '';
+        document.getElementById('auth-signup-email').value = '';
+        document.getElementById('auth-signup-password').value = '';
     };
 
     // Cambiar entre tabs (login/signup)
@@ -233,9 +233,9 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
     // LOGIN
     window.handleLogin = async () => {
-        const email = document.getElementById('login-email').value.trim();
-        const password = document.getElementById('login-password').value.trim();
-        const errorEl = document.getElementById('login-error');
+        const email = document.getElementById('auth-login-email').value.trim();
+        const password = document.getElementById('auth-login-password').value.trim();
+        const errorEl = document.getElementById('auth-login-error');
 
         if (!email || !password) {
             errorEl.textContent = 'Email y contraseña son obligatorios';
@@ -272,13 +272,13 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
     // SIGNUP
     window.handleSignup = async () => {
-        const email = document.getElementById('signup-email').value.trim();
-        const password = document.getElementById('signup-password').value.trim();
-        const name = document.getElementById('signup-name').value.trim();
-        const dpi = document.getElementById('signup-dpi').value.trim();
-        const address = document.getElementById('signup-address').value.trim();
-        const phone = document.getElementById('signup-phone').value.trim();
-        const errorEl = document.getElementById('signup-error');
+        const email = document.getElementById('auth-signup-email').value.trim();
+        const password = document.getElementById('auth-signup-password').value.trim();
+        const name = document.getElementById('auth-signup-name').value.trim();
+        const dpi = document.getElementById('auth-signup-dpi').value.trim();
+        const address = document.getElementById('auth-signup-address').value.trim();
+        const phone = document.getElementById('auth-signup-phone').value.trim();
+        const errorEl = document.getElementById('auth-signup-error');
 
         if (!email || !password || !name || !dpi || !address || !phone) {
             errorEl.textContent = 'Todos los campos son obligatorios';
@@ -755,36 +755,6 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         }
     };
 
-    window.toggleLogin = () => {
-        const modal = document.getElementById('login-modal');
-        modal.classList.toggle('hidden');
-        if (modal.classList.contains('hidden')) {
-            document.body.style.overflow = 'auto';
-        } else {
-            document.body.style.overflow = 'hidden';
-        }
-    };
-
-    window.performLogin = async () => {
-        const email = document.getElementById('login-email').value;
-        const pass = document.getElementById('login-pass').value;
-        try {
-            await setPersistence(window.auth, browserSessionPersistence);
-            await signInWithEmailAndPassword(window.auth, email, pass);
-            window.toggleLogin(); // Cerrar modal
-        } catch (error) {
-            alert('Credenciales incorrectas o no autorizadas.');
-            console.error(error);
-        }
-    };
-
-    window.performLogout = async () => {
-        try {
-            await signOut(window.auth);
-        } catch (error) {
-            console.error("Error al cerrar sesión", error);
-        }
-    };
 
     window.mockLeads = [];
 
@@ -3489,35 +3459,6 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
        Alta de empleado
        ------------------------------------------------------------------ */
 
-    window.openStaffModal = () => $('staff-modal').classList.remove('hidden');
-    window.closeStaffModal = () => $('staff-modal').classList.add('hidden');
-
-    window.createStaff = async () => {
-        const name = $('ns-name').value.trim();
-        const email = $('ns-email').value.trim();
-        const puesto = $('ns-puesto').value.trim();
-        const role = $('ns-role').value;
-        const services = [...document.querySelectorAll('.ns-svc:checked')].map(c => c.value);
-
-        if (!name || !email) { alert('Nombre y correo son obligatorios.'); return; }
-
-        // El alta requiere crear el usuario en Auth Y el doc en `staff` con el
-        // MISMO uid. Solo el Admin SDK puede hacerlo, por eso va por callable:
-        // las reglas bloquean `create` sobre staff/{uid} desde el navegador,
-        // justo para que nadie pueda auto-asignarse role:'admin'.
-        try {
-            const fn = httpsCallable(getFunctions(getApp()), 'onStaffCreate');
-            await fn({ name, email, puesto, role, services });
-            await window.logEvent('staff_created', `Empleado creado: ${name} (${role})`);
-            alert('Empleado creado. Se le envió un correo para definir su contraseña.');
-            window.closeStaffModal();
-        } catch (e) {
-            console.error(e);
-            alert('No se pudo crear el empleado.\n\nSi el error es "not-found", falta ' +
-                'desplegar la Cloud Function onStaffCreate (ver 05_GUIA_SETUP.md paso 7). ' +
-                'Mientras tanto, créalo a mano en Authentication + Firestore.');
-        }
-    };
 
 
     /* ---------------------------------------------------------------------

@@ -473,113 +473,8 @@
     </div>
 
     <!-- ========================================== -->
-    <!-- MODAL DE LOGIN (ACCESO PRIVADO)            -->
-    <!-- ========================================== -->
-    <div id="login-modal" class="hidden fixed inset-0 z-[100] bg-forest/95 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="bg-cream rounded-3xl w-full max-w-md p-10 shadow-2xl border border-gold/30 relative fade-in">
-            <button onclick="toggleLogin()" class="absolute top-6 right-6 text-forest/50 hover:text-forest transition text-2xl"><i class="fa-solid fa-times"></i></button>
-            <div class="text-center mb-10">
-                <div class="w-20 h-20 bg-forest rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                    <i class="fa-solid fa-shield-halved text-gold text-3xl"></i>
-                </div>
-                <h2 class="text-3xl font-bold text-forest">Portal Interno</h2>
-                <p class="text-sm text-gray-500 mt-2">Acceso restringido a personal de Casa Canis</p>
-            </div>
-            <form onsubmit="event.preventDefault(); performLogin();" class="space-y-5">
-                <div>
-                    <label class="block text-sm font-bold text-forest mb-2">Credencial / Correo</label>
-                    <div class="relative">
-                        <i class="fa-solid fa-user absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" id="login-email" class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gold bg-white shadow-inner" placeholder="admin@casacanis.com">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-forest mb-2">Contraseña de Seguridad</label>
-                    <div class="relative">
-                        <i class="fa-solid fa-lock absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <input type="password" id="login-pass" class="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gold bg-white shadow-inner" placeholder="••••••••">
-                    </div>
-                </div>
-                <button type="submit" class="w-full bg-forest text-gold font-bold py-4 rounded-xl hover:bg-forestLight transition mt-6 shadow-lg">
-                    Autenticar Ingreso
-                </button>
-
-            </form>
-        </div>
-    </div>
-
-    <!-- ========================================== -->
     <!-- MODAL: PERFIL DE CLIENTE                   -->
     <!-- ========================================== -->
-    <div id="client-profile-modal" class="hidden fixed inset-0 z-[100] bg-forest/95 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-gray-100 rounded-3xl w-full max-w-4xl p-0 shadow-2xl relative fade-in my-8 flex flex-col max-h-[90vh]">
-            <div class="p-6 bg-white rounded-t-3xl border-b border-gray-200 flex justify-between items-center sticky top-0 z-10">
-                <h2 class="text-2xl font-bold text-forest"><i class="fa-solid fa-user-edit text-gold mr-3"></i>Perfil de Cliente</h2>
-                <button onclick="closeClientProfile()" class="text-gray-400 hover:text-red-500 transition text-2xl"><i class="fa-solid fa-times"></i></button>
-            </div>
-            
-            <div class="p-8 overflow-y-auto custom-scrollbar">
-                <input type="hidden" id="cp-id">
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                    <!-- Datos del Dueño -->
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                        <h4 class="font-bold text-forest mb-4 border-b pb-2">Información del Dueño</h4>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Nombre Completo</label>
-                                <input type="text" id="cp-nombre" class="w-full border border-gray-300 rounded p-2 text-sm focus:border-gold outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Teléfono (WhatsApp)</label>
-                                <input type="text" id="cp-tel" class="w-full border border-gray-300 rounded p-2 text-sm focus:border-gold outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 mb-1">Correo Electrónico</label>
-                                <input type="email" id="cp-email" class="w-full border border-gray-300 rounded p-2 text-sm focus:border-gold outline-none">
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Preferencias de Comunicación (Opt-Out) -->
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                        <h4 class="font-bold text-forest mb-4 border-b pb-2">Preferencias de Marketing</h4>
-                        <p class="text-xs text-gray-500 mb-4">Controles para no recibir campañas masivas.</p>
-                        
-                        <div class="space-y-4">
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" id="cp-optout-whatsapp" class="w-5 h-5 text-gold border-gray-300 rounded focus:ring-gold">
-                                <span class="text-sm font-bold text-gray-700">Bloquear WhatsApps Masivos (Opt-Out)</span>
-                            </label>
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" id="cp-optout-email" class="w-5 h-5 text-gold border-gray-300 rounded focus:ring-gold">
-                                <span class="text-sm font-bold text-gray-700">Bloquear Correos Masivos (Opt-Out)</span>
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Mascotas -->
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                    <div class="flex justify-between items-center border-b pb-2 mb-4">
-                        <h4 class="font-bold text-forest">Mascotas Asociadas</h4>
-                        <button onclick="addCPPet()" class="bg-green-100 text-green-700 hover:bg-green-200 px-3 py-1 rounded text-xs font-bold transition"><i class="fa-solid fa-plus mr-1"></i> Añadir Perro</button>
-                    </div>
-                    <div id="cp-pets-container" class="space-y-4">
-                        <!-- Mascotas dinámicas -->
-                    </div>
-                </div>
-            </div>
-            
-            <div class="p-6 bg-gray-50 rounded-b-3xl border-t border-gray-200 flex justify-between items-center sticky bottom-0 z-10">
-                <button onclick="deleteClientProfile()" class="text-red-500 hover:bg-red-50 px-4 py-2 rounded-lg font-bold text-sm transition admin-only"><i class="fa-solid fa-trash mr-2"></i> Eliminar Cliente</button>
-                <div class="space-x-3">
-                    <button onclick="closeClientProfile()" class="px-4 py-2 font-bold text-gray-600 hover:bg-gray-200 rounded-lg transition text-sm">Cancelar</button>
-                    <button onclick="saveClientProfile()" class="bg-gold text-forest font-bold px-6 py-2 rounded-lg hover:bg-goldHover transition shadow-md text-sm"><i class="fa-solid fa-save mr-2"></i> Guardar Cambios</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
 
     <!-- ========================================== -->
@@ -2016,57 +1911,6 @@
     <!-- ========================================== -->
 
 <!-- Modal: alta de empleado -->
-<div id="staff-modal" class="hidden fixed inset-0 z-[100] bg-forest/95 backdrop-blur-md flex items-center justify-center p-4">
-  <div class="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden">
-    <div class="bg-forest px-8 py-6 flex items-center justify-between">
-      <h3 class="text-xl font-serif font-bold text-gold">Nuevo Empleado</h3>
-      <button onclick="closeStaffModal()" class="text-white/60 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
-    </div>
-    <div class="p-8 space-y-4">
-      <div>
-        <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Nombre completo</label>
-        <input type="text" id="ns-name" class="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-gold">
-      </div>
-      <div>
-        <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Correo</label>
-        <input type="email" id="ns-email" class="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-gold">
-      </div>
-      <div>
-        <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Puesto</label>
-        <input type="text" id="ns-puesto" placeholder="Ej. Groomer Principal"
-               class="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-gold">
-      </div>
-      <div>
-        <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Rol de sistema</label>
-        <select id="ns-role" class="w-full border border-gray-200 rounded-xl p-3 outline-none focus:border-gold bg-white">
-          <option value="agent">Agente (operación diaria)</option>
-          <option value="admin">Administrador (acceso total)</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Servicios que puede atender</label>
-        <div class="grid grid-cols-2 gap-2 text-sm">
-          <label class="flex items-center gap-2"><input type="checkbox" class="ns-svc" value="grooming" class="rounded"> Grooming</label>
-          <label class="flex items-center gap-2"><input type="checkbox" class="ns-svc" value="hospedaje"> Hospedaje</label>
-          <label class="flex items-center gap-2"><input type="checkbox" class="ns-svc" value="daypass"> Day Pass</label>
-          <label class="flex items-center gap-2"><input type="checkbox" class="ns-svc" value="veterinaria"> Veterinaria</label>
-          <label class="flex items-center gap-2"><input type="checkbox" class="ns-svc" value="fisioterapia"> Fisioterapia</label>
-          <label class="flex items-center gap-2"><input type="checkbox" class="ns-svc" value="transporte"> Transporte</label>
-        </div>
-      </div>
-      <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 text-xs text-blue-800">
-        <i class="fa-solid fa-circle-info mr-1"></i>
-        Se creará la cuenta de acceso y se enviará un correo para que el empleado
-        defina su contraseña. Requiere la Cloud Function <code>onStaffCreate</code>.
-      </div>
-    </div>
-    <div class="px-8 pb-8 flex justify-end gap-3">
-      <button onclick="closeStaffModal()" class="px-6 py-3 font-bold text-gray-500 hover:text-gray-800">Cancelar</button>
-      <button onclick="createStaff()" class="bg-forest text-gold font-bold px-8 py-3 rounded-xl hover:bg-forestLight shadow-lg">Crear</button>
-    </div>
-  </div>
-</div>
-
     <!-- ================================================
          LOGIN / SIGNUP MODAL
          ================================================ -->
@@ -2086,48 +1930,48 @@
             <div id="login-tab" class="p-8 space-y-4">
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Email</label>
-                    <input type="email" id="login-email" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="tu@email.com">
+                    <input type="email" id="auth-login-email" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="tu@email.com">
                 </div>
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Contraseña</label>
-                    <input type="password" id="login-password" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="••••••••">
+                    <input type="password" id="auth-login-password" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="••••••••">
                 </div>
                 <button onclick="handleLogin()" class="w-full bg-forest text-cream font-bold py-3 rounded-lg hover:bg-forestLight">
                     Ingresar
                 </button>
-                <p id="login-error" class="text-red-500 text-sm hidden"></p>
+                <p id="auth-login-error" class="text-red-500 text-sm hidden"></p>
             </div>
 
             <!-- SIGNUP TAB -->
             <div id="signup-tab" class="hidden p-8 space-y-4 max-h-96 overflow-y-auto">
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Email</label>
-                    <input type="email" id="signup-email" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="tu@email.com">
+                    <input type="email" id="auth-signup-email" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="tu@email.com">
                 </div>
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Contraseña</label>
-                    <input type="password" id="signup-password" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="••••••••">
+                    <input type="password" id="auth-signup-password" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="••••••••">
                 </div>
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Nombre Completo</label>
-                    <input type="text" id="signup-name" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="Juan García">
+                    <input type="text" id="auth-signup-name" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="Juan García">
                 </div>
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">DPI</label>
-                    <input type="text" id="signup-dpi" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="1234567890123">
+                    <input type="text" id="auth-signup-dpi" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="1234567890123">
                 </div>
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Dirección</label>
-                    <input type="text" id="signup-address" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="Calle 5 #123">
+                    <input type="text" id="auth-signup-address" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="Calle 5 #123">
                 </div>
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2">Teléfono (WhatsApp)</label>
-                    <input type="tel" id="signup-phone" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="+502 7654 3210">
+                    <input type="tel" id="auth-signup-phone" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="+502 7654 3210">
                 </div>
                 <button onclick="handleSignup()" class="w-full bg-forest text-cream font-bold py-3 rounded-lg hover:bg-forestLight">
                     Crear Cuenta
                 </button>
-                <p id="signup-error" class="text-red-500 text-sm hidden"></p>
+                <p id="auth-signup-error" class="text-red-500 text-sm hidden"></p>
             </div>
 
             <!-- CERRAR -->
