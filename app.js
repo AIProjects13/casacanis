@@ -148,8 +148,6 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     // ==========================================
     // AUTO-LOGIN ANÓNIMO PARA USUARIOS SIN SESIÓN (FIX-SUP-1)
     // ==========================================
-    import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
-
     setPersistence(window.auth, browserLocalPersistence)
       .then(() => {
         onAuthStateChanged(window.auth, async (user) => {
