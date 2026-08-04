@@ -17,12 +17,12 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 (async function () {
     // 2. CONFIGURACIÓN FIREBASE
     const firebaseConfig = {
-        apiKey: "AIzaSyASyXuzH5HvZL0LWsmazvg-6iW4bqO4snk",
-        authDomain: "casacanis-dd642.firebaseapp.com",
-        projectId: "casacanis-dd642",
-        storageBucket: "casacanis-dd642.firebasestorage.app",
-        messagingSenderId: "616453134402",
-        appId: "1:616453134402:web:64fa0850adb6c84a9fb5db"
+        apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+        authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+        projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+        storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+        messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+        appId: import.meta.env.VITE_FIREBASE_APP_ID
     };
 
     const app = initializeApp(firebaseConfig);
@@ -31,6 +31,151 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     window.auth = getAuth(app);
     window.storage = getStorage(app);
 
+    // ==========================================
+    // SECURITY UTILITIES (XSS Prevention)
+    // ==========================================
+    window.SecurityUtils = {
+        // Escapa caracteres HTML especiales
+        escapeHTML: function(text) {
+            if (typeof text !== 'string') return '';
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        },
+
+        // Escapa para uso en atributos HTML
+        escapeAttr: function(text) {
+            if (typeof text !== 'string') return '';
+            return text.replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+        },
+
+        // Limpia entrada de usuario
+        sanitizeInput: function(input) {
+            if (typeof input !== 'string') return '';
+            // Remover tags HTML peligrosos
+            return input
+                .replace(/<script[^>]*>.*?<\/script>/gi, '')
+                .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
+                .replace(/<iframe[^>]*>.*?<\/iframe>/gi, '');
+        }
+    };
+
+    // ==========================================
+    // FORM VALIDATORS
+    // ==========================================
+    window.FormValidators = {
+        // Valida que fecha sea futura
+        futureDate: function(dateStr) {
+            if (!dateStr) return false;
+            const date = new Date(dateStr);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return date >= today;
+        },
+
+        // Valida NIT guatemalteco (8 dígitos)
+        nit: function(value) {
+            if (!value) return false;
+            const cleaned = value.replace(/\D/g, '');
+            return cleaned.length === 8;
+        },
+
+        // Valida email
+        email: function(value) {
+            if (!value) return false;
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+        },
+
+        // Valida teléfono Guatemala +502 XXXX-XXXX
+        phone: function(value) {
+            if (!value) return false;
+            return /^(\+?502\s?)?(\d{4}-?\d{4}|\d{8})$/.test(value.replace(/\s/g, ''));
+        },
+
+        // Valida peso en libras (1-200)
+        weight: function(value) {
+            if (!value) return false;
+            const num = parseFloat(value);
+            return !isNaN(num) && num > 0 && num < 200;
+        },
+
+        // Valida que no esté vacío
+        required: function(value) {
+            return value && value.toString().trim().length > 0;
+        }
+    };
+
+    // ==========================================
+    // AUTH VALIDATOR (Immutable role checking)
+    // ==========================================
+    window.AuthValidator = (function() {
+        let _user = null;
+
+        return {
+            setUser: function(userData) {
+                // Hacer copia congelada (immutable)
+                _user = Object.freeze({ ...userData });
+            },
+
+            getUser: function() {
+                if (!_user) return null;
+                return { ..._user };
+            },
+
+            isAdmin: function() {
+                return _user?.role === 'admin';
+            },
+
+            isAgent: function() {
+                return _user?.role === 'agent' || _user?.role === 'admin';
+            },
+
+            isAuthenticated: function() {
+                return _user !== null;
+            },
+
+            clear: function() {
+                _user = null;
+            }
+        };
+    })();
+
+    // ==========================================
+    // AUTO-LOGIN ANÓNIMO PARA USUARIOS SIN SESIÓN (FIX-SUP-1)
+    // ==========================================
+    import { signInAnonymously } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+
+    setPersistence(window.auth, browserLocalPersistence)
+      .then(() => {
+        onAuthStateChanged(window.auth, async (user) => {
+          if (!user) {
+            try {
+              const anonUser = await signInAnonymously(window.auth);
+              console.log('[Auth] Sesión anónima iniciada:', anonUser.user.uid);
+            } catch (error) {
+              console.error('[Auth] Error al iniciar sesión anónima:', error);
+            }
+          }
+        });
+      })
+      .catch(error => console.error('[Auth] Error de persistencia:', error));
+
+    // ==========================================
+    // CLEANUP ON PAGE UNLOAD (FIX-SUP-12)
+    // ==========================================
+    window.addEventListener('beforeunload', () => {
+        if (window.unsubs && Array.isArray(window.unsubs)) {
+            window.unsubs.forEach(fn => {
+                try { fn(); } catch (e) { }
+            });
+            window.unsubs = [];
+        }
+    });
 
     // ==========================================
     // BOOKING WIZARD LOGIC (RESERVATIONS & LOCKS)
@@ -91,8 +236,19 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
             // Validación Paso 1 y Bloqueo de Cupos
             const date = document.getElementById('bw-date').value;
             const cupos = document.getElementById('bw-cupos').value;
-            if (!date || !cupos) {
-                alert("Por favor selecciona una fecha y la cantidad de cupos.");
+
+            if (!date) {
+                alert("Selecciona una fecha de entrada.");
+                return;
+            }
+
+            if (!window.FormValidators.futureDate(date)) {
+                alert("La fecha debe ser en el futuro.");
+                return;
+            }
+
+            if (!cupos || isNaN(parseInt(cupos)) || parseInt(cupos) < 1) {
+                alert("Debe ser un número positivo de mascotas.");
                 return;
             }
 
@@ -540,8 +696,8 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         reqList.innerHTML = emp.permissions.length === 0 ? '<p class="text-xs text-gray-400">No tienes solicitudes.</p>' : emp.permissions.map(r => `
             <div class="bg-gray-50 border border-gray-200 p-2 rounded-lg flex justify-between items-center">
                 <div>
-                    <p class="text-xs font-bold text-forest">${r.type}</p>
-                    <p class="text-[10px] text-gray-500">${r.date}</p>
+                    <p class="text-xs font-bold text-forest">${window.SecurityUtils.escapeHTML(r.type)}</p>
+                    <p class="text-[10px] text-gray-500">${window.SecurityUtils.escapeHTML(r.date)}</p>
                 </div>
                 <span class="text-[10px] font-bold px-2 py-1 rounded-full ${r.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : (r.status === 'approved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')}">
                     ${r.status === 'pending' ? 'Pendiente' : (r.status === 'approved' ? 'Aprobado' : 'Rechazado')}
@@ -636,10 +792,12 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         } else {
             emptyState.classList.add('hidden');
 
+            // Construir HTML una sola vez (FIX-6: Performance)
+            let html = '';
             filteredLeads.forEach(lead => {
                 const icon = lead.origen === 'whatsapp_bot' ? '<i class="fa-brands fa-whatsapp text-[#25D366] text-lg"></i>' : (lead.origen === 'landing_web_wizard' ? '<i class="fa-solid fa-desktop text-blue-500 text-lg"></i>' : '<i class="fa-solid fa-user text-gray-500 text-lg"></i>');
                 const mascotas = lead.mascotas || [];
-                const dogNames = mascotas.map(m => m.nombre).join(', ') || 'N/A';
+                const dogNames = mascotas.map(m => window.SecurityUtils.escapeHTML(m.nombre)).join(', ') || 'N/A';
 
                 let statusColor = "bg-gray-100 text-gray-500 border border-gray-200";
                 if (lead.estado === 'Pendiente Validación Médica') statusColor = "bg-yellow-100 text-yellow-800 border border-yellow-200 animate-pulse";
@@ -665,19 +823,19 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                     `;
                 }
 
-                tbody.innerHTML += `
+                html += `
                     <tr class="hover:bg-gray-50 transition group">
                         <td class="p-5 border-b border-gray-100">
-                            <p class="font-bold text-forest">${lead.nombre}</p>
-                            <p class="text-xs text-gray-500"><i class="fa-solid fa-phone mr-1"></i> ${lead.tel}</p>
+                            <p class="font-bold text-forest">${window.SecurityUtils.escapeHTML(lead.nombre)}</p>
+                            <p class="text-xs text-gray-500"><i class="fa-solid fa-phone mr-1"></i> ${window.SecurityUtils.escapeHTML(lead.tel)}</p>
                         </td>
                         <td class="p-5 border-b border-gray-100">
-                            <span class="font-medium text-gray-800">${dogNames}</span> 
+                            <span class="font-medium text-gray-800">${dogNames}</span>
                             <span class="text-[10px] bg-gold/20 text-gold px-2 py-1 rounded font-bold uppercase tracking-wider ml-1">${mascotas.length} Perro(s)</span>
                         </td>
                         <td class="p-5 border-b border-gray-100 font-medium text-gray-600">
-                            ${lead.servicio}
-                            ${lead.fecha_checkin ? `<br><span class="text-xs text-blue-600 font-bold"><i class="fa-regular fa-calendar"></i> ${lead.fecha_checkin}</span>` : ''}
+                            ${window.SecurityUtils.escapeHTML(lead.servicio)}
+                            ${lead.fecha_checkin ? `<br><span class="text-xs text-blue-600 font-bold"><i class="fa-regular fa-calendar"></i> ${window.SecurityUtils.escapeHTML(lead.fecha_checkin)}</span>` : ''}
                         </td>
                         <td class="p-5 border-b border-gray-100 flex items-center gap-2 mt-2">${icon} <span class="text-xs font-bold text-gray-500">${lead.origen ? lead.origen.replace(/_/g, ' ').toUpperCase() : 'MANUAL'}</span></td>
                         <td class="p-5 border-b border-gray-100 text-center">
@@ -689,12 +847,17 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                     </tr>
                 `;
             });
+            tbody.innerHTML = html;  // Una sola asignación
         }
         if (typeof window.fillMsgTargetOptions === 'function') window.fillMsgTargetOptions();
         if (typeof window.updateMsgCount === 'function') window.updateMsgCount();
     };
 
-    window.logEvent = (action, desc) => { console.log('[AUDIT] ' + action + ': ' + desc); };
+    window.logEvent = (action, desc) => {
+        if (import.meta.env.DEV) {
+            console.log('[AUDIT]', action);  // Sin descripción por seguridad
+        }
+    };
     window.updateClientStatus = async (id, newStatus) => {
         if (!window.db) return;
         try {
@@ -770,7 +933,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         const title = document.getElementById('edit-title').value;
         const subtitle = document.getElementById('edit-subtitle').value;
 
-        document.getElementById('landing-title').innerHTML = title.replace(/\n/g, '<br>');
+        document.getElementById('landing-title').innerHTML = window.SecurityUtils.escapeHTML(title).replace(/\n/g, '<br>');
         document.getElementById('landing-subtitle').innerText = subtitle;
 
         // Guardar Configuración de APIs
@@ -2410,8 +2573,19 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         unsubs = [];
 
         if (!user) {
+            // Limpiar estado de usuario
             window.currentUser = null;
+            window.AuthValidator.clear();
+            window.clientsData = [];
+            window.citasData = [];
+            window.inventoryData = [];
+            window.catalogData = [];
+
+            // Limpiar UI
             document.body.removeAttribute('data-role');
+            document.getElementById('admin-view')?.classList.add('hidden');
+            document.getElementById('public-view')?.classList.remove('hidden');
+
             return;
         }
 
@@ -2519,7 +2693,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         // Bloqueo de tabs de admin del lado del cliente (las reglas hacen el
         // bloqueo real del lado del servidor).
         const ADMIN_ONLY = ['tab-config', 'tab-reportes', 'tab-auditoria', 'tab-capacidad', 'tab-catalogo'];
-        if (ADMIN_ONLY.includes(tabId) && window.currentUser?.role !== 'admin') {
+        if (ADMIN_ONLY.includes(tabId) && !window.AuthValidator.isAdmin()) {
             alert('No tienes permisos para esta sección.');
             return;
         }
