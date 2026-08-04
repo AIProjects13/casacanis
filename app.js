@@ -7,7 +7,7 @@
    ===================================================================== */
 
 import { getApp, initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-import { browserLocalPersistence, browserSessionPersistence, getAuth, onAuthStateChanged, setPersistence, signInAnonymously, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+import { browserLocalPersistence, browserSessionPersistence, createUserWithEmailAndPassword, getAuth, onAuthStateChanged, setPersistence, signInAnonymously, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
 import { Timestamp, addDoc, collection, collectionGroup, deleteDoc, doc, getDoc, getDocs, getFirestore, increment, limit, onSnapshot, orderBy, query, runTransaction, serverTimestamp, setDoc, updateDoc, where } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-functions.js";
 import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-storage.js";
@@ -30,6 +30,43 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     window.functions = getFunctions(app);
     window.auth = getAuth(app);
     window.storage = getStorage(app);
+
+    // ==========================================
+    // INICIALIZAR DOCUMENTOS DE CONFIGURACIÓN
+    // ==========================================
+    (async () => {
+        // Crear /cancellationRules/default si no existe
+        const cancRulesRef = doc(window.db, 'cancellationRules', 'default');
+        const cancRulesSnap = await getDoc(cancRulesRef);
+        if (!cancRulesSnap.exists()) {
+            await setDoc(cancRulesRef, {
+                windowDays: 7,
+                earlyPenaltyPercent: 50,
+                allowReschedule: true,
+                allowEdit: true,
+                rescheduleWindowDays: 7,
+                updatedBy: 'admin_001',
+                updatedAt: serverTimestamp()
+            });
+            console.log('[Init] Documento /cancellationRules/default creado');
+        }
+
+        // Crear /settings/landingContent si no existe
+        const landingRef = doc(window.db, 'settings', 'landingContent');
+        const landingSnap = await getDoc(landingRef);
+        if (!landingSnap.exists()) {
+            await setDoc(landingRef, {
+                heroImage: 'https://via.placeholder.com/1200x400?text=Casa+Canis',
+                heroTitle: 'Bienvenido a Casa Canis',
+                heroSubtitle: 'Cuidado profesional para tu mascota',
+                servicesImage: 'https://via.placeholder.com/600x400?text=Servicios',
+                aboutImage: 'https://via.placeholder.com/600x400?text=Nosotros',
+                updatedBy: 'admin_001',
+                updatedAt: serverTimestamp()
+            });
+            console.log('[Init] Documento /settings/landingContent creado');
+        }
+    })();
 
     // ==========================================
     // SECURITY UTILITIES (XSS Prevention)
@@ -146,21 +183,10 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
     })();
 
     // ==========================================
-    // AUTO-LOGIN ANÓNIMO PARA USUARIOS SIN SESIÓN (FIX-SUP-1)
+    // INICIALIZAR PERSISTENCIA (SIN auto-login anónimo)
+    // NOTA: signInAnonymously() se hace solo en booking/upload
     // ==========================================
     setPersistence(window.auth, browserLocalPersistence)
-      .then(() => {
-        onAuthStateChanged(window.auth, async (user) => {
-          if (!user) {
-            try {
-              const anonUser = await signInAnonymously(window.auth);
-              console.log('[Auth] Sesión anónima iniciada:', anonUser.user.uid);
-            } catch (error) {
-              console.error('[Auth] Error al iniciar sesión anónima:', error);
-            }
-          }
-        });
-      })
       .catch(error => console.error('[Auth] Error de persistencia:', error));
 
     // ==========================================
@@ -174,6 +200,263 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
             window.unsubs = [];
         }
     });
+
+    // ==========================================
+    // AUTENTICACIÓN: LOGIN / SIGNUP / LOGOUT
+    // ==========================================
+
+    // Mostrar/ocultar modal de autenticación
+    window.openAuthModal = () => {
+        document.getElementById('auth-modal').classList.remove('hidden');
+    };
+
+    window.closeAuthModal = () => {
+        document.getElementById('auth-modal').classList.add('hidden');
+        document.getElementById('login-email').value = '';
+        document.getElementById('login-password').value = '';
+        document.getElementById('signup-email').value = '';
+        document.getElementById('signup-password').value = '';
+    };
+
+    // Cambiar entre tabs (login/signup)
+    window.switchAuthTab = (tab) => {
+        document.querySelectorAll('.auth-tab').forEach(btn => {
+            btn.classList.toggle('border-forest', btn.dataset.tab === tab);
+            btn.classList.toggle('border-transparent', btn.dataset.tab !== tab);
+            btn.classList.toggle('text-forest', btn.dataset.tab === tab);
+            btn.classList.toggle('text-gray-500', btn.dataset.tab !== tab);
+        });
+
+        document.getElementById('login-tab').classList.toggle('hidden', tab !== 'login');
+        document.getElementById('signup-tab').classList.toggle('hidden', tab !== 'signup');
+    };
+
+    // LOGIN
+    window.handleLogin = async () => {
+        const email = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value.trim();
+        const errorEl = document.getElementById('login-error');
+
+        if (!email || !password) {
+            errorEl.textContent = 'Email y contraseña son obligatorios';
+            errorEl.classList.remove('hidden');
+            return;
+        }
+
+        try {
+            errorEl.classList.add('hidden');
+            const userCred = await signInWithEmailAndPassword(window.auth, email, password);
+            const user = userCred.user;
+
+            // Verificar si es cliente o staff
+            const staffDoc = await getDoc(doc(window.db, 'staff', user.uid));
+            if (staffDoc.exists()) {
+                // Es staff/admin → ir a CRM
+                document.getElementById('admin-view').classList.remove('hidden');
+                document.getElementById('public-view').classList.add('hidden');
+                document.getElementById('client-profile-view').classList.add('hidden');
+                window.closeAuthModal();
+            } else {
+                // Es cliente → ir a perfil
+                await window.loadClientProfile(user.uid);
+                document.getElementById('public-view').classList.add('hidden');
+                document.getElementById('admin-view').classList.add('hidden');
+                document.getElementById('client-profile-view').classList.remove('hidden');
+                window.closeAuthModal();
+            }
+        } catch (error) {
+            errorEl.textContent = 'Error: ' + error.message;
+            errorEl.classList.remove('hidden');
+        }
+    };
+
+    // SIGNUP
+    window.handleSignup = async () => {
+        const email = document.getElementById('signup-email').value.trim();
+        const password = document.getElementById('signup-password').value.trim();
+        const name = document.getElementById('signup-name').value.trim();
+        const dpi = document.getElementById('signup-dpi').value.trim();
+        const address = document.getElementById('signup-address').value.trim();
+        const phone = document.getElementById('signup-phone').value.trim();
+        const errorEl = document.getElementById('signup-error');
+
+        if (!email || !password || !name || !dpi || !address || !phone) {
+            errorEl.textContent = 'Todos los campos son obligatorios';
+            errorEl.classList.remove('hidden');
+            return;
+        }
+
+        try {
+            errorEl.classList.add('hidden');
+
+            // Crear usuario en Firebase Auth
+            const userCred = await createUserWithEmailAndPassword(window.auth, email, password);
+            const user = userCred.user;
+
+            // Guardar datos en Firestore
+            await setDoc(doc(window.db, 'clients', user.uid), {
+                name,
+                dpi,
+                address,
+                phone,
+                email,
+                role: 'customer',
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp()
+            });
+
+            console.log('[Auth] Cliente registrado:', user.uid);
+
+            // Ir a perfil del cliente
+            await window.loadClientProfile(user.uid);
+            document.getElementById('public-view').classList.add('hidden');
+            document.getElementById('admin-view').classList.add('hidden');
+            document.getElementById('client-profile-view').classList.remove('hidden');
+            window.closeAuthModal();
+        } catch (error) {
+            errorEl.textContent = 'Error: ' + error.message;
+            errorEl.classList.remove('hidden');
+        }
+    };
+
+    // LOGOUT
+    window.handleLogout = async () => {
+        try {
+            await signOut(window.auth);
+            document.getElementById('client-profile-view').classList.add('hidden');
+            document.getElementById('admin-view').classList.add('hidden');
+            document.getElementById('public-view').classList.remove('hidden');
+            console.log('[Auth] Sesión cerrada');
+        } catch (error) {
+            console.error('[Auth] Error al cerrar sesión:', error);
+        }
+    };
+
+    // ==========================================
+    // PERFIL DE CLIENTE
+    // ==========================================
+
+    window.loadClientProfile = async (clientId) => {
+        try {
+            const clientDoc = await getDoc(doc(window.db, 'clients', clientId));
+            if (clientDoc.exists()) {
+                const data = clientDoc.data();
+                document.getElementById('profile-name').textContent = data.name;
+                document.getElementById('profile-dpi').textContent = data.dpi;
+                document.getElementById('profile-phone').textContent = data.phone;
+                document.getElementById('profile-email').textContent = data.email;
+                document.getElementById('profile-address').textContent = data.address;
+
+                // Cargar mascotas
+                window.loadClientPets(clientId);
+
+                // Cargar reservas
+                window.loadClientReservations(clientId);
+            }
+        } catch (error) {
+            console.error('[Profile] Error:', error);
+        }
+    };
+
+    window.loadClientPets = async (clientId) => {
+        try {
+            const petsSnap = await getDocs(collection(window.db, 'clients', clientId, 'pets'));
+            const petsList = document.getElementById('pets-list');
+
+            if (petsSnap.empty) {
+                petsList.innerHTML = '<p class="text-gray-500 text-center py-4">Sin mascotas registradas</p>';
+                return;
+            }
+
+            petsList.innerHTML = petsSnap.docs.map(doc => {
+                const pet = doc.data();
+                return `
+                    <div class="border border-gray-200 rounded-lg p-4 flex justify-between items-start">
+                        <div>
+                            <h3 class="font-bold text-forest">${window.SecurityUtils.escapeHTML(pet.name)}</h3>
+                            <p class="text-sm text-gray-600">${window.SecurityUtils.escapeHTML(pet.breed)} • ${pet.weight} lb</p>
+                            <p class="text-xs text-gray-500">${pet.allergies ? 'Alergias: ' + pet.allergies.join(', ') : 'Sin alergias'}</p>
+                        </div>
+                        <button onclick="openEditPetModal('${doc.id}')" class="text-gold hover:text-forestLight font-bold">
+                            <i class="fa-solid fa-edit"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        } catch (error) {
+            console.error('[Pets] Error:', error);
+        }
+    };
+
+    window.loadClientReservations = async (clientId) => {
+        try {
+            const query_obj = query(
+                collection(window.db, 'bookings'),
+                where('clientId', '==', clientId),
+                orderBy('date', 'desc')
+            );
+            const reservasSnap = await getDocs(query_obj);
+            const reservasList = document.getElementById('reservas-list');
+
+            if (reservasSnap.empty) {
+                reservasList.innerHTML = '<p class="text-gray-500 text-center py-4">Sin reservas registradas</p>';
+                return;
+            }
+
+            reservasList.innerHTML = reservasSnap.docs.map(doc => {
+                const booking = doc.data();
+                const statusColor = booking.status === 'approved' ? 'green' : booking.status === 'rejected' ? 'red' : 'yellow';
+                return `
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h3 class="font-bold text-forest">${window.SecurityUtils.escapeHTML(booking.dogName)}</h3>
+                                <p class="text-sm text-gray-600">${booking.service || 'Servicio'}</p>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-${statusColor}-100 text-${statusColor}-800">
+                                ${booking.status}
+                            </span>
+                        </div>
+                        <div class="text-sm text-gray-600 mb-3">
+                            Fecha: ${new Date(booking.date?.toDate?.() || booking.date).toLocaleDateString('es-ES')}
+                        </div>
+                        <div class="flex gap-2">
+                            ${booking.receipt ? `<a href="${booking.receipt.receiptUrl}" target="_blank" class="text-gold hover:underline text-sm font-bold">Ver Recibo</a>` : ''}
+                            <button onclick="openReservationDetails('${doc.id}')" class="text-gold hover:underline text-sm font-bold">
+                                Detalles
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch (error) {
+            console.error('[Reservations] Error:', error);
+        }
+    };
+
+    // ==========================================
+    // MODALES Y FUNCIONES AUXILIARES
+    // ==========================================
+
+    window.openAddPetModal = () => {
+        alert('Modal para agregar mascota (implementar)');
+    };
+
+    window.openEditPetModal = (petId) => {
+        alert('Modal para editar mascota (implementar)');
+    };
+
+    window.openEditProfileModal = () => {
+        alert('Modal para editar perfil (implementar)');
+    };
+
+    window.openBookingWizard = () => {
+        alert('Booking wizard (implementar)');
+    };
+
+    window.openReservationDetails = (bookingId) => {
+        alert('Detalles de reserva (implementar)');
+    };
 
     // ==========================================
     // BOOKING WIZARD LOGIC (RESERVATIONS & LOCKS)
@@ -353,6 +636,17 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
             let comprobanteUrl = null;
             // Subir fotos a Firebase Storage
             if (window.storage) {
+                // Asegurar que el usuario anónimo está autenticado antes de subir
+                if (!window.auth.currentUser) {
+                    try {
+                        await signInAnonymously(window.auth);
+                        console.log('[Auth] Sesión anónima iniciada para uploads');
+                    } catch (error) {
+                        console.error('[Auth] Error al iniciar sesión anónima:', error);
+                        throw error;
+                    }
+                }
+
                 // Subir fotos vacunas
                 for (let i = 0; i < vacunasFiles.length; i++) {
                     const file = vacunasFiles[i];
@@ -500,64 +794,72 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         dateDisplay.innerText = new Date().toLocaleDateString('es-ES', options);
     }
 
-    onAuthStateChanged(window.auth, (user) => {
+    onAuthStateChanged(window.auth, async (user) => {
         if (user) {
-            document.getElementById('public-view').classList.add('hidden');
-            document.getElementById('admin-view').classList.remove('hidden');
-            if (window.switchTab) {
-                window.switchTab('tab-leads'); // o el default
-            }
+            // Verificar si es staff o cliente
+            const staffDoc = await getDoc(doc(window.db, 'staff', user.uid));
 
-            // Cargar settings globales (incluye modoPrueba)
-            onSnapshot(doc(window.db, "settings", "keys"), (docSnap) => {
-                if (docSnap.exists()) {
-                    window.apiKeys = docSnap.data();
-                    if (window.apiKeys.modoPrueba !== undefined) {
+            if (staffDoc.exists()) {
+                // ===== STAFF / ADMIN =====
+                document.getElementById('public-view').classList.add('hidden');
+                document.getElementById('client-profile-view').classList.add('hidden');
+                document.getElementById('admin-view').classList.remove('hidden');
+
+                if (window.switchTab) {
+                    window.switchTab('tab-leads');
+                }
+
+                // Cargar settings globales (incluye modoPrueba)
+                onSnapshot(doc(window.db, "settings", "keys"), (docSnap) => {
+                    if (docSnap.exists()) {
+                        window.apiKeys = docSnap.data();
                         const toggle = document.getElementById('edit-modo-prueba');
                         if (toggle) toggle.checked = window.apiKeys.modoPrueba;
                     }
-                } else {
-                    window.apiKeys = { modoPrueba: true };
-                }
-            });
-
-            // Cargar clientes desde Firebase
-            onSnapshot(collection(window.db, "clients"), (snapshot) => {
-                const clients = [];
-                snapshot.forEach((doc) => {
-                    clients.push({ id: doc.id, ...doc.data() });
                 });
-                window.mockLeads = clients;
-                if (window.renderLeads) window.renderLeads();
-            });
 
-            // Cargar catálogo desde Firebase
-            onSnapshot(collection(window.db, "catalog"), (snapshot) => {
-                const catalog = [];
-                snapshot.forEach((doc) => {
-                    catalog.push({ id: doc.id, ...doc.data() });
+                // Cargar clientes desde Firebase
+                onSnapshot(collection(window.db, "clients"), (snapshot) => {
+                    const clients = [];
+                    snapshot.forEach((doc) => {
+                        clients.push({ id: doc.id, ...doc.data() });
+                    });
+                    window.mockLeads = clients;
+                    if (window.renderLeads) window.renderLeads();
                 });
-                window.catalogData = catalog;
-                if (window.renderCatalogViews) window.renderCatalogViews();
-            });
 
-            // Cargar inventario desde Firebase
-            onSnapshot(collection(window.db, "inventory"), (snapshot) => {
-                const inventory = [];
-                snapshot.forEach((doc) => {
-                    inventory.push({ id: doc.id, ...doc.data() });
+                // Cargar catálogo desde Firebase
+                onSnapshot(collection(window.db, "catalog"), (snapshot) => {
+                    const catalog = [];
+                    snapshot.forEach((doc) => {
+                        catalog.push({ id: doc.id, ...doc.data() });
+                    });
+                    window.catalogData = catalog;
+                    if (window.renderCatalogViews) window.renderCatalogViews();
                 });
-                window.inventoryData = inventory;
-                if (window.renderInventoryViews) window.renderInventoryViews();
-            });
 
-            // Cargar auditoria
-            window.auditLogs = window.auditLogs || [];
+                // Cargar inventario desde Firebase
+                onSnapshot(collection(window.db, "inventory"), (snapshot) => {
+                    const inventory = [];
+                    snapshot.forEach((doc) => {
+                        inventory.push({ id: doc.id, ...doc.data() });
+                    });
+                    window.inventoryData = inventory;
+                    if (window.renderInventoryViews) window.renderInventoryViews();
+                });
+            } else {
+                // ===== CLIENTE =====
+                document.getElementById('admin-view').classList.add('hidden');
+                document.getElementById('public-view').classList.add('hidden');
+                document.getElementById('client-profile-view').classList.remove('hidden');
 
-
+                await window.loadClientProfile(user.uid);
+            }
         } else {
+            // ===== SIN LOGIN =====
             document.getElementById('public-view').classList.remove('hidden');
             document.getElementById('admin-view').classList.add('hidden');
+            document.getElementById('client-profile-view').classList.add('hidden');
         }
     });
 
