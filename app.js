@@ -1351,15 +1351,35 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
                     if (window.renderLeads) window.renderLeads();
                 });
 
-                // Cargar catálogo desde Firebase
-                onSnapshot(collection(window.db, "catalog"), (snapshot) => {
+                // Construir catálogo desde products y services
+                Promise.all([
+                    getDocs(collection(window.db, "products")),
+                    getDocs(collection(window.db, "services"))
+                ]).then(([productsSnap, servicesSnap]) => {
                     const catalog = [];
-                    snapshot.forEach((doc) => {
-                        catalog.push({ id: doc.id, ...doc.data() });
+                    productsSnap.forEach(doc => {
+                        const data = doc.data();
+                        catalog.push({
+                            id: doc.id,
+                            type: 'product',
+                            name: data.name,
+                            price: data.price || 0,
+                            desc: data.description || ''
+                        });
+                    });
+                    servicesSnap.forEach(doc => {
+                        const data = doc.data();
+                        catalog.push({
+                            id: doc.id,
+                            type: 'service',
+                            name: data.name,
+                            price: data.basePrice || 0,
+                            desc: data.description || ''
+                        });
                     });
                     window.catalogData = catalog;
                     if (window.renderCatalogViews) window.renderCatalogViews();
-                });
+                }).catch(err => console.error('[Catalog] Error construyendo catálogo:', err));
 
                 // Cargar inventario desde Firebase
                 onSnapshot(collection(window.db, "inventory"), (snapshot) => {
@@ -4103,7 +4123,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
 
     /* ---------------- lado público: leer el resumen ---------------- */
 
-    onSnapshot(doc(db, 'availability', 'summary'), (snap) => {
+    onSnapshot(doc(window.db, 'availability', 'summary'), (snap) => {
         if (snap.exists()) window.availabilitySummary = snap.data();
     }, (e) => console.error('[availability]', e));
 
@@ -4254,7 +4274,7 @@ import { getDownloadURL, getStorage, ref, uploadBytes } from "https://www.gstati
         });
 
         try {
-            await setDoc(doc(db, 'availability', 'summary'), {
+            await setDoc(doc(window.db, 'availability', 'summary'), {
                 days,
                 capacity: window.capacityTotals || { peq: 0, med: 0, gra: 0 },
                 updatedAt: serverTimestamp()
