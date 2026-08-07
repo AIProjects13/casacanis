@@ -308,14 +308,13 @@ body {
     }
 }
 
-.fade-in,
 .fade-in-up,
 .fade-in-left {
     opacity: 0;
 }
 
-.fade-in.visible {
-    animation: fade-in 0.8s ease-out forwards;
+.fade-in {
+    opacity: 1;
 }
 
 .fade-in-up.visible {
@@ -363,7 +362,7 @@ body {
     margin-bottom: 1.5rem;
     color: var(--color-gray-dark);
     line-height: 1.8;
-    text-align: justify;
+    text-align: left;
 }
 
 .summary-image {
