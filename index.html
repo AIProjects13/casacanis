@@ -4,2258 +4,379 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Casa Canis | Dog Hotel & Resort</title>
-    
-    <!-- Tailwind CSS Integrado via CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        forest: '#0B2F1D',      // Verde Bosque
-                        forestLight: '#164F33', // Variante clara para hovers
-                        gold: '#C5A059',        // Dorado
-                        goldHover: '#D4B371',   // Variante dorada clara
-                        cream: '#F4F1EA',       // Crema para fondos
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        serif: ['Playfair Display', 'serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    
-    <!-- Fuentes Google (Inter & Playfair Display para toque Premium) -->
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- FontAwesome (Iconos) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Estilos propios -->
     <link rel="stylesheet" href="style.css">
-
-    <!-- Bootstrap: script CLÁSICO. Va inline y ANTES de todo módulo:
-         los módulos son diferidos, así que este corre primero. -->
-    <script>
-    (function () {
-      'use strict';
-
-      // --- Globals que el código existente lee pero nunca inicializa -------
-      window.cart            = [];
-      window.catalogData     = [];
-      window.inventoryData   = [];
-      window.clientsData     = [];
-      window.mockLeads       = window.clientsData;   // alias legacy: mismo array
-      window.citasData       = [];
-      window.auditLogs       = [];
-      window.employeesData   = {};
-      window.timeOffData     = [];
-      window.capacityData    = { pequeno:{total:0,occ:0}, mediano:{total:0,occ:0}, grande:{total:0,occ:0} };
-      window.capacityTotals  = { peq:0, med:0, gra:0 };
-      window.apiKeys         = { modoPrueba: true };
-      window.connectorStatus = {};
-      window.currentTerms    = '';
-      window.currentTermsVersion = 'v0';
-      window.currentUser     = null;                 // { uid, email, name, role }
-      window.currentEmployeeEmail = null;
-      window.charts          = {};
-
-      // --- Reemplazo de via.placeholder.com (dominio caído) ---------------
-      // SVG inline: no depende de red, nunca se rompe.
-      window.PLACEHOLDER_IMG =
-        'data:image/svg+xml;utf8,' + encodeURIComponent(
-          '<svg xmlns="http://www.w3.org/2000/svg" width="150" height="150">' +
-          '<rect width="150" height="150" fill="#F4F1EA"/>' +
-          '<text x="75" y="82" font-family="sans-serif" font-size="42" ' +
-          'fill="#C5A059" text-anchor="middle">🐾</text></svg>'
-        );
-
-      // Cualquier <img> que falle cae al placeholder en lugar de mostrar el
-      // ícono de imagen rota. Captura en fase de captura porque `error` no
-      // burbujea desde <img>.
-      document.addEventListener('error', function (e) {
-        var t = e.target;
-        if (t && t.tagName === 'IMG' && t.src !== window.PLACEHOLDER_IMG) {
-          t.src = window.PLACEHOLDER_IMG;
-        }
-      }, true);
-
-      // --- Estilo real para .admin-only -----------------------------------
-      // Hasta ahora la clase existía en 13 lugares del HTML sin ninguna regla
-      // que la respaldara. `data-role` se fija en el BLOQUE B tras el login.
-      var css = document.createElement('style');
-      css.textContent =
-        'body[data-role="agent"] .admin-only{display:none !important;}' +
-        'body:not([data-role]) .admin-only{display:none !important;}' +
-        '.cc-readonly{background:#f9fafb;color:#6b7280;cursor:not-allowed;}';
-      document.head.appendChild(css);
-
-      // --- Stubs defensivos ------------------------------------------------
-      // Si un onclick del HTML se dispara antes de que el BLOQUE B termine de
-      // cargar, esto evita un ReferenceError en consola.
-      ['handleTargetChange','updateMsgCount','updateMsgPreview',
-       'filterIndividualClients','fillMsgTargetOptions','logEvent'
-      ].forEach(function (fn) {
-        if (typeof window[fn] !== 'function') window[fn] = function () {};
-      });
-    })();
-    </script>
-
-    <!-- Chart.js CDN (Para Reportes Corporativos) -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- html2canvas CDN (Para Captura de Recibos de Caja) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
-    <!-- FullCalendar CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 </head>
-<body class="font-sans antialiased flex flex-col min-h-screen selection:bg-gold selection:text-forest">
+<body>
 
-    <!-- ========================================== -->
-    <!-- MÓDULO PÚBLICO (CLIENTE / LANDING PAGE)    -->
-    <!-- ========================================== -->
-    <div id="public-view" class="flex-grow">
-        
-        <!-- Navegación Superior -->
-        <nav class="fixed w-full z-50 glass-panel shadow-sm transition-all duration-300" id="navbar">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-20 items-center">
-                    <div class="flex-shrink-0 flex items-center gap-3 cursor-pointer" onclick="window.scrollTo(0,0)">
-                        <i class="fa-solid fa-paw text-gold text-3xl"></i>
-                        <span class="font-serif text-2xl font-bold text-forest tracking-tight">Casa Canis</span>
-                    </div>
-                    <div class="hidden md:flex space-x-8 items-center">
-                        <a href="#servicios" class="text-forest font-semibold hover:text-gold transition duration-300">Servicios</a>
-                        <a href="#disponibilidad" class="text-forest font-semibold hover:text-gold transition duration-300">Disponibilidad</a>
-                        <!-- Botones de Login/Signup para clientes -->
-                        <div class="flex gap-3">
-                            <button onclick="document.getElementById('auth-modal').classList.remove('hidden'); window.switchAuthTab('login')" class="text-forest font-semibold hover:text-gold transition">
-                                Login
-                            </button>
-                            <button onclick="document.getElementById('auth-modal').classList.remove('hidden'); window.switchAuthTab('signup')" class="bg-forest text-cream px-6 py-2.5 rounded-full hover:bg-forestLight transition shadow-lg text-sm font-bold tracking-wide">
-                                Registrarse
-                            </button>
-                        </div>
-                    </div>
-                </div>
+    <!-- ============================================ -->
+    <!-- NAVEGACIÓN FIJA CON LOGO REAL -->
+    <!-- ============================================ -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <img src="fotos/casa canis logo 2.JPG" alt="Casa Canis Logo" class="logo-img">
+                <span>Casa Canis</span>
             </div>
-        </nav>
+            <div class="nav-links">
+                <a href="#sobre-nosotros" class="nav-link">Sobre Nosotros</a>
+                <a href="#diferenciadores" class="nav-link">Diferenciadores</a>
+                <a href="#servicios" class="nav-link">Servicios</a>
+                <a href="#contacto" class="nav-link nav-link-cta">Hacer Reserva</a>
+            </div>
+        </div>
+    </nav>
 
-        <!-- Hero Banner Header -->
-        <header class="relative pt-32 pb-20 lg:pt-48 lg:pb-36 overflow-hidden bg-forest">
-            <!-- Imagen cargada dinámicamente -->
-            <div class="absolute inset-0 z-0 opacity-40 mix-blend-overlay">
-                <img id="img-hero" src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=1920&q=80" alt="Dog Resort" class="w-full h-full object-cover">
-            </div>
-            <!-- Degradado inferior para transición -->
-            <div class="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-cream to-transparent z-0"></div>
-            
-            <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mt-8">
-                <span class="inline-block py-1 px-3 rounded-full bg-gold/20 text-gold border border-gold/50 text-sm font-bold tracking-widest uppercase mb-6 backdrop-blur-sm">Resort & Spa 5 Estrellas</span>
-                <h1 id="landing-title" class="text-5xl md:text-7xl font-serif font-extrabold text-cream mb-6 drop-shadow-xl leading-tight">Exclusividad y confort<br>para tu mejor amigo</h1>
-                <p id="landing-subtitle" class="text-lg md:text-2xl text-gold mb-12 max-w-2xl mx-auto drop-shadow-md font-medium">El estándar más alto en cuidado canino en Guatemala.</p>
-                <div class="flex flex-col sm:flex-row justify-center gap-4">
-                    <a href="#disponibilidad" class="inline-flex items-center justify-center bg-gold text-forest font-bold text-lg px-8 py-4 rounded-full hover:bg-goldHover transition transform hover:-translate-y-1 shadow-2xl">
-                        Verificar Disponibilidad <i class="fa-solid fa-arrow-right ml-2"></i>
+    <!-- ============================================ -->
+    <!-- HERO SECTION CON FOTO REAL -->
+    <!-- ============================================ -->
+    <section class="hero" style="background: url('fotos/18.jpeg') center/cover;">
+        <div class="hero-overlay"></div>
+        <div class="hero-content">
+            <div class="hero-text fade-in-up">
+                <h1 class="hero-title">Exclusividad y Confort para Tu Mejor Amigo</h1>
+                <p class="hero-subtitle">El estándar más alto en cuidado canino en Guatemala</p>
+                <div class="hero-buttons">
+                    <a href="#contacto" class="btn btn-primary">
+                        <i class="fas fa-calendar-check"></i> Hacer Reserva
                     </a>
-                    <a href="#servicios" class="inline-flex items-center justify-center bg-white/10 backdrop-blur-md text-cream font-bold text-lg px-8 py-4 rounded-full hover:bg-white/20 transition border border-white/20">
-                        Explorar Servicios
+                    <a href="#sobre-nosotros" class="btn btn-secondary">
+                        <i class="fas fa-chevron-down"></i> Conoce Más
                     </a>
                 </div>
             </div>
-        </header>
-
-        <!-- Sección de Servicios -->
-        <section id="servicios" class="py-24 bg-cream relative z-10">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="text-center mb-16">
-                    <h2 class="text-4xl md:text-5xl font-serif font-bold text-forest mb-4">Experiencias Premium</h2>
-                    <div class="w-24 h-1 bg-gold mx-auto rounded-full"></div>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
-                    <!-- Servicio: Hotel -->
-                    <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden group hover:-translate-y-2 transition duration-300 border border-gray-100">
-                        <div class="h-56 overflow-hidden relative">
-                            <div class="absolute inset-0 bg-forest/20 group-hover:bg-transparent transition duration-300 z-10"></div>
-                            <img id="img-serv-1" src="https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=800&q=80" alt="Hotel Canino" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
-                        </div>
-                        <div class="p-8">
-                            <div class="text-gold mb-3"><i class="fa-solid fa-bed text-2xl"></i></div>
-                            <h3 class="text-2xl font-serif font-bold text-forest mb-3">Hotel Boutique</h3>
-                            <p class="text-gray-600 mb-6 leading-relaxed">Habitaciones privadas climatizadas con monitoreo 24/7. Rutina estructurada y paseos guiados para el bienestar físico y mental.</p>
-                        </div>
-                    </div>
-                    <!-- Servicio: Day Pass -->
-                    <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden group hover:-translate-y-2 transition duration-300 border border-gray-100">
-                        <div class="h-56 overflow-hidden relative">
-                            <div class="absolute inset-0 bg-forest/20 group-hover:bg-transparent transition duration-300 z-10"></div>
-                            <img id="img-serv-2" src="https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=800&q=80" alt="Day Pass" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
-                        </div>
-                        <div class="p-8">
-                            <div class="text-gold mb-3"><i class="fa-solid fa-sun text-2xl"></i></div>
-                            <h3 class="text-2xl font-serif font-bold text-forest mb-3">Day Pass (Guardería)</h3>
-                            <p class="text-gray-600 mb-6 leading-relaxed">Entorno de socialización supervisada con juegos al aire libre, acceso a piscinas caninas y áreas de descanso premium.</p>
-                        </div>
-                    </div>
-                    <!-- Servicio: Spa & Grooming -->
-                    <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden group hover:-translate-y-2 transition duration-300 border border-gray-100">
-                        <div class="h-56 overflow-hidden relative">
-                            <div class="absolute inset-0 bg-forest/20 group-hover:bg-transparent transition duration-300 z-10"></div>
-                            <img id="img-serv-3" src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=800&q=80" alt="Grooming" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
-                        </div>
-                        <div class="p-8">
-                            <div class="text-gold mb-3"><i class="fa-solid fa-bath text-2xl"></i></div>
-                            <h3 class="text-2xl font-serif font-bold text-forest mb-3">Spa & Grooming</h3>
-                            <p class="text-gray-600 mb-6 leading-relaxed">Cortes de raza especializados, baños relajantes con ozonoterapia, limpieza dental profunda y cuidado de pelaje.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Cotizador Público Dinámico -->
-        <section id="cotizador" class="py-20 bg-white relative z-10 border-t border-gray-100">
-            <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="text-center mb-12">
-                    <h2 class="text-3xl md:text-4xl font-serif font-bold text-forest mb-4">Arma tu Paquete Ideal</h2>
-                    <p class="text-gray-500">Selecciona los servicios que deseas para estimar tu inversión en Casa Canis.</p>
-                </div>
-                
-                <div id="public-catalog-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
-                    <!-- Checkboxes dinámicos de servicios -->
-                </div>
-                
-                <div class="bg-gray-50 border border-gray-200 rounded-2xl p-8 flex flex-col sm:flex-row justify-between items-center gap-6 shadow-sm">
-                    <div>
-                        <p class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-1">Inversión Estimada</p>
-                        <h3 id="quote-total" class="text-4xl font-black text-forest">Q 0.00</h3>
-                    </div>
-                    <button onclick="document.getElementById('disponibilidad').scrollIntoView({behavior: 'smooth'})" class="bg-gold text-forest font-bold px-8 py-4 rounded-xl hover:bg-goldHover hover:scale-105 transform transition shadow-lg flex items-center justify-center gap-3">
-                        <i class="fa-solid fa-calendar-check"></i> Verificar Disponibilidad
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- Módulo: Consulta de Disponibilidad (Conectado a Firebase Conceptualmente) -->
-        <section id="disponibilidad" class="py-24 bg-forest text-cream relative overflow-hidden">
-            <!-- Background element -->
-            <div class="absolute top-0 right-0 -mr-20 -mt-20 w-96 h-96 bg-gold/10 rounded-full blur-3xl"></div>
-            <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-96 h-96 bg-gold/5 rounded-full blur-3xl"></div>
-            
-            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-                <div class="text-center mb-12">
-                    <h2 class="text-4xl md:text-5xl font-serif font-bold mb-6 text-gold drop-shadow-md">Consulta de Disponibilidad</h2>
-                    <p class="text-xl opacity-90 font-light max-w-2xl mx-auto">Verifica en tiempo real nuestros cupos limitados para garantizar la comodidad y seguridad de cada huésped.</p>
-                </div>
-                
-                <div class="bg-white/10 p-8 md:p-10 rounded-3xl backdrop-blur-xl border border-gold/30 shadow-2xl">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                        <div>
-                            <label class="block text-sm font-semibold mb-3 tracking-wide text-gold uppercase">Fecha de Ingreso</label>
-                            <div class="relative">
-                                <i class="fa-regular fa-calendar absolute left-4 top-1/2 transform -translate-y-1/2 text-white/50"></i>
-                                <input type="date" id="check-date" class="w-full pl-12 pr-4 py-4 rounded-xl bg-forestLight/50 border border-gold/40 text-white focus:outline-none focus:ring-2 focus:ring-gold transition shadow-inner">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold mb-3 tracking-wide text-gold uppercase">Tamaño de la Mascota</label>
-                            <div class="relative">
-                                <i class="fa-solid fa-dog absolute left-4 top-1/2 transform -translate-y-1/2 text-white/50"></i>
-                                <select id="check-size" class="w-full pl-12 pr-4 py-4 rounded-xl bg-forestLight/50 border border-gold/40 text-white focus:outline-none focus:ring-2 focus:ring-gold transition appearance-none shadow-inner cursor-pointer">
-                                    <option value="" class="text-gray-900">Seleccionar tamaño...</option>
-                                    <option value="pequeno" class="text-gray-900">Pequeño (1 - 10 kg)</option>
-                                    <option value="mediano" class="text-gray-900">Mediano (11 - 25 kg)</option>
-                                    <option value="grande" class="text-gray-900">Grande (+25 kg)</option>
-                                </select>
-                                <i class="fa-solid fa-chevron-down absolute right-4 top-1/2 transform -translate-y-1/2 text-white/50 pointer-events-none"></i>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <button onclick="checkAvailability()" class="w-full bg-gold text-forest font-extrabold text-lg px-8 py-5 rounded-xl hover:bg-goldHover transition shadow-[0_0_20px_rgba(197,160,89,0.3)] flex items-center justify-center gap-3">
-                        <i class="fa-solid fa-magnifying-glass"></i> Consultar Sistema
-                    </button>
-
-                    <!-- Caja de Resultado (Se muestra via JS) -->
-                    <div id="availability-result" class="hidden mt-10 text-center p-8 rounded-2xl border-2 fade-in shadow-inner">
-                        <div id="avail-icon" class="text-5xl mb-4"></div>
-                        <h3 id="avail-status" class="text-3xl font-serif font-bold mb-3"></h3>
-                        <p id="avail-msg" class="text-lg mb-8 font-medium"></p>
-                        
-                        <!-- Flujo Webhook / WhatsApp Bot -->
-                        <!-- Flujo Webhook / WhatsApp Bot -->
-                        <div id="registration-flow" class="hidden border-t border-current pt-8 mt-4 border-opacity-20">
-                            <h4 class="text-xl font-bold mb-2">¡Asegura tu reserva ahora!</h4>
-                            <p class="text-sm opacity-90 mb-6 max-w-md mx-auto">Elige cómo prefieres continuar con tu registro:</p>
-                            
-<div class="flex justify-center mb-6">
-                                <button onclick="openBookingWizard()" class="w-full sm:w-auto bg-gold text-forest font-bold px-10 py-4 rounded-xl hover:bg-goldHover hover:scale-105 transform transition shadow-lg flex items-center justify-center gap-3 text-lg">
-                                    <i class="fa-solid fa-calendar-check text-xl"></i> Solicitar Reserva
-                                </button>
-                            </div>
-
-
-/*
-
-                            <!-- Web Form -->
-                            <div id="web-form-container" class="hidden text-left bg-white/10 p-6 rounded-2xl max-w-md mx-auto border border-white/20 h-96 overflow-y-auto custom-scrollbar">
-                                <div class="mb-4">
-                                    <label class="block text-sm font-bold mb-1">Nombre Completo</label>
-                                    <input type="text" id="wf-nombre" class="w-full px-4 py-2 rounded-lg outline-none focus:ring-2 focus:ring-gold text-forest" placeholder="Ej. Ana Pérez">
-                                </div>
-                                <div class="mb-4">
-                                    <label class="block text-sm font-bold mb-1">Teléfono</label>
-                                    <input type="tel" id="wf-tel" class="w-full px-4 py-2 rounded-lg outline-none focus:ring-2 focus:ring-gold text-forest" placeholder="Ej. +502 12345678">
-                                </div>
-                                <div class="mb-4">
-                                    <label class="block text-sm font-bold mb-1">Correo Electrónico</label>
-                                    <input type="email" id="wf-email" class="w-full px-4 py-2 rounded-lg outline-none focus:ring-2 focus:ring-gold text-forest" placeholder="Ej. ana@mail.com">
-                                </div>
-                                <div class="mb-4">
-                                    <label class="block text-sm font-bold mb-1">Servicio Deseado</label>
-                                    <select id="wf-servicio" class="w-full px-4 py-2 rounded-lg outline-none focus:ring-2 focus:ring-gold text-forest bg-white">
-                                        <option value="Hotel Boutique">Hotel Boutique</option>
-                                        <option value="Day Pass">Day Pass</option>
-                                        <option value="Spa & Grooming">Spa & Grooming</option>
-                                    </select>
-                                </div>
-                                <hr class="border-white/20 my-4">
-                                <p class="text-sm font-bold text-gold mb-3">Datos de tus Mascotas</p>
-                                <div class="grid grid-cols-2 gap-4 mb-4">
-                                    <div>
-                                        <label class="block text-xs font-bold mb-1">Cantidad Perros</label>
-                                        <input type="number" id="wf-cant" min="1" value="1" class="w-full px-4 py-2 rounded-lg outline-none focus:ring-2 focus:ring-gold text-forest text-sm">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold mb-1">Nombres</label>
-                                        <input type="text" id="wf-mascota" class="w-full px-4 py-2 rounded-lg outline-none focus:ring-2 focus:ring-gold text-forest text-sm" placeholder="Max, Bella">
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-2 gap-4 mb-4">
-                                    <div>
-                                        <label class="block text-xs font-bold mb-1">Raza(s)</label>
-                                        <input type="text" id="wf-raza" class="w-full px-4 py-2 rounded-lg outline-none focus:ring-2 focus:ring-gold text-forest text-sm" placeholder="Ej. Beagle">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold mb-1">Edad(es)</label>
-                                        <input type="text" id="wf-edad" class="w-full px-4 py-2 rounded-lg outline-none focus:ring-2 focus:ring-gold text-forest text-sm" placeholder="Ej. 2 años">
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-2 mb-2">
-                                    <input type="checkbox" id="wf-vacunas" class="w-4 h-4 rounded text-gold focus:ring-gold">
-                                    <label class="text-sm font-bold">Vacunas al día (Cartilla obligatoria)</label>
-                                </div>
-                                <div class="flex items-center gap-2 mb-6">
-                                    <input type="checkbox" id="wf-desparacitado" class="w-4 h-4 rounded text-gold focus:ring-gold">
-                                    <label class="text-sm font-bold">Desparasitado (Menos de 3 meses)</label>
-                                </div>
-
-                                <button onclick="submitWebForm()" class="w-full bg-forest text-gold font-bold py-3 rounded-lg hover:bg-gray-900 transition flex justify-center items-center gap-2 shadow-md">
-                                    <i class="fa-solid fa-paper-plane"></i> Enviar Registro
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Footer -->
-        <footer class="bg-[#05170e] text-white/60 py-12 border-t border-white/5">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <i class="fa-solid fa-paw text-gold/50 text-4xl mb-6"></i>
-                <h2 class="font-serif text-2xl text-white mb-2">Casa Canis</h2>
-                <p class="text-sm mb-8">Resort & Spa 5 Estrellas para Mascotas</p>
-                <div class="flex justify-center space-x-6 mb-8">
-                    <a href="#" class="text-white/40 hover:text-gold transition"><i class="fa-brands fa-instagram text-2xl"></i></a>
-                    <a href="#" class="text-white/40 hover:text-gold transition"><i class="fa-brands fa-facebook text-2xl"></i></a>
-                    <a href="#" class="text-white/40 hover:text-gold transition"><i class="fa-brands fa-tiktok text-2xl"></i></a>
-                </div>
-                <p class="text-xs">&copy; 2026 Casa Canis Guatemala. Todos los derechos reservados. Precios en Quetzales (Q).</p>
-            </div>
-        </footer>
-    </div>
-
-
-    <!-- ========================================== -->
-    <!-- MODAL NUEVA CITA                           -->
-    <!-- ========================================== -->
-    <div id="cita-modal" class="hidden fixed inset-0 z-[100] bg-forest/95 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="bg-cream rounded-3xl w-full max-w-lg p-8 shadow-2xl border border-gold/30 relative fade-in">
-            <button onclick="closeCitaModal()" class="absolute top-6 right-6 text-forest/50 hover:text-forest transition text-2xl"><i class="fa-solid fa-times"></i></button>
-            <div class="text-center mb-6">
-                <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-md">
-                    <i class="fa-solid fa-calendar-plus text-forest text-2xl"></i>
-                </div>
-                <h2 class="text-2xl font-bold text-forest">Nueva Cita</h2>
-            </div>
-            <div class="space-y-4">
-                <div class="relative">
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Buscar Cliente Registrado</label>
-                    <input type="hidden" id="cita-cliente">
-                    <input type="text" id="cita-cliente-search" onfocus="showCitaClientList()" onkeyup="filterCitaClients()" class="w-full px-4 py-3 bg-white rounded-xl border border-gray-200 outline-none focus:border-gold" placeholder="Buscar por nombre, email o teléfono..." autocomplete="off">
-                    <div id="cita-cliente-list" class="absolute z-[110] w-full bg-white border border-gray-200 rounded-xl shadow-xl mt-1 max-h-60 overflow-y-auto hidden">
-                        <!-- Lista dinámica poblada por JS -->
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Correo</label>
-                        <input type="email" id="cita-correo" class="w-full px-4 py-3 bg-gray-50 rounded-xl border border-gray-200 outline-none text-gray-500" placeholder="Automático" readonly>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Mascota</label>
-                        <select id="cita-mascota" class="w-full px-4 py-3 bg-white rounded-xl border border-gray-200 outline-none focus:border-gold">
-                            <option value="">-- Seleccionar Cliente Primero --</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Servicio</label>
-                        <select id="cita-servicio" class="w-full px-4 py-3 bg-white rounded-xl border border-gray-200 outline-none focus:border-gold">
-                            <option value="Grooming">Grooming</option>
-                            <option value="Spa">Spa Relajante</option>
-                            <option value="Hotel">Día de Hotel</option>
-                            <option value="Evaluacion">Evaluación Conductual</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Fecha</label>
-                        <input type="date" id="cita-fecha" class="w-full px-4 py-3 bg-white rounded-xl border border-gray-200 outline-none focus:border-gold">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Hora Inicio</label>
-                        <input type="time" id="cita-hora-inicio" class="w-full px-4 py-3 bg-white rounded-xl border border-gray-200 outline-none focus:border-gold">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Hora Fin</label>
-                        <input type="time" id="cita-hora-fin" class="w-full px-4 py-3 bg-white rounded-xl border border-gray-200 outline-none focus:border-gold">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Google Calendar Event ID (Opcional)</label>
-                    <input type="text" id="cita-google-cal-id" class="w-full px-4 py-3 bg-white rounded-xl border border-gray-200 outline-none focus:border-gold" placeholder="Ej. 7g4d5j6k9f...">
-                    <p class="text-xs text-gray-400 mt-1">Este ID servirá para futuras sincronizaciones automáticas con la API de Google.</p>
-                </div>
-                <button onclick="saveCita()" class="w-full bg-forest text-gold font-bold py-4 rounded-xl hover:bg-forestLight shadow-lg transition">Agendar y Notificar</button>
-            </div>
         </div>
-    </div>
+    </section>
 
-    <!-- MODAL DE CONFIRMACIÓN DE CITA (CORREO SIMULADO) -->
-    <div id="cita-success-modal" class="hidden fixed inset-0 z-[110] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl relative fade-in text-center">
-            <button onclick="document.getElementById('cita-success-modal').classList.add('hidden')" class="absolute top-6 right-6 text-gray-400 hover:text-gray-600 transition text-2xl"><i class="fa-solid fa-times"></i></button>
-            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-green-500 text-4xl">
-                <i class="fa-solid fa-check"></i>
-            </div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">¡Cita Registrada!</h2>
-            <p class="text-gray-500 mb-6 text-sm">Se ha enviado un correo al cliente. Además, puedes añadir esta cita al Google Calendar del negocio haciendo clic en el botón debajo.</p>
-            
-            <div class="bg-gray-50 p-4 rounded-xl text-left mb-6 border border-gray-100">
-                <p class="text-xs font-bold text-gray-400 mb-2 uppercase">Correo del Cliente</p>
-                <p class="text-sm text-gray-800 mb-4"><strong>Para:</strong> <span id="sim-correo-cliente"></span></p>
-                <p class="text-sm text-gray-600 mb-4">¡Hola <span id="sim-nombre-cliente"></span>! Tu cita para <span id="sim-servicio"></span> con <span id="sim-mascota"></span> ha sido confirmada.</p>
-                <a id="btn-cliente-mailto" href="#" class="block bg-forest text-gold font-bold py-2 px-4 rounded-lg text-sm hover:bg-forestLight mb-2 text-center"><i class="fa-solid fa-envelope mr-2"></i>Abrir Plantilla de Correo</a>
-                <a id="btn-cliente-gcal" target="_blank" href="#" class="block bg-white border border-gray-300 text-gray-700 font-bold py-2 px-4 rounded-lg text-sm hover:bg-gray-50 text-center"><i class="fa-brands fa-google text-blue-500 mr-2"></i>Ver Link de Calendario</a>
-            </div>
+    <!-- ============================================ -->
+    <!-- SECCIÓN: SOBRE NOSOTROS -->
+    <!-- ============================================ -->
+    <section id="sobre-nosotros" class="summary-section">
+        <div class="container">
+            <div class="summary-box fade-in">
+                <h2>"Un resort diseñado para el bienestar, la seguridad y la felicidad de quienes más amamos"</h2>
 
-            <a id="btn-negocio-gcal" target="_blank" href="#" class="w-full block bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 shadow transition"><i class="fa-brands fa-google mr-2"></i>Sincronizar a Google Calendar del Negocio</a>
-        </div>
-    </div>
+                <div class="summary-content">
+                    <div class="summary-text">
+                        <p><strong>Más que un hotel para perros,</strong> en Casa Canis Dog Hotel & Resort, creemos que cada mascota merece mucho más que un lugar donde quedarse. Creamos un espacio diseñado para brindar seguridad, comodidad, bienestar y atención personalizada, ofreciendo una experiencia de hospedaje donde cada huésped es tratado como parte de nuestra familia.</p>
 
-    <!-- ========================================== -->
-    <!-- MODAL: PERFIL DE CLIENTE                   -->
-    <!-- ========================================== -->
+                        <p>Nuestro compromiso es proporcionar tranquilidad tanto a las mascotas como a sus propietarios mediante instalaciones modernas, protocolos profesionales, supervisión constante y un servicio basado en los más altos estándares de bienestar animal.</p>
 
-
-    <!-- ========================================== -->
-    <!-- MÓDULO PRIVADO (EMPRESA / RECEPCIÓN)       -->
-    <!-- ========================================== -->
-    <div id="admin-view" class="hidden min-h-screen bg-gray-100 flex overflow-hidden">
-        
-        <!-- Barra Lateral Administrativa -->
-        <aside class="w-72 bg-forest text-cream flex flex-col shadow-[10px_0_30px_rgba(0,0,0,0.1)] z-20 shrink-0">
-            <div class="p-8 flex items-center gap-4 border-b border-white/10">
-                <i class="fa-solid fa-paw text-gold text-3xl"></i>
-                <div>
-                    <span class="font-serif text-2xl font-bold block leading-none">Casa Canis</span>
-                    <span class="text-xs text-gold font-medium tracking-widest uppercase mt-1 block">Management</span>
-                </div>
-            </div>
-            
-            <nav class="flex-grow p-6 space-y-2 overflow-y-auto">
-                
-                <!-- GRUPO: OPERACIONES -->
-                <button onclick="toggleNavGroup('group-op', this)" class="w-full flex items-center justify-between text-xs font-bold text-white/40 hover:text-white uppercase tracking-wider mb-2 ml-2 transition outline-none group">
-                    <span>Operaciones</span>
-                    <i class="fa-solid fa-chevron-up transition-transform duration-300"></i>
-                </button>
-                <div id="group-op" class="space-y-2 mb-6 overflow-hidden transition-all duration-300">
-                    <button onclick="switchTab('tab-leads')" class="admin-tab w-full flex items-center gap-4 px-4 py-3.5 rounded-xl bg-gold/20 text-gold hover:bg-white/10 transition text-left font-medium" data-target="tab-leads">
-                        <i class="fa-solid fa-users w-6 text-center text-lg"></i>
-                        <span>Directorio Clientes</span>
-                        <span id="leads-badge" class="ml-auto bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow animate-pulse">2</span>
-                    </button>
-                    
-                    <button onclick="switchTab('tab-calendario')" class="admin-tab w-full flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-white/10 transition text-left font-medium text-white/80" data-target="tab-calendario">
-                        <i class="fa-regular fa-calendar-check w-6 text-center text-lg"></i>
-                        <span>Calendario / Reservas</span>
-                    </button>
-                    
-                    <button onclick="switchTab('tab-caja')" class="admin-tab w-full flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-white/10 transition text-left font-medium text-white/80" data-target="tab-caja">
-                        <i class="fa-solid fa-cash-register w-6 text-center text-lg"></i>
-                        <span>Punto de Venta</span>
-                    </button>
-
-                    <button onclick="switchTab('tab-mensajes')" class="admin-tab w-full flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-white/10 transition text-left font-medium text-white/80" data-target="tab-mensajes">
-                        <i class="fa-solid fa-paper-plane w-6 text-center text-lg"></i>
-                        <span>Mensajería Masiva</span>
-                    </button>
-                </div>
-                
-                <!-- GRUPO: CONFIGURACION -->
-                <button onclick="toggleNavGroup('group-conf', this)" class="admin-only w-full flex items-center justify-between text-xs font-bold text-white/40 hover:text-white uppercase tracking-wider mb-2 mt-4 ml-2 transition outline-none group">
-                    <span>Configuración</span>
-                    <i class="fa-solid fa-chevron-up transition-transform duration-300"></i>
-                </button>
-                <div id="group-conf" class="space-y-2 mb-6 overflow-hidden transition-all duration-300 admin-only">
-                    <button onclick="switchTab('tab-capacidad')" class="admin-tab w-full flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-white/10 transition text-left font-medium text-white/80 admin-only" data-target="tab-capacidad">
-                        <i class="fa-solid fa-hotel w-6 text-center text-lg"></i>
-                        <span>Capacidad Hotel</span>
-                    </button>
-
-                    <button onclick="switchTab('tab-inventario')" class="admin-tab w-full flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-white/10 transition text-left font-medium text-white/80" data-target="tab-inventario">
-                        <i class="fa-solid fa-boxes-stacked w-6 text-center text-lg"></i>
-                        <span>Control Inventario</span>
-                    </button>
-                    
-                    <button onclick="switchTab('tab-config')" class="admin-tab w-full flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-white/10 transition text-left font-medium text-white/80 admin-only" data-target="tab-config">
-                        <i class="fa-solid fa-cogs w-6 text-center text-lg"></i>
-                        <span>Ajustes del Sistema</span>
-                    </button>
-                    
-                    <button onclick="switchTab('tab-mi-perfil')" class="admin-tab w-full flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-white/10 transition text-left font-medium text-white/80" data-target="tab-mi-perfil">
-                        <i class="fa-solid fa-user text-gold w-6 text-center text-lg"></i>
-                        <span class="text-gold">Mi Perfil</span>
-                    </button>
-
-
-
-                    <button onclick="switchTab('tab-catalogo')" class="admin-tab w-full flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-white/10 transition text-left font-medium text-white/80 admin-only" data-target="tab-catalogo">
-                        <i class="fa-solid fa-tags w-6 text-center text-lg"></i>
-                        <span>Catálogo & Precios</span>
-                    </button>
-                </div>
-                
-                <!-- GRUPO: AUDITORIA -->
-                <button onclick="toggleNavGroup('group-audit', this)" class="admin-only w-full flex items-center justify-between text-xs font-bold text-white/40 hover:text-white uppercase tracking-wider mb-2 mt-4 ml-2 transition outline-none group">
-                    <span>Auditoría</span>
-                    <i class="fa-solid fa-chevron-up transition-transform duration-300"></i>
-                </button>
-                <div id="group-audit" class="space-y-2 mb-6 overflow-hidden transition-all duration-300 admin-only">
-                    <button onclick="switchTab('tab-reportes')" class="admin-tab w-full flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-white/10 transition text-left font-medium text-white/80 admin-only" data-target="tab-reportes">
-                        <i class="fa-solid fa-chart-line w-6 text-center text-lg"></i>
-                        <span>Reportes & KPI</span>
-                    </button>
-
-                    <button onclick="switchTab('tab-auditoria')" class="admin-tab w-full flex items-center gap-4 px-4 py-3.5 rounded-xl hover:bg-white/10 transition text-left font-medium text-white/80" data-target="tab-auditoria">
-                        <i class="fa-solid fa-clipboard-user w-6 text-center text-lg"></i>
-                        <span>Auditoría de Personal</span>
-                    </button>
-                </div>
-            </nav>
-            
-            <div class="p-6 border-t border-white/10 bg-black/10">
-                <div class="flex items-center gap-4 mb-6">
-                    <div class="w-12 h-12 rounded-full bg-gradient-to-tr from-gold to-yellow-200 flex items-center justify-center text-forest font-bold text-xl shadow-lg border-2 border-forest">
-                        <i class="fa-solid fa-user-tie"></i>
+                        <p>Ya sea para hospedaje, Day Pass o grooming, cada detalle ha sido cuidadosamente diseñado para que su mascota disfrute de una estancia segura, divertida y libre de estrés.</p>
                     </div>
-                    <div>
-                        <p id="ui-role-name" class="text-sm font-bold text-white">Administrador</p>
-                        <p class="text-xs text-gold">Recepción Central</p>
-                    </div>
-                </div>
-                <button onclick="handleLogout()" class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-red-500/20 text-red-300 hover:bg-red-500 hover:text-white transition font-bold text-sm">
-                    <i class="fa-solid fa-sign-out-alt"></i> Cerrar Sesión Segura
-                </button>
-            </div>
-        </aside>
-
-        <!-- Área de Trabajo Principal -->
-        <main class="flex-grow h-screen overflow-y-auto relative">
-            <!-- Header Superior del Dashboard -->
-            <div class="bg-white px-10 py-5 flex justify-between items-center shadow-sm sticky top-0 z-10">
-                <div>
-                    <h2 class="text-2xl font-bold text-forest" id="dashboard-title">Panel de Control</h2>
-                    <p class="text-sm text-gray-500">Operación en Quetzales (Q) | Estado del Sistema: <span class="text-green-500 font-bold"><i class="fa-solid fa-wifi"></i> En Línea</span></p>
-                </div>
-                <div class="flex gap-4">
-                    <div class="text-right">
-                        <p class="text-xs text-gray-500">Fecha Actual</p>
-                        <p class="font-bold text-forest" id="current-date-display"></p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="p-10">
-                
-                <!-- TAB: LEADS WHATSAPP (CRM Básico) -->
-                <div id="tab-leads" class="admin-panel fade-in">
-                    <div class="flex justify-between items-end mb-8">
-                        <div>
-                            <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
-                                <div class="bg-blue-100 p-2 rounded-lg"><i class="fa-solid fa-address-book text-blue-600"></i></div>
-                                Directorio de Clientes (CRM)
-                            </h3>
-                            <p class="text-gray-500 mt-2">Gestión de todos tus clientes registrados manual o automáticamente desde la Web/WhatsApp.</p>
-                            <div class="flex gap-2 mt-4 overflow-x-auto pb-2">
-                                <button onclick="filterCRM('all')" class="crm-filter-btn px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 border bg-forest text-gold border-forest shadow-md" data-filter="all">Todos</button>
-                                <button onclick="filterCRM('Pendiente Validación Médica')" class="crm-filter-btn px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 border bg-white text-forest border-forest/20 hover:bg-forest/5" data-filter="Pendiente Validación Médica">Por Validar</button>
-                                <button onclick="filterCRM('Reserva Próxima')" class="crm-filter-btn px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 border bg-white text-forest border-forest/20 hover:bg-forest/5" data-filter="Reserva Próxima">Reservas Próximas</button>
-                                <button onclick="filterCRM('Mascota Adentro')" class="crm-filter-btn px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-300 border bg-white text-forest border-forest/20 hover:bg-forest/5" data-filter="Mascota Adentro">En Hotel</button>
-                            </div>
-
-                        </div>
-                        <button onclick="openClientProfile()" class="bg-forest text-gold border border-forest px-5 py-2.5 rounded-xl hover:bg-forestLight transition font-medium flex items-center gap-2 text-sm shadow-sm">
-                            <i class="fa-solid fa-user-plus"></i> Ingresar Cliente Manual
-                        </button>
-                    </div>
-                    
-                    <div class="bg-white rounded-2xl shadow-[0_5px_20px_rgba(0,0,0,0.03)] border border-gray-200 overflow-hidden">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b border-gray-200">
-                                    <th class="p-5 font-bold">Cliente / Contacto</th>
-                                    <th class="p-5 font-bold">Datos Mascota</th>
-                                    <th class="p-5 font-bold">Servicio Interés</th>
-                                    <th class="p-5 font-bold">Origen Sistema</th>
-                                    <th class="p-5 font-bold text-center">Estado</th>
-                                    <th class="p-5 font-bold text-right">Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody id="leads-table-body" class="divide-y divide-gray-100 text-sm">
-                                <!-- Filas pobladas dinámicamente por JS -->
-                            </tbody>
-                        </table>
-                        <!-- Empty state (Oculto por defecto) -->
-                        <div id="leads-empty" class="hidden text-center py-16">
-                            <i class="fa-regular fa-folder-open text-5xl text-gray-300 mb-4"></i>
-                            <p class="text-gray-500">No hay leads pendientes por contactar.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB: CALENDARIO -->
-                <div id="tab-calendario" class="admin-panel hidden fade-in h-full flex flex-col">
-                    <div class="mb-6 flex justify-between items-end">
-                        <div>
-                            <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
-                                <div class="bg-indigo-100 p-2 rounded-lg"><i class="fa-regular fa-calendar-check text-indigo-600"></i></div>
-                                Calendario de Servicios
-                            </h3>
-                            <p class="text-gray-500 mt-2">Gestiona las reservas de Spa, Grooming y consultas.</p>
-                        </div>
-
-                        <div class="flex gap-4">
-                            <span class="flex items-center gap-2 text-sm text-gray-500 font-bold"><div class="w-3 h-3 rounded-full bg-purple-500"></div> Grooming</span>
-                            <span class="flex items-center gap-2 text-sm text-gray-500 font-bold"><div class="w-3 h-3 rounded-full bg-blue-500"></div> Spa</span>
-                            <span class="flex items-center gap-2 text-sm text-gray-500 font-bold"><div class="w-3 h-3 rounded-full bg-gold"></div> Hotel</span>
-                            
-                            <button onclick="openCitaModal()" class="bg-forest text-cream px-5 py-3 rounded-xl hover:bg-forestLight shadow-md transition font-bold flex items-center gap-2 ml-4">
-                                <i class="fa-solid fa-plus"></i> Nueva Cita
-                            </button>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex-grow">
-                        <div id="calendar-container" class="h-full min-h-[600px]"></div>
-                    </div>
-                </div>
-
-                <!-- TAB: PUNTO DE VENTA Y CAJA -->
-                <div id="tab-caja" class="admin-panel hidden fade-in">
-                    <div class="mb-8">
-                        <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
-                            <div class="bg-gold/20 p-2 rounded-lg"><i class="fa-solid fa-cash-register text-gold"></i></div>
-                            Facturación Rápida
-                        </h3>
-                        <p class="text-gray-500 mt-2">Generador de recibos comprobantes para envíos por WhatsApp.</p>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        <!-- Panel Izquierdo: Catálogo y Productos -->
-                        <div class="lg:col-span-7 space-y-6">
-                            <!-- Servicios -->
-                            <div class="bg-white p-6 rounded-2xl shadow-[0_5px_20px_rgba(0,0,0,0.03)] border border-gray-200">
-                                <div class="flex justify-between items-center mb-4 border-b pb-2">
-                                    <h4 class="text-lg font-bold text-forest">Catálogo de Servicios</h4>
-                                    <button onclick="switchTab('tab-catalogo')" class="text-xs text-gold font-bold hover:underline admin-only">Editar Catálogo</button>
-                                </div>
-                                <div id="pos-catalog-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto custom-scrollbar pr-2">
-                                    <!-- Botones POS generados dinámicamente -->
-                                </div>
-                            </div>
-                            
-                            <!-- Productos (Inventario) -->
-                            <div class="bg-white p-6 rounded-2xl shadow-[0_5px_20px_rgba(0,0,0,0.03)] border border-gray-200">
-                                <div class="flex justify-between items-center mb-4 border-b pb-2">
-                                    <h4 class="text-lg font-bold text-forest">Productos (Inventario)</h4>
-                                    <button onclick="switchTab('tab-inventario')" class="text-xs text-gold font-bold hover:underline">Gestionar Stock</button>
-                                </div>
-                                <div id="pos-inventory-container" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-60 overflow-y-auto custom-scrollbar pr-2">
-                                    <!-- Botones de productos generados dinámicamente -->
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Panel Derecho: Ticket de Caja -->
-                        <div class="lg:col-span-5 bg-white p-8 rounded-3xl shadow-[0_10px_40px_rgba(197,160,89,0.15)] border border-gold/30 flex flex-col h-[750px] relative">
-                            <!-- Decoración Ticket -->
-                            <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 w-20 h-6 bg-gray-100 rounded-b-xl border-b border-x border-gray-200"></div>
-                            
-                            <h4 class="text-2xl font-bold text-forest mb-6 text-center">Ticket de Cobro</h4>
-                            
-                            <!-- Datos de Facturación -->
-                            <div class="space-y-4 mb-6 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                                <!-- NUEVO: SELECTOR DE CLIENTE ACTIVO -->
-                                <div>
-                                    <label class="text-xs font-bold text-forest uppercase">Vincular a Cliente Activo</label>
-                                    <select id="pos-client-select" onchange="autoFillPOSClient()" class="w-full bg-white border border-gray-300 rounded-lg py-1.5 px-2 focus:border-gold outline-none text-sm text-forest mt-1 font-bold">
-                                        <option value="">-- Cobro Libre (Consumidor Final) --</option>
-                                    </select>
-                                </div>
-                                <hr class="border-gray-200">
-                                <div>
-                                    <label class="text-xs font-bold text-gray-500 uppercase">Nombre a Facturar</label>
-                                    <input type="text" id="bill-name" placeholder="Consumidor Final" class="w-full bg-transparent border-b border-gray-300 focus:border-gold outline-none py-1 text-forest font-medium">
-                                </div>
-                                <div>
-                                    <label class="text-xs font-bold text-gray-500 uppercase">NIT (o C.F.)</label>
-                                    <input type="text" id="bill-nit" placeholder="C.F." class="w-full bg-transparent border-b border-gray-300 focus:border-gold outline-none py-1 text-forest font-medium">
-                                </div>
-                                <div class="pt-2">
-                                    <label class="text-xs font-bold text-gray-500 uppercase">Comentario Opcional / Notas</label>
-                                    <input type="text" id="bill-comment" placeholder="Ej: Cliente solicitó cuidado especial..." class="w-full bg-transparent border-b border-gray-300 focus:border-gold outline-none py-1 text-forest text-sm italic">
-                                </div>
-                            </div>
-
-                            <!-- Lista de Items -->
-                            <div class="flex justify-between text-xs font-bold text-gray-400 uppercase border-b pb-2 mb-2">
-                                <span>Concepto</span>
-                                <span>Subtotal</span>
-                            </div>
-                            <div id="cart-items" class="flex-grow overflow-y-auto space-y-3 custom-scrollbar pr-2 mb-6">
-                                <!-- Llenado por JS -->
-                                <div class="text-center text-gray-400 text-sm mt-10 italic">Añade servicios al ticket...</div>
-                            </div>
-
-                            <!-- Total y Acción -->
-                            <div class="border-t-2 border-dashed border-gray-300 pt-6 mt-auto">
-                                <div class="flex justify-between items-end mb-6">
-                                    <span class="text-gray-500 font-bold uppercase tracking-wider">Total a Pagar</span>
-                                    <span id="cart-total" class="text-4xl font-black text-forest tracking-tight">Q 0.00</span>
-                                </div>
-
-                                <!-- Toggles FEL -->
-                                <div class="flex items-center justify-between mb-6 bg-green-50/50 p-3 rounded-lg border border-green-100">
-                                    <div class="flex items-center gap-3">
-                                        <i class="fa-solid fa-file-invoice-dollar text-green-600 text-lg"></i>
-                                        <div>
-                                            <p class="text-sm font-bold text-forest">Generar FEL Oficial (SAT)</p>
-                                            <p class="text-[10px] text-gray-500">Se reportará automáticamente a la SAT.</p>
-                                        </div>
-                                    </div>
-                                    <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" id="emit-fel-checkbox" class="sr-only peer">
-                                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
-                                    </label>
-                                </div>
-                                <button onclick="generateReceipt()" class="w-full bg-forest text-gold font-bold text-lg py-4 rounded-xl hover:bg-forestLight hover:shadow-lg transition transform hover:-translate-y-1 flex items-center justify-center gap-3">
-                                    <i class="fa-solid fa-cash-register"></i> Procesar Cobro
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB: CAPACIDAD HOTEL -->
-                <div id="tab-capacidad" class="admin-panel hidden fade-in">
-                    <div class="mb-8 flex justify-between items-end">
-                        <div>
-                            <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
-                                <div class="bg-blue-100 p-2 rounded-lg"><i class="fa-solid fa-hotel text-blue-600"></i></div>
-                                Control de Disponibilidad
-                            </h3>
-                            <p class="text-gray-500 mt-2">Ajusta los límites físicos del hotel. Esto impacta el módulo de reservas público en tiempo real.</p>
-                        </div>
-                        <button onclick="saveCapacity()" class="bg-forest text-cream px-6 py-3 rounded-xl hover:bg-forestLight shadow-md transition font-bold flex items-center gap-2">
-                            <i class="fa-solid fa-cloud-arrow-up"></i> Guardar Capacidad
-                        </button>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        <!-- Card: Pequeños -->
-                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden group">
-                            <div class="absolute top-0 right-0 w-24 h-24 bg-green-500 opacity-10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150 duration-500"></div>
-                            <h4 class="text-xl font-bold text-forest mb-1">Razas Pequeñas</h4>
-                            <p class="text-sm text-gray-500 mb-8">Hasta 10 kg</p>
-                            
-                            <div class="space-y-6">
-                                <div>
-                                    <label class="flex justify-between text-sm font-bold text-gray-600 mb-2">Total Habitaciones <i class="fa-solid fa-building text-gray-400"></i></label>
-                                    <input type="number" id="cap-peq-total" value="15" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-lg font-bold text-forest focus:ring-2 focus:ring-green-400 outline-none">
-                                </div>
-                                <div>
-                                    <label class="flex justify-between text-sm font-bold text-gray-600 mb-2">Ocupadas (Huéspedes) <i class="fa-solid fa-dog text-gray-400"></i></label>
-                                    <input type="number" id="cap-peq-occ" value="2" onchange="updateBars()" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-lg font-bold text-forest focus:ring-2 focus:ring-green-400 outline-none">
-                                </div>
-                                
-                                <div class="pt-4 border-t border-gray-100">
-                                    <div class="flex justify-between text-xs font-bold mb-2">
-                                        <span class="text-gray-500">Ocupación</span>
-                                        <span id="pct-peq" class="text-green-600">13%</span>
-                                    </div>
-                                    <div class="w-full bg-gray-100 rounded-full h-3">
-                                        <div id="bar-peq" class="bg-green-500 h-3 rounded-full transition-all duration-500" style="width: 13%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Card: Medianos -->
-                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden group">
-                            <div class="absolute top-0 right-0 w-24 h-24 bg-yellow-500 opacity-10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150 duration-500"></div>
-                            <h4 class="text-xl font-bold text-forest mb-1">Razas Medianas</h4>
-                            <p class="text-sm text-gray-500 mb-8">De 11 a 25 kg</p>
-                            
-                            <div class="space-y-6">
-                                <div>
-                                    <label class="flex justify-between text-sm font-bold text-gray-600 mb-2">Total Habitaciones <i class="fa-solid fa-building text-gray-400"></i></label>
-                                    <input type="number" id="cap-med-total" value="10" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-lg font-bold text-forest focus:ring-2 focus:ring-yellow-400 outline-none">
-                                </div>
-                                <div>
-                                    <label class="flex justify-between text-sm font-bold text-gray-600 mb-2">Ocupadas (Huéspedes) <i class="fa-solid fa-dog text-gray-400"></i></label>
-                                    <input type="number" id="cap-med-occ" value="8" onchange="updateBars()" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-lg font-bold text-forest focus:ring-2 focus:ring-yellow-400 outline-none">
-                                </div>
-                                
-                                <div class="pt-4 border-t border-gray-100">
-                                    <div class="flex justify-between text-xs font-bold mb-2">
-                                        <span class="text-gray-500">Ocupación</span>
-                                        <span id="pct-med" class="text-yellow-600">80%</span>
-                                    </div>
-                                    <div class="w-full bg-gray-100 rounded-full h-3">
-                                        <div id="bar-med" class="bg-yellow-500 h-3 rounded-full transition-all duration-500" style="width: 80%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Card: Grandes -->
-                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 relative overflow-hidden group">
-                            <div class="absolute top-0 right-0 w-24 h-24 bg-red-500 opacity-10 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-150 duration-500"></div>
-                            <h4 class="text-xl font-bold text-forest mb-1">Razas Grandes</h4>
-                            <p class="text-sm text-gray-500 mb-8">Más de 25 kg</p>
-                            
-                            <div class="space-y-6">
-                                <div>
-                                    <label class="flex justify-between text-sm font-bold text-gray-600 mb-2">Total Habitaciones <i class="fa-solid fa-building text-gray-400"></i></label>
-                                    <input type="number" id="cap-gra-total" value="5" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-lg font-bold text-forest focus:ring-2 focus:ring-red-400 outline-none">
-                                </div>
-                                <div>
-                                    <label class="flex justify-between text-sm font-bold text-gray-600 mb-2">Ocupadas (Huéspedes) <i class="fa-solid fa-dog text-gray-400"></i></label>
-                                    <input type="number" id="cap-gra-occ" value="5" onchange="updateBars()" class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-lg font-bold text-forest focus:ring-2 focus:ring-red-400 outline-none">
-                                </div>
-                                
-                                <div class="pt-4 border-t border-gray-100">
-                                    <div class="flex justify-between text-xs font-bold mb-2">
-                                        <span class="text-gray-500">Ocupación (¡Lleno!)</span>
-                                        <span id="pct-gra" class="text-red-600">100%</span>
-                                    </div>
-                                    <div class="w-full bg-gray-100 rounded-full h-3">
-                                        <div id="bar-gra" class="bg-red-500 h-3 rounded-full transition-all duration-500 animate-pulse" style="width: 100%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB: CONFIGURACIÓN WEB -->
-                <div id="tab-config" class="admin-panel hidden fade-in admin-only">
-                    <div class="mb-8">
-                        <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
-                            <div class="bg-purple-100 p-2 rounded-lg"><i class="fa-solid fa-cogs text-purple-600"></i></div>
-                            Ajustes del Sistema
-                        </h3>
-                        <p class="text-gray-500 mt-2">Configuración general, integraciones y personalización del sistema.</p>
-                    </div>
-                    
-                    <div class="bg-white p-10 rounded-3xl shadow-sm border border-gray-100 max-w-4xl">
-                        <div class="space-y-8">
-                            
-                            <!-- MODO PRUEBA GLOBAL -->
-                            <div class="bg-red-50 p-6 rounded-2xl border-2 border-red-200 shadow-sm relative overflow-hidden">
-                                <div class="absolute -right-4 -top-4 text-red-100/50">
-                                    <i class="fa-solid fa-flask text-8xl"></i>
-                                </div>
-                                <div class="relative z-10 flex items-start justify-between">
-                                    <div>
-                                        <h4 class="text-xl font-bold text-red-800 flex items-center gap-2 mb-2">
-                                            <i class="fa-solid fa-bug text-red-600"></i> Modo Prueba Global
-                                        </h4>
-                                        <p class="text-sm text-red-700 max-w-md">Actívalo para probar el sistema sin realizar cobros reales ni enviar datos a la SAT o APIs. Al apagarlo, todas las conexiones serán <strong class="font-black">EN VIVO</strong>.</p>
-                                    </div>
-                                    <label class="relative inline-flex items-center cursor-pointer mt-2">
-                                        <input type="checkbox" id="edit-modo-prueba" class="sr-only peer" checked>
-                                        <div class="w-14 h-7 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-red-600"></div>
-                                    </label>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">Título Principal (Hero Banner)</label>
-                                <input type="text" id="edit-title" value="Exclusividad y confort para tu mejor amigo" class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none font-serif text-xl text-forest">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">Subtítulo (Call to action)</label>
-                                <textarea id="edit-subtitle" rows="2" class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none text-gray-600">El estándar más alto en cuidado canino en Guatemala.</textarea>
-                            </div>
-                            
-                            <!-- Edición de Imágenes -->
-                            <div>
-                                <h4 class="font-bold text-forest mb-4 text-lg"><i class="fa-regular fa-images text-gold mr-2"></i>Gestor de Imágenes</h4>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-xs font-bold text-gray-700 mb-2 tracking-wider">Foto de Fondo (Hero Banner)</label>
-                                        <input type="file" id="edit-img-hero" accept="image/*" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gold outline-none text-xs text-gray-500">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold text-gray-700 mb-2 tracking-wider">Foto Servicio 1 (Hotel)</label>
-                                        <input type="file" id="edit-img-serv1" accept="image/*" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gold outline-none text-xs text-gray-500">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold text-gray-700 mb-2 tracking-wider">Foto Servicio 2 (Day Pass)</label>
-                                        <input type="file" id="edit-img-serv2" accept="image/*" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gold outline-none text-xs text-gray-500">
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-bold text-gray-700 mb-2 tracking-wider">Foto Servicio 3 (Spa/Grooming)</label>
-                                        <input type="file" id="edit-img-serv3" accept="image/*" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-gold outline-none text-xs text-gray-500">
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <hr class="border-gray-200 my-8">
-                            
-                            <!-- NUEVA SECCION: API KEYS -->
-                            <div>
-                                <h4 class="font-bold text-forest mb-4 text-lg"><i class="fa-solid fa-key text-gold mr-2"></i>Credenciales de Integración</h4>
-                                <label class="block text-sm font-bold text-gray-700 mb-3 tracking-wider">WhatsApp Business API Key</label>
-                                <div class="relative mb-2">
-                                    <i class="fa-brands fa-whatsapp absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                                    <input type="password" id="edit-wa-apikey" placeholder="EAAIzaSy_... (Token permanente)" class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#25D366] outline-none text-gray-600 font-mono text-sm">
-                                </div>
-                                <label class="block text-sm font-bold text-gray-700 mb-3 tracking-wider mt-4">WhatsApp Phone Number ID</label>
-                                <div class="relative mb-2">
-                                    <i class="fa-solid fa-phone absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                                    <input type="text" id="edit-wa-phoneid" placeholder="1032483..." class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#25D366] outline-none text-gray-600 font-mono text-sm">
-                                </div>
-                                <p class="text-xs text-gray-500 mb-4">Esta clave y el ID del teléfono se utilizarán para la integración oficial de mensajes masivos con Plantillas.</p>
-                                
-                                <label class="block text-sm font-bold text-gray-700 mb-3 tracking-wider">Email Provider API Key (ej. SendGrid)</label>
-                                <div class="relative mb-2">
-                                    <i class="fa-solid fa-envelope absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                                    <input type="password" id="edit-email-apikey" placeholder="SG.xxxxxxx..." class="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-gray-600 font-mono text-sm">
-                                </div>
-                                <p class="text-xs text-gray-500">Esta clave permitirá el envío de correos automatizados (recibos, confirmaciones, campañas).</p>
-                            </div>
-                            
-                            <hr class="border-gray-200 my-8">
-
-                            <h4 class="font-bold text-forest mb-4 text-lg"><i class="fa-solid fa-file-invoice-dollar text-green-500 mr-2"></i>Facturación Electrónica (FEL - SAT Guatemala)</h4>
-                            <div class="bg-green-50 p-6 rounded-2xl border border-green-100">
-                                <label class="block text-sm font-bold text-gray-700 mb-3 tracking-wider">Certificador</label>
-                                <select id="edit-fel-provider" class="w-full px-5 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-400 outline-none text-gray-600 mb-4">
-                                    <option value="infile">Infile</option>
-                                    <option value="megaprint">Megaprint</option>
-                                    <option value="guatefacturas">Guatefacturas</option>
-                                    <option value="digifact">Digifact</option>
-                                </select>
-
-                                <label class="block text-sm font-bold text-gray-700 mb-3 tracking-wider">Alias / Usuario (Requestor)</label>
-                                <input type="text" id="edit-fel-alias" placeholder="ej. CASA_CANIS_FEL" class="w-full px-5 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-400 outline-none text-gray-600 mb-4">
-
-                                <label class="block text-sm font-bold text-gray-700 mb-3 tracking-wider">Llave / Token API (Firma)</label>
-                                <input type="password" id="edit-fel-llave" placeholder="Ingresa tu token o llave..." class="w-full px-5 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-400 outline-none text-gray-600 mb-4">
-
-                                <label class="block text-sm font-bold text-gray-700 mb-3 tracking-wider">NIT Emisor / Afiliación IVA</label>
-                                <input type="text" id="edit-fel-afiliacion" placeholder="ej. 1234567-8" class="w-full px-5 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-400 outline-none text-gray-600 mb-4">
-
-                                <label class="block text-sm font-bold text-gray-700 mb-3 tracking-wider">Frase Legal (SAT)</label>
-                                <input type="text" id="edit-fel-frase" placeholder="Sujeto a pagos trimestrales..." class="w-full px-5 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-400 outline-none text-gray-600">
-                                <p class="text-xs text-gray-500 mt-2"><i class="fa-solid fa-circle-info mr-1"></i>Frase obligatoria según tu régimen en la SAT.</p>
-                            </div>
-                            
-                            <hr class="border-gray-200 my-8">
-                            <h4 class="font-bold text-forest mb-4 text-lg"><i class="fa-brands fa-google text-blue-500 mr-2"></i>Integraciones de Calendario</h4>
-                            <div class="bg-blue-50 p-6 rounded-2xl border border-blue-100">
-                                <label class="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">Google Calendar ID (Negocio)</label>
-                                <input type="text" id="config-gcal-id" placeholder="ejemplo@gmail.com o ID largo..." class="w-full px-5 py-4 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-400 outline-none text-gray-600 mb-2">
-                                <p class="text-xs text-gray-500"><i class="fa-solid fa-circle-info mr-1"></i>Ingresa el ID del calendario maestro donde se guardarán las citas aprobadas. Si lo dejas en blanco, se guardará en tu calendario personal.</p>
-                            </div>
-
-                            <hr class="border-gray-200 my-8">
-                            
-                            <div class="flex justify-end gap-4">
-                                <button class="px-6 py-3 font-bold text-gray-500 hover:text-gray-800 transition">Cancelar</button>
-                                <button onclick="saveWebConfig()" class="bg-gold text-forest font-bold px-8 py-3 rounded-xl hover:bg-goldHover shadow-lg transition transform hover:-translate-y-1">
-                                    Publicar Cambios Web
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-<!-- Términos y Condiciones -->
-                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 mt-6 admin-only">
-                        <div class="flex items-center justify-between mb-4">
-                            <h4 class="font-bold text-forest text-lg">
-                                <i class="fa-solid fa-scale-balanced text-gold mr-2"></i>Términos y Condiciones
-                            </h4>
-                            <span class="text-xs text-gray-400">Versión actual: <span id="cfg-tc-version-current" class="font-mono font-bold">—</span></span>
-                        </div>
-                        <p class="text-xs text-gray-500 mb-4">
-                            Este es el texto que el cliente debe aceptar antes de pagar. Al guardar se
-                            crea una versión nueva; las reservas anteriores conservan la que aceptaron.
-                        </p>
-                        <textarea id="cfg-tc-text" rows="14"
-                                  class="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm outline-none focus:border-gold font-mono leading-relaxed"
-                                  placeholder="1. Políticas de Reservación y Pago&#10;- ..."></textarea>
-                        <div class="flex justify-end mt-4">
-                            <button onclick="saveTerms()" class="bg-forest text-gold font-bold px-8 py-3 rounded-xl hover:bg-forestLight shadow-lg transition">
-                                <i class="fa-solid fa-save mr-2"></i>Publicar Términos
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Datos bancarios -->
-                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 mt-6 admin-only">
-                        <h4 class="font-bold text-forest text-lg mb-4">
-                            <i class="fa-solid fa-building-columns text-gold mr-2"></i>Datos Bancarios
-                        </h4>
-                        <p class="text-xs text-gray-500 mb-6">
-                            Lo que ve el cliente en el último paso de la reserva para hacer el depósito.
-                        </p>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Banco</label>
-                                <input type="text" id="cfg-bank-name" placeholder="Banco Industrial"
-                                       class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-gold">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Tipo de cuenta</label>
-                                <select id="cfg-bank-type" class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-gold">
-                                    <option value="Monetaria">Monetaria</option>
-                                    <option value="Ahorro">Ahorro</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Número de cuenta</label>
-                                <input type="text" id="cfg-bank-number" placeholder="123-456789-0"
-                                       class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-gold font-mono">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">A nombre de</label>
-                                <input type="text" id="cfg-bank-owner" placeholder="Casa Canis, S.A."
-                                       class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-gold">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">NIT (opcional)</label>
-                                <input type="text" id="cfg-bank-nit" placeholder="1234567-8"
-                                       class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-gold">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">% a pagar por adelantado</label>
-                                <input type="number" id="cfg-pay-pct" min="1" max="100" value="100"
-                                       class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-gold">
-                            </div>
-                        </div>
-                        <div class="mt-4">
-                            <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Instrucciones adicionales</label>
-                            <textarea id="cfg-bank-notes" rows="3" placeholder="Ej. Coloca el nombre de tu mascota en la referencia del depósito."
-                                      class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-gold"></textarea>
-                        </div>
-                        <div class="flex justify-end mt-4">
-                            <button onclick="savePaymentInfo()" class="bg-forest text-gold font-bold px-8 py-3 rounded-xl hover:bg-forestLight shadow-lg transition">
-                                <i class="fa-solid fa-save mr-2"></i>Guardar Datos Bancarios
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB: PERFIL EMPLEADOS -->
-                <!-- TAB: MI PERFIL -->
-                <div id="tab-mi-perfil" class="admin-panel hidden fade-in">
-
-                  <div class="mb-8 flex items-start justify-between">
-                    <div>
-                      <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
-                        <div class="bg-gold/20 p-2 rounded-lg"><i class="fa-solid fa-users-gear text-gold"></i></div>
-                        <span id="staff-tab-title">Mi Perfil</span>
-                      </h3>
-                      <p id="staff-tab-sub" class="text-gray-500 mt-2">Tu información y solicitudes.</p>
-                    </div>
-                    <button id="btn-add-staff" onclick="openStaffModal()"
-                            class="admin-only bg-forest text-gold font-bold px-6 py-3 rounded-xl hover:bg-forestLight shadow-lg transition">
-                      <i class="fa-solid fa-user-plus mr-2"></i>Agregar Empleado
-                    </button>
-                  </div>
-
-                  <!-- ============ VISTA ADMIN ============ -->
-                  <div id="staff-admin-view" class="hidden space-y-8">
-
-                    <!-- Cola de solicitudes pendientes -->
-                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-                      <div class="px-8 py-5 border-b border-gray-100 flex items-center justify-between">
-                        <h4 class="font-bold text-forest text-lg">
-                          <i class="fa-regular fa-calendar-xmark text-gold mr-2"></i>Solicitudes de Ausencia
-                        </h4>
-                        <span id="timeoff-pending-count"
-                              class="bg-yellow-100 text-yellow-800 text-xs font-bold px-3 py-1 rounded-full">0 pendientes</span>
-                      </div>
-                      <div id="timeoff-queue" class="divide-y divide-gray-100"></div>
-                    </div>
-
-                    <!-- Plantilla -->
-                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-                      <div class="px-8 py-5 border-b border-gray-100">
-                        <h4 class="font-bold text-forest text-lg">
-                          <i class="fa-solid fa-id-badge text-gold mr-2"></i>Plantilla de Personal
-                        </h4>
-                      </div>
-                      <div id="staff-roster" class="divide-y divide-gray-100"></div>
-                    </div>
-
-                    <!-- Editor de horario semanal -->
-                    <div id="schedule-editor" class="hidden bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-                      <div class="flex items-center justify-between mb-6">
-                        <h4 class="font-bold text-forest text-lg">
-                          <i class="fa-regular fa-clock text-gold mr-2"></i>
-                          Horario semanal · <span id="sched-emp-name" class="text-gold"></span>
-                        </h4>
-                        <button onclick="closeScheduleEditor()" class="text-gray-400 hover:text-gray-700">
-                          <i class="fa-solid fa-xmark text-xl"></i>
-                        </button>
-                      </div>
-                      <p class="text-xs text-gray-500 mb-6">
-                        <i class="fa-solid fa-circle-info mr-1"></i>
-                        Estos horarios definen la disponibilidad real de los servicios en el calendario público.
-                        Un día sin marcar no genera cupos.
-                      </p>
-                      <div id="schedule-grid" class="space-y-3"></div>
-                      <div class="flex justify-end mt-8">
-                        <button onclick="saveSchedule()"
-                                class="bg-gold text-forest font-bold px-8 py-3 rounded-xl hover:bg-goldHover shadow-lg transition">
-                          <i class="fa-solid fa-save mr-2"></i>Guardar Horario
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- ============ VISTA AGENTE ============ -->
-                  <div id="staff-agent-view" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                    <!-- Perfil -->
-                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-                      <div class="flex items-center gap-4 mb-6">
-                        <img id="my-profile-img" alt="Foto de perfil"
-                             class="w-20 h-20 rounded-full object-cover border-2 border-gold/40 bg-cream">
-                        <div class="flex-1">
-                          <p id="my-profile-name" class="font-bold text-forest text-lg"></p>
-                          <p id="my-profile-role" class="text-sm text-gold font-medium"></p>
-                        </div>
-                      </div>
-                      <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Cambiar foto</label>
-                      <input type="file" id="my-profile-upload" accept="image/*"
-                             class="w-full text-xs mb-4 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-cream file:text-forest file:font-bold">
-                      <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Teléfono</label>
-                      <input type="text" id="my-profile-phone"
-                             class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-gold mb-4">
-                      <button onclick="saveMyProfile()"
-                              class="w-full bg-forest text-gold font-bold py-3 rounded-xl hover:bg-forestLight transition">
-                        Guardar
-                      </button>
-                    </div>
-
-                    <!-- Mi horario (solo lectura) + descansos -->
-                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-                      <h4 class="font-bold text-forest mb-4">
-                        <i class="fa-regular fa-clock text-gold mr-2"></i>Mi Horario
-                      </h4>
-                      <div id="my-schedule-list" class="space-y-2 text-sm mb-6"></div>
-                      <p class="text-[11px] text-gray-400 mb-6">
-                        Definido por administración. Si necesitas un cambio, envía una solicitud.
-                      </p>
-                      <div class="border-t border-gray-100 pt-5">
-                        <h5 class="font-bold text-forest text-sm mb-3">Registro de descanso</h5>
-                        <button id="btn-break" onclick="toggleBreak()"
-                                class="w-full bg-cream text-forest font-bold py-3 rounded-xl hover:bg-gold/20 transition border border-gold/30">
-                          <i class="fa-solid fa-mug-hot mr-2"></i>Iniciar descanso
-                        </button>
-                        <p class="text-[11px] text-gray-400 mt-2">Queda registrado en auditoría.</p>
-                      </div>
-                    </div>
-
-                    <!-- Solicitudes -->
-                    <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
-                      <h4 class="font-bold text-forest mb-4">
-                        <i class="fa-regular fa-calendar-xmark text-gold mr-2"></i>Solicitar Ausencia
-                      </h4>
-
-                      <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Tipo</label>
-                      <select id="req-type" onchange="onReqTypeChange()"
-                              class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-gold mb-3">
-                        <option value="vacaciones">Vacaciones</option>
-                        <option value="dia_completo">Ausencia de día completo</option>
-                        <option value="salida_temprana">Salida temprana</option>
-                        <option value="permiso">Permiso especial</option>
-                      </select>
-
-                      <div class="grid grid-cols-2 gap-2 mb-3">
-                        <div>
-                          <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Desde</label>
-                          <input type="date" id="req-date-start"
-                                 class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-gold">
-                        </div>
-                        <div>
-                          <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Hasta</label>
-                          <input type="date" id="req-date-end"
-                                 class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-gold">
-                        </div>
-                      </div>
-
-                      <div id="req-hour-wrap" class="hidden mb-3">
-                        <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Hora de salida</label>
-                        <input type="time" id="req-hour-start"
-                               class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-gold">
-                      </div>
-
-                      <label class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wider">Motivo</label>
-                      <textarea id="req-reason" rows="3"
-                                class="w-full bg-gray-50 border border-gray-200 rounded-lg p-2 text-sm outline-none focus:border-gold mb-4"
-                                placeholder="Explica la razón de tu solicitud..."></textarea>
-
-                      <button onclick="submitPermissionRequest()"
-                              class="w-full bg-gold text-forest font-bold py-3 rounded-xl hover:bg-goldHover transition shadow">
-                        <i class="fa-solid fa-paper-plane mr-2"></i>Enviar Solicitud
-                      </button>
-
-                      <h5 class="font-bold text-forest text-sm mt-8 mb-3">Mis solicitudes</h5>
-                      <div id="my-requests-list" class="space-y-2 max-h-48 overflow-y-auto"></div>
-                    </div>
-                  </div>
-                </div>
-
-
-
-                <!-- TAB: CATALOGO Y PRECIOS -->
-                <div id="tab-catalogo" class="admin-panel hidden fade-in">
-                    <div class="mb-8">
-                        <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
-                            <div class="bg-blue-100 p-2 rounded-lg"><i class="fa-solid fa-tags text-blue-600"></i></div>
-                            Gestión de Servicios
-                        </h3>
-                        <p class="text-gray-500 mt-2">Crea y edita servicios que los clientes pueden reservar.</p>
-                    </div>
-
-                    <!-- SERVICIOS -->
-                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 mb-8">
-                        <div class="flex justify-between items-center mb-6 border-b pb-4">
-                            <h4 class="text-lg font-bold text-forest">Servicios Disponibles</h4>
-                            <button onclick="openServiceModal()" class="bg-forest text-gold px-4 py-2 rounded-lg text-sm font-bold hover:bg-forestLight transition shadow-sm"><i class="fa-solid fa-plus mr-1"></i> Nuevo Servicio</button>
-                        </div>
-                        <div class="overflow-x-auto border border-gray-200 rounded-xl">
-                            <table class="w-full text-left border-collapse text-sm">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="p-4 font-bold">Servicio</th>
-                                        <th class="p-4 font-bold">Categoría</th>
-                                        <th class="p-4 font-bold">Duración</th>
-                                        <th class="p-4 font-bold">Precio (S/M/L)</th>
-                                        <th class="p-4 font-bold text-center">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="services-tbody" class="divide-y divide-gray-100">
-                                    <tr><td class="p-4 text-gray-500" colspan="5">Cargando servicios...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                <!-- TAB: INVENTARIO -->
-                <div id="tab-inventario" class="admin-panel hidden fade-in">
-                    <div class="mb-8">
-                        <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
-                            <div class="bg-indigo-100 p-2 rounded-lg"><i class="fa-solid fa-boxes-stacked text-indigo-600"></i></div>
-                            Control de Inventario y Productos
-                        </h3>
-                        <p class="text-gray-500 mt-2">Gestiona productos, categorías y movimientos de inventario.</p>
-                    </div>
-
-                    <!-- CATEGORÍAS -->
-                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 mb-8">
-                        <div class="flex justify-between items-center mb-6 border-b pb-4">
-                            <h4 class="text-lg font-bold text-forest">Categorías de Productos</h4>
-                            <button onclick="openCategoryModal()" class="bg-forest text-gold px-4 py-2 rounded-lg text-sm font-bold hover:bg-forestLight transition shadow-sm"><i class="fa-solid fa-plus mr-1"></i> Nueva Categoría</button>
-                        </div>
-                        <div class="overflow-x-auto border border-gray-200 rounded-xl">
-                            <table class="w-full text-left border-collapse text-sm">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="p-4 font-bold">Categoría</th>
-                                        <th class="p-4 font-bold">Descripción</th>
-                                        <th class="p-4 font-bold text-center">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="categories-tbody" class="divide-y divide-gray-100">
-                                    <tr><td class="p-4 text-gray-500" colspan="3">Cargando categorías...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- PRODUCTOS -->
-                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 mb-8">
-                        <div class="flex justify-between items-center mb-6 border-b pb-4">
-                            <h4 class="text-lg font-bold text-forest">Productos Disponibles</h4>
-                            <button onclick="openProductModal()" class="bg-forest text-gold px-4 py-2 rounded-lg text-sm font-bold hover:bg-forestLight transition shadow-sm"><i class="fa-solid fa-plus mr-1"></i> Nuevo Producto</button>
-                        </div>
-                        <div class="overflow-x-auto border border-gray-200 rounded-xl">
-                            <table class="w-full text-left border-collapse text-sm">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="p-4 font-bold">Producto</th>
-                                        <th class="p-4 font-bold">Categoría</th>
-                                        <th class="p-4 font-bold">Precio (Q)</th>
-                                        <th class="p-4 font-bold">Stock</th>
-                                        <th class="p-4 font-bold">Mínimo</th>
-                                        <th class="p-4 font-bold text-center">Estado</th>
-                                        <th class="p-4 font-bold text-center">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="products-tbody" class="divide-y divide-gray-100">
-                                    <tr><td class="p-4 text-gray-500" colspan="7">Cargando productos...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- MOVIMIENTOS DE INVENTARIO -->
-                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 mb-8">
-                        <div class="flex justify-between items-center mb-6 border-b pb-4">
-                            <h4 class="text-lg font-bold text-forest">Movimientos de Inventario</h4>
-                            <button onclick="openInventoryMovementModal()" class="bg-forest text-gold px-4 py-2 rounded-lg text-sm font-bold hover:bg-forestLight transition shadow-sm"><i class="fa-solid fa-plus mr-1"></i> Registrar Movimiento</button>
-                        </div>
-                        <div class="overflow-x-auto border border-gray-200 rounded-xl">
-                            <table class="w-full text-left border-collapse text-sm">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="p-4 font-bold">Producto</th>
-                                        <th class="p-4 font-bold">Tipo</th>
-                                        <th class="p-4 font-bold">Cantidad</th>
-                                        <th class="p-4 font-bold">Razón</th>
-                                        <th class="p-4 font-bold">Staff</th>
-                                        <th class="p-4 font-bold">Fecha</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="inventory-movements-tbody" class="divide-y divide-gray-100">
-                                    <tr><td class="p-4 text-gray-500" colspan="6">Cargando movimientos...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB: MENSAJERÍA -->
-                <div id="tab-mensajes" class="admin-panel hidden fade-in">
-                    <div class="mb-8">
-                        <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
-                            <div class="bg-green-100 p-2 rounded-lg"><i class="fa-solid fa-paper-plane text-green-600"></i></div>
-                            Mensajería Masiva
-                        </h3>
-                        <p class="text-gray-500 mt-2">Envía campañas de marketing o avisos con plantillas interactivas a tus clientes.</p>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl">
-                        <!-- Redactor -->
-                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-                            <h4 class="text-lg font-bold text-forest mb-6 border-b pb-4"><i class="fa-solid fa-bullhorn text-gold mr-2"></i> Redactor de Campaña</h4>
-                            
-                            <div class="space-y-5">
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-bold text-gray-700 mb-2">Canal de Envío</label>
-                                        <select id="msg-channel" class="w-full border border-gray-300 rounded-lg p-3 bg-gray-50 outline-none focus:border-gold" onchange="updateMsgCount()">
-                                            <option value="whatsapp">WhatsApp</option>
-                                            <option value="email">Correo Electrónico</option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-bold text-gray-700 mb-2">Público Objetivo</label>
-                                        <select id="msg-target" class="w-full border border-gray-300 rounded-lg p-3 bg-gray-50 outline-none focus:border-gold" onchange="handleTargetChange()">
-                                            <option value="todos">Todos (Registrados)</option>
-                                            <optgroup label="Grupos">
-                                                <option value="Hotel Boutique">Clientes Hotel</option>
-                                                <option value="Day Pass">Clientes Day Pass</option>
-                                            </optgroup>
-                                            <option value="individual">Cliente Individual (Búsqueda Avanzada)</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                
-                                <!-- Buscador Individual -->
-                                <div id="individual-search-container" class="hidden mb-4 relative z-20">
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Buscar Cliente Individual</label>
-                                    <input type="text" id="individual-search-input" class="w-full border border-gray-300 rounded-lg p-3 bg-white outline-none focus:border-gold shadow-sm" placeholder="Escribe nombre, correo o teléfono..." oninput="filterIndividualClients()" autocomplete="off">
-                                    <div id="individual-search-results" class="hidden absolute w-full bg-white border border-gray-200 shadow-xl rounded-lg mt-1 max-h-48 overflow-y-auto">
-                                    </div>
-                                </div>
-                                
-                                <div id="msg-subject-container" class="hidden mb-4">
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Asunto del Correo</label>
-                                    <input type="text" id="msg-subject" class="w-full border border-gray-300 rounded-lg p-3 bg-gray-50 outline-none focus:border-gold" placeholder="Ej. Tu reserva en Casa Canis" oninput="updateMsgPreview()">
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Cuerpo del Mensaje (Soporta variables como {nombre_cliente})</label>
-                                    <textarea id="msg-body" rows="4" class="w-full border border-gray-300 rounded-lg p-3 bg-gray-50 outline-none focus:border-gold" placeholder="Hola {nombre_cliente}, te recordamos que..." oninput="updateMsgPreview()"></textarea>
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm font-bold text-gray-700 mb-2">Botones Interactivos (Max 2)</label>
-                                    <div class="space-y-2">
-                                        <input type="text" id="msg-btn-1" class="w-full border border-gray-300 rounded-lg p-2 bg-gray-50 outline-none text-sm" placeholder="Botón 1 (ej. Confirmar Asistencia)" value="Confirmar Asistencia" oninput="updateMsgPreview()">
-                                        <input type="text" id="msg-btn-2" class="w-full border border-gray-300 rounded-lg p-2 bg-gray-50 outline-none text-sm" placeholder="Botón 2 (ej. Re-agendar)" oninput="updateMsgPreview()">
-                                    </div>
-                                </div>
-                                
-                                <button onclick="sendMassMessage()" class="w-full bg-green-500 text-white font-bold py-3 rounded-xl hover:bg-green-600 transition shadow-lg mt-4">
-                                    <i class="fa-solid fa-paper-plane mr-2"></i> Enviar a <span id="msg-count">0</span> Clientes
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Vista Previa -->
-                        <div class="bg-gray-100 p-8 rounded-3xl border border-gray-200 flex flex-col items-center justify-center relative">
-                            <h4 class="absolute top-6 left-8 text-sm font-bold text-gray-500 uppercase">Vista Previa Cliente</h4>
-                            
-                            <div id="msg-preview-container" class="w-full max-w-[300px] bg-white rounded-2xl shadow-xl overflow-hidden mt-6 border border-gray-200">
-                                <div id="msg-preview-header" class="bg-green-500 px-4 py-3 text-white font-bold flex items-center gap-2">
-                                    <i id="msg-preview-icon" class="fa-brands fa-whatsapp text-xl"></i> <span id="msg-preview-title">Casa Canis</span>
-                                </div>
-                                <div id="msg-preview-body-container" class="p-4 bg-[url('https://i.pinimg.com/736x/8c/98/99/8c98994518b575bfd8c949e91d20548b.jpg')] bg-cover relative">
-                                    <div id="msg-preview-bubble" class="bg-white rounded-lg p-3 shadow-sm text-sm text-gray-800 relative z-10 break-words mb-2">
-                                        <div id="msg-preview-subject" class="font-bold border-b pb-1 mb-2 hidden"></div>
-                                        <p id="msg-preview-text">Escribe un mensaje para ver la vista previa aquí.</p>
-                                        <span id="msg-preview-time" class="text-[10px] text-gray-400 block text-right mt-1">12:00 PM</span>
-                                    </div>
-                                    <div id="msg-preview-btns" class="space-y-1 relative z-10">
-                                        <div class="bg-white text-center text-blue-500 font-medium p-2 rounded-lg text-sm shadow-sm border border-gray-100 cursor-pointer">Confirmar Asistencia</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB: AUDITORIA DE PERSONAL -->
-                <div id="tab-auditoria" class="admin-panel hidden fade-in">
-                    <div class="mb-8 flex justify-between items-end">
-                        <div>
-                            <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
-                                <div class="bg-indigo-100 p-2 rounded-lg"><i class="fa-solid fa-server text-indigo-600"></i></div>
-                                Auditoría del Sistema
-                            </h3>
-                            <p class="text-gray-500 mt-2">Registro secuencial de cambios y eventos en la base de datos.</p>
-                        </div>
-                        <div class="flex gap-4">
-                            <!-- Filtro de Tiempo -->
-                            <select id="audit-time-filter" onchange="handleAuditTimeFilter()" class="bg-white border border-gray-200 text-sm font-bold text-forest rounded-xl px-4 py-3 shadow-sm outline-none focus:border-gold">
-                                <option value="today" selected>Hoy</option>
-                                <option value="yesterday">Ayer</option>
-                                <option value="this_week">Esta Semana</option>
-                                <option value="this_month">Este Mes</option>
-                                <option value="all">Todo el Histórico</option>
-                                <option value="custom">Rango Personalizado</option>
-                            </select>
-                            
-                            <div id="audit-custom-dates" class="hidden flex gap-2 items-center">
-                                <input type="date" id="audit-date-start" onchange="renderAuditTab()" class="bg-white border border-gray-200 text-sm font-bold text-forest rounded-xl px-3 py-3 shadow-sm outline-none">
-                                <span class="text-gray-400 font-bold">-</span>
-                                <input type="date" id="audit-date-end" onchange="renderAuditTab()" class="bg-white border border-gray-200 text-sm font-bold text-forest rounded-xl px-3 py-3 shadow-sm outline-none">
-                            </div>
-                            
-                            <button onclick="exportAuditCSV()" class="admin-only hidden bg-forest text-cream px-5 py-3 rounded-xl hover:bg-forestLight shadow-md transition font-bold flex items-center gap-2">
-                                <i class="fa-solid fa-file-csv"></i> Exportar CSV
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- Tabla de Logs -->
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                        <table class="w-full text-left border-collapse">
-                            <thead id="audit-table-head" class="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider border-b border-gray-200">
-                                <!-- Cabeceras pobladas por JS -->
-                            </thead>
-                            <tbody id="audit-table-body" class="divide-y divide-gray-100 text-sm">
-                                <!-- Filas pobladas por JS -->
-                            </tbody>
-                        </table>
-                        <div id="audit-empty" class="hidden text-center py-16">
-                            <i class="fa-solid fa-clipboard-list text-5xl text-gray-300 mb-4"></i>
-                            <p class="text-gray-500">No hay registros para este período.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB: REPORTES (Solo Admins) -->
-                <div id="tab-reportes" class="admin-panel hidden fade-in">
-                    <div class="mb-8">
-                        <h3 class="text-3xl font-bold text-forest flex items-center gap-3">
-                            <div class="bg-gray-800 p-2 rounded-lg"><i class="fa-solid fa-chart-line text-white"></i></div>
-                            Inteligencia de Negocio
-                        </h3>
-                        <p class="text-gray-500 mt-2">Métricas de conversión y ventas en Quetzales (Q).</p>
-                    </div>
-                    
-                    <!-- Stats cards -->
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 mt-2">
-                        <!-- Tasa de Conversión -->
-                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm border-l-4 border-l-blue-500 relative group cursor-help">
-                            <p class="text-gray-500 text-sm font-bold uppercase mb-1">Tasa de Conversión</p>
-                            <h5 id="kpi-conversion" class="text-3xl font-black text-forest">0%</h5>
-                            <p class="text-xs text-gray-400 mt-2 line-clamp-2">Leads que pagan vs totales.</p>
-                            <!-- Tooltip/Explicación -->
-                            <div class="absolute hidden group-hover:block bg-forest text-cream text-xs p-3 rounded-lg -bottom-16 left-0 w-64 shadow-xl z-10">
-                                <strong>Mejora:</strong> Si es bajo (&lt; 20%), revisa la calidad de respuesta en WhatsApp o crea ofertas gancho para la primera visita.
-                            </div>
-                        </div>
-
-                        <!-- Ticket Promedio -->
-                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm border-l-4 border-l-gold relative group cursor-help">
-                            <p class="text-gray-500 text-sm font-bold uppercase mb-1">Ticket Promedio</p>
-                            <h5 id="kpi-ticket" class="text-3xl font-black text-forest">Q 0.00</h5>
-                            <p class="text-xs text-gray-400 mt-2 line-clamp-2">Gasto promedio por cita.</p>
-                            <div class="absolute hidden group-hover:block bg-forest text-cream text-xs p-3 rounded-lg -bottom-16 left-0 w-64 shadow-xl z-10">
-                                <strong>Mejora:</strong> Ofrece "upsells" en mostrador (ej. Spa, Dientes, Juguetes) para aumentar el gasto sin buscar más clientes.
-                            </div>
-                        </div>
-
-                        <!-- Retención -->
-                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm border-l-4 border-l-green-500 relative group cursor-help">
-                            <p class="text-gray-500 text-sm font-bold uppercase mb-1">Retención</p>
-                            <h5 id="kpi-retention" class="text-3xl font-black text-forest">0%</h5>
-                            <p class="text-xs text-gray-400 mt-2 line-clamp-2">Clientes recurrentes vs nuevos.</p>
-                            <div class="absolute hidden group-hover:block bg-forest text-cream text-xs p-3 rounded-lg -bottom-16 left-0 w-64 shadow-xl z-10">
-                                <strong>Mejora:</strong> Implementa membresías o agenda la próxima cita antes de que el cliente salga de la tienda.
-                            </div>
-                        </div>
-
-                        <!-- Ingresos Totales -->
-                        <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm border-l-4 border-l-indigo-500 relative">
-                            <p class="text-gray-500 text-sm font-bold uppercase mb-1">Ventas del Rango</p>
-                            <h5 id="kpi-revenue" class="text-3xl font-black text-forest">Q 0.00</h5>
-                            <p class="text-xs text-gray-400 mt-2 line-clamp-2">Ingreso neto en este periodo.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 mb-8">
-                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                            <h4 id="revenue-title" class="text-lg font-bold text-forest">Ingresos (Q)</h4>
-                            <div class="flex items-center gap-2">
-                                <input type="date" id="report-date-start" onchange="updateFinancialCharts()" class="bg-gray-50 border border-gray-200 text-sm font-bold text-forest rounded-xl px-3 py-2 outline-none">
-                                <span class="text-gray-400 font-bold">-</span>
-                                <input type="date" id="report-date-end" onchange="updateFinancialCharts()" class="bg-gray-50 border border-gray-200 text-sm font-bold text-forest rounded-xl px-3 py-2 outline-none">
-                            </div>
-                        </div>
-                        <div class="relative h-72 w-full">
-                            <canvas id="revenueChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-                        <!-- Origen de Leads -->
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                            <h4 class="text-md font-bold text-forest mb-4 text-center">Origen de Leads</h4>
-                            <div class="relative h-48 w-full flex justify-center">
-                                <canvas id="leadsChart"></canvas>
-                            </div>
-                            <p class="text-xs text-center text-gray-500 mt-4">Compara efectividad de canales.</p>
-                        </div>
-                        <!-- Mix de Servicios -->
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                            <h4 class="text-md font-bold text-forest mb-4 text-center">Servicios (Top 5)</h4>
-                            <div class="relative h-48 w-full flex justify-center">
-                                <canvas id="servicesChart"></canvas>
-                            </div>
-                            <p class="text-xs text-center text-gray-500 mt-4">Identifica los servicios estrella.</p>
-                        </div>
-                        <!-- Mix de Productos -->
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                            <h4 class="text-md font-bold text-forest mb-4 text-center">Productos (Top 5)</h4>
-                            <div class="relative h-48 w-full flex justify-center">
-                                <canvas id="productsChart"></canvas>
-                            </div>
-                            <p class="text-xs text-center text-gray-500 mt-4">Tus mejores productos en tienda.</p>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </main>
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- ÁREA DE CAPTURA HTML2CANVAS (RECIBO OCULTO PARA EXPORTAR) -->
-    <!-- ========================================================= -->
-    <div id="receipt-capture-area" class="bg-white p-10 w-[450px] border border-gray-200 text-forest fixed top-[-9999px] left-[-9999px] shadow-2xl z-0" style="font-family: 'Inter', sans-serif;">
-        <!-- Header Recibo -->
-        <div class="text-center mb-8 border-b-2 border-dashed border-gray-300 pb-6">
-            <i class="fa-solid fa-paw text-gold text-4xl mb-3"></i>
-            <h2 class="font-serif font-black text-2xl tracking-tight uppercase">Casa Canis</h2>
-            <p class="text-sm font-bold text-gray-500 tracking-widest mt-1">Dog Hotel & Resort</p>
-            <p class="text-xs text-gray-400 mt-2">Km 14.5 Carretera a El Salvador</p>
-            <p class="text-xs text-gray-400 font-bold mt-1">NIT: 8765432-1</p>
-        </div>
-        
-        <!-- Datos Cliente -->
-        <div class="mb-6 bg-gray-50 p-4 rounded-xl">
-            <div class="flex justify-between mb-1 text-sm">
-                <span class="text-gray-500">Fecha:</span>
-                <strong id="r-date" class="text-forest"></strong>
-            </div>
-            <div class="flex justify-between mb-1 text-sm">
-                <span class="text-gray-500">Cliente:</span>
-                <strong id="r-name" class="text-forest uppercase"></strong>
-            </div>
-            <div class="flex justify-between text-sm">
-                <span class="text-gray-500">NIT:</span>
-                <strong id="r-nit" class="text-forest"></strong>
-            </div>
-            <div class="flex justify-between text-sm mt-1 border-t pt-2">
-                <span class="text-gray-500">Notas:</span>
-                <strong id="r-comment" class="text-forest italic text-xs text-right max-w-[200px]"></strong>
-            </div>
-        </div>
-        
-        <!-- Detalle de Compra -->
-        <table class="w-full text-sm mb-6">
-            <thead>
-                <tr class="border-b border-gray-300 text-gray-400 uppercase text-xs">
-                    <th class="text-left pb-2 font-bold">Cant. / Descripción</th>
-                    <th class="text-right pb-2 font-bold">Importe</th>
-                </tr>
-            </thead>
-            <tbody id="r-items" class="divide-y divide-gray-100">
-                <!-- Se inyectan tr por JS -->
-            </tbody>
-        </table>
-        
-        <!-- Totales -->
-        <div class="border-t-2 border-gray-800 pt-4 mb-8">
-            <div class="flex justify-between font-black text-xl text-forest">
-                <span>TOTAL (GTQ):</span>
-                <span id="r-total">Q 0.00</span>
-            </div>
-        </div>
-        
-        <!-- Footer Recibo -->
-        <div class="text-center mt-auto">
-            <div class="w-32 h-32 mx-auto bg-gray-100 flex items-center justify-center mb-4 rounded-xl border border-gray-200">
-                <i class="fa-solid fa-qrcode text-6xl text-gray-400"></i>
-            </div>
-            <p class="font-bold text-sm">¡Gracias por su preferencia!</p>
-            <p class="text-xs text-gray-500 mt-1">Documento no contable generado internamente.</p>
-        </div>
-    </div>
-
-
-    <!-- MODAL PERFIL CLIENTE -->
-    <div id="client-modal" class="hidden fixed inset-0 z-[100] bg-forest/90 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto p-8 shadow-2xl relative">
-            <button onclick="closeClientProfile()" class="absolute top-6 right-6 text-gray-400 hover:text-forest transition text-2xl"><i class="fa-solid fa-times"></i></button>
-            
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-forest"><i class="fa-solid fa-address-card mr-2 text-gold"></i> Perfil del Cliente</h2>
-                <button onclick="saveClientProfile()" class="bg-forest text-cream px-5 py-2 rounded-xl hover:bg-forestLight transition font-bold text-sm shadow-md">
-                    <i class="fa-solid fa-save mr-1"></i> Guardar Cambios
-                </button>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- Datos del Dueño -->
-                <div class="col-span-1 space-y-4">
-                    <h3 class="font-bold text-gray-700 border-b pb-2">Datos del Dueño</h3>
-                    <input type="hidden" id="crm-id">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Nombre Completo</label>
-                        <input type="text" id="crm-nombre" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-gold focus:border-gold">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Teléfono</label>
-                        <input type="text" id="crm-tel" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-gold focus:border-gold">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Correo Electrónico</label>
-                        <input type="email" id="crm-email" class="w-full border border-gray-300 rounded-lg p-2 focus:ring-gold focus:border-gold">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-500 mb-1">Servicio de Interés</label>
-                        <input type="text" id="crm-servicio" class="w-full border border-gray-300 rounded-lg p-2 bg-gray-50" readonly>
-                    </div>
-                    <div class="pt-4">
-                        <button onclick="deleteClientProfile()" class="w-full bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg hover:bg-red-100 transition font-bold text-xs admin-only">
-                            <i class="fa-solid fa-trash-alt mr-1"></i> Eliminar Cliente Permanentemente
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Datos de Mascotas -->
-                <div class="col-span-2">
-                    <div class="flex justify-between items-center border-b pb-2 mb-4">
-                        <h3 class="font-bold text-gray-700">Mascotas (Perros)</h3>
-                        <button onclick="addMascotaForm()" class="text-xs bg-gold/20 text-goldHover px-3 py-1 rounded font-bold hover:bg-gold hover:text-white transition">
-                            <i class="fa-solid fa-plus"></i> Añadir Perro
-                        </button>
-                    </div>
-                    <div id="crm-mascotas-container" class="space-y-4">
-                        <!-- Generado via JS -->
+                    <div class="summary-image">
+                        <img src="fotos/25.jpeg" alt="Casa Canis Áreas Verdes" class="summary-img">
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    
-<!-- BOOKING WIZARD MODAL -->
-<div id="booking-wizard-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex justify-center items-center backdrop-blur-sm p-4">
-    <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        <!-- Header -->
-        <div class="bg-forest p-6 text-white flex justify-between items-center relative">
-            <div>
-                <h3 class="text-2xl font-bold font-serif text-gold">Reserva tu Espacio</h3>
-                <p id="bw-step-indicator" class="text-sm opacity-80">Paso 1 de 5: Fechas y Mascotas</p>
+    <!-- ============================================ -->
+    <!-- SECCIÓN: DIFERENCIADORES -->
+    <!-- ============================================ -->
+    <section id="diferenciadores" class="diferenciadores-section">
+        <div class="container">
+            <h2 class="section-title fade-in-left">¿Qué nos hace diferentes?</h2>
+            <p class="section-subtitle fade-in-left">En Casa Canis no solo cuidamos mascotas; construimos experiencias de confianza. Nos distinguimos por ofrecer:</p>
+
+            <div class="diferenciadores-grid">
+                <div class="diferenciador-card fade-in-up" style="background: url('fotos/24.jpeg') center/cover; animation-delay: 0.1s;">
+                    <div class="card-overlay"></div>
+                    <div class="card-content">
+                        <div class="card-icon">
+                            <i class="fas fa-leaf"></i>
+                        </div>
+                        <h3>Naturaleza como Parte del Cuidado</h3>
+                        <p>Creemos que el bienestar también depende del entorno. Por eso nuestros huéspedes disfrutan de amplias áreas verdes donde pueden correr libremente, caminar sobre césped natural, explorar diferentes aromas, interactuar con un ambiente cambiante y disfrutar del aire fresco y la luz del sol.</p>
+                    </div>
+                </div>
+
+                <div class="diferenciador-card fade-in-up" style="background: url('fotos/23.jpeg') center/cover; animation-delay: 0.2s;">
+                    <div class="card-overlay"></div>
+                    <div class="card-content">
+                        <div class="card-icon">
+                            <i class="fas fa-stethoscope"></i>
+                        </div>
+                        <h3>Respaldo Veterinario Permanente</h3>
+                        <p>Nos permite responder de forma inmediata ante cualquier situación médica o emergencia que pueda presentarse durante la estancia, minimizando riesgos y brindando tranquilidad a los propietarios. Atendemos mascotas con necesidades médicas especiales.</p>
+                    </div>
+                </div>
+
+                <div class="diferenciador-card fade-in-up" style="background: url('fotos/21.jpeg') center/cover; animation-delay: 0.3s;">
+                    <div class="card-overlay"></div>
+                    <div class="card-content">
+                        <div class="card-icon">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <h3>Atención Completamente Personalizada</h3>
+                        <p>Nos adaptamos a la rutina, alimentación y necesidades individuales de cada mascota, asegurando que cada experiencia sea única y especial.</p>
+                    </div>
+                </div>
+
+                <div class="diferenciador-card fade-in-up" style="background: url('fotos/14.jpeg') center/cover; animation-delay: 0.4s;">
+                    <div class="card-overlay"></div>
+                    <div class="card-content">
+                        <div class="card-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3>Protocolos Estrictos de Bioseguridad</h3>
+                        <p>Nuestra dirección veterinaria ha permitido establecer estándares superiores de bioseguridad, higiene y control sanitario. Cada procedimiento diseñado para reducir riesgos y prevenir enfermedades.</p>
+                    </div>
+                </div>
+
+                <div class="diferenciador-card fade-in-up" style="background: url('fotos/13.jpeg') center/cover; animation-delay: 0.5s;">
+                    <div class="card-overlay"></div>
+                    <div class="card-content">
+                        <div class="card-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h3>Personal Capacitado y Comprometido</h3>
+                        <p>Cada integrante ha sido seleccionado y capacitado para brindar atención basada en profesionalismo, responsabilidad y respeto. Compromiso con capacitación continua.</p>
+                    </div>
+                </div>
+
+                <div class="diferenciador-card fade-in-up" style="background: url('fotos/11.jpeg') center/cover; animation-delay: 0.6s;">
+                    <div class="card-overlay"></div>
+                    <div class="card-content">
+                        <div class="card-icon">
+                            <i class="fas fa-handshake"></i>
+                        </div>
+                        <h3>Transparencia y Confianza</h3>
+                        <p>Creemos que la confianza se construye con hechos. Ofrecemos visitas guiadas programadas para que los propietarios conozcan nuestras instalaciones y protocolos.</p>
+                    </div>
+                </div>
             </div>
-            <button onclick="closeBookingWizard()" class="text-white/50 hover:text-white transition absolute top-6 right-6">
-                <i class="fa-solid fa-times text-xl"></i>
-            </button>
         </div>
+    </section>
 
-        <!-- Body -->
-        <div class="p-8 overflow-y-auto custom-scrollbar flex-1 relative">
-            <!-- Loader -->
-            <div id="bw-loader" class="absolute inset-0 bg-white/90 z-10 hidden flex-col justify-center items-center">
-                <i class="fa-solid fa-spinner fa-spin text-4xl text-forest mb-4"></i>
-                <p id="bw-loader-text" class="text-forest font-bold">Procesando...</p>
-            </div>
+    <!-- ============================================ -->
+    <!-- SECCIÓN: SERVICIOS PRINCIPALES -->
+    <!-- ============================================ -->
+    <section id="servicios" class="servicios-section">
+        <div class="container">
+            <h2 class="section-title fade-in-left">Nuestros Servicios Premium</h2>
+            <p class="section-subtitle fade-in-left">Horarios de Atención</p>
+            <p class="section-description fade-in-left">Con el objetivo de brindar una atención organizada y dedicar el tiempo necesario a cada uno de nuestros huéspedes, manejamos los siguientes horarios de servicio:</p>
 
-            <!-- Paso 1: Fechas y Cupos -->
-<div id="bw-step-1" class="bw-step block space-y-6">
+            <div class="servicios-grid">
+                <!-- GROOMING -->
+                <div class="servicio-card fade-in-up" style="background: url('fotos/2.jpeg') center/cover; animation-delay: 0.1s;">
+                    <div class="servicio-overlay"></div>
+                    <div class="servicio-content">
+                        <div class="servicio-icon">
+                            <i class="fas fa-spa"></i>
+                        </div>
+                        <h3>Grooming con Respaldo Profesional</h3>
+                        <p>En Casa Canis entendemos que el grooming es mucho más que la apariencia; es una parte fundamental de la salud y el bienestar de cada mascota. Nuestro equipo cuenta con amplia experiencia y dedica el tiempo necesario para brindar un servicio de calidad.</p>
 
-                <div>
-                    <label class="block text-sm font-bold text-forest mb-2">Servicio</label>
-                    <select id="bw-servicio" onchange="onBookingChange()"
-                            class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
-                        <option value="">Selecciona un servicio...</option>
-                    </select>
-                </div>
+                        <div class="servicio-horario">
+                            <h4><i class="fas fa-clock"></i> Horarios de Recepción</h4>
+                            <ul>
+                                <li><strong>Pelo largo:</strong> 8:00 a.m. a 11:00 a.m.</li>
+                                <li><strong>Pelo corto:</strong> 8:00 a.m. a 2:30 p.m.</li>
+                            </ul>
+                        </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-bold text-forest mb-2">Fecha de entrada</label>
-                        <input type="date" id="bw-date" onchange="onBookingChange()"
-                               class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
-                        <p class="text-[11px] text-gray-400 mt-1">Ingreso de 8:00 a 16:00</p>
+                        <div class="servicio-info">
+                            <p><i class="fas fa-info-circle"></i> <strong>Cuidado extendido:</strong> Hasta 6:30 p.m. con previa notificación (+Q75.00)</p>
+                            <p><i class="fas fa-info-circle"></i> Si desea que su mascota disfrute de nuestras áreas verdes y Day Pass mientras espera su turno, puede agregarlo a su reserva.</p>
+                        </div>
+
+                        <div class="servicio-beneficios">
+                            <p>✓ Baños terapéuticos y tratamientos dermatológicos</p>
+                            <p>✓ Productos de alta calidad</p>
+                            <p>✓ Evaluación detallada de salud cutánea</p>
+                            <p>✓ Respaldo de Médico Veterinario</p>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-sm font-bold text-forest mb-2">Fecha de salida</label>
-                        <input type="date" id="bw-date-out" onchange="onBookingChange()"
-                               class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
-                        <p class="text-[11px] text-gray-400 mt-1">Salida de 8:00 a 11:00</p>
+                </div>
+
+                <!-- HOSPEDAJE -->
+                <div class="servicio-card fade-in-up" style="background: url('fotos/28.jpg') center/cover; animation-delay: 0.2s;">
+                    <div class="servicio-overlay"></div>
+                    <div class="servicio-content">
+                        <div class="servicio-icon">
+                            <i class="fas fa-bed"></i>
+                        </div>
+                        <h3>Hospedaje Diseñado para el Bienestar Integral</h3>
+                        <p>En Casa Canis cada estancia ha sido diseñada para ofrecer mucho más que un lugar donde dormir. Ambiente seguro, limpio y enriquecido, con amplias áreas verdes, espacios para el ejercicio y períodos de descanso adecuados.</p>
+
+                        <div class="servicio-horario">
+                            <h4><i class="fas fa-clock"></i> Horarios</h4>
+                            <ul>
+                                <li><strong>Check-in:</strong> 8:00 a.m. a 4:00 p.m.</li>
+                                <li><strong>Check-out:</strong> 8:00 a.m. a 11:00 a.m.</li>
+                            </ul>
+                        </div>
+
+                        <div class="servicio-info">
+                            <p><i class="fas fa-info-circle"></i> Ingresos/salidas fuera de horario con autorización previa. Cargo adicional: Q75.00</p>
+                        </div>
+
+                        <div class="servicio-beneficios">
+                            <p>✓ Atención personalizada 24/7</p>
+                            <p>✓ Monitoreo constante de comportamiento y apetito</p>
+                            <p>✓ Respaldo médico veterinario inmediato</p>
+                            <p>✓ Adaptado a necesidades individuales</p>
+                        </div>
                     </div>
                 </div>
 
-                <div id="bw-noches-badge" class="hidden bg-cream border border-gold/30 rounded-xl px-4 py-2 text-sm text-forest font-bold"></div>
+                <!-- DAY PASS -->
+                <div class="servicio-card fade-in-up" style="background: url('fotos/9.jpeg') center/cover; animation-delay: 0.3s;">
+                    <div class="servicio-overlay"></div>
+                    <div class="servicio-content">
+                        <div class="servicio-icon">
+                            <i class="fas fa-sun"></i>
+                        </div>
+                        <h3>Day Pass: Un Día de Actividad y Bienestar</h3>
+                        <p>Nuestro servicio de Day Pass está diseñado para perros que necesitan mantenerse activos mientras sus propietarios trabajan, viajan o cumplen otros compromisos. Amplias áreas verdes, contacto con la naturaleza, ejercicio supervisado y oportunidades de socialización.</p>
 
-                <div>
-                    <div class="flex items-center justify-between mb-3">
-                        <label class="block text-sm font-bold text-forest">Mascotas</label>
-                        <button type="button" onclick="addPetRow()"
-                                class="text-xs bg-forest text-gold font-bold px-4 py-2 rounded-lg hover:bg-forestLight transition">
-                            <i class="fa-solid fa-plus mr-1"></i>Agregar perro
-                        </button>
+                        <div class="servicio-horario">
+                            <h4><i class="fas fa-clock"></i> Disponibilidad</h4>
+                            <p>Lunes a Domingo | Horarios flexibles según tus necesidades</p>
+                        </div>
+
+                        <div class="servicio-beneficios">
+                            <p>✓ Contacto con naturaleza</p>
+                            <p>✓ Enriquecimiento ambiental</p>
+                            <p>✓ Socialización controlada</p>
+                            <p>✓ Monitoreo constante de bienestar</p>
+                        </div>
                     </div>
-                    <div id="bw-pets" class="space-y-3"></div>
-                    <p class="text-[11px] text-gray-400 mt-2">
-                        El peso define la tarifa: hasta 40 lb pequeño, hasta 60 lb mediano, 61 lb o más grande.
-                    </p>
-                </div>
-
-                <div id="bw-avail-box" class="hidden rounded-xl p-4 text-sm"></div>
-            </div>
-
-
-            <div id="bw-step-2" class="bw-step hidden space-y-6">
-                <div class="bg-blue-50 text-blue-700 p-3 rounded-xl text-sm flex gap-2">
-                    <i class="fa-solid fa-lock mt-0.5"></i>
-                    <span>Tus cupos están apartados por 10 minutos mientras completas el registro.</span>
-                </div>
-
-                <div>
-                    <h4 class="font-bold text-forest mb-3">Datos del encargado</h4>
-                    <input type="text" id="bw-nombre" placeholder="Nombre completo"
-                           class="w-full px-4 py-3 mb-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
-                    <input type="tel" id="bw-tel" placeholder="Teléfono / WhatsApp"
-                           class="w-full px-4 py-3 mb-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
-                    <input type="email" id="bw-email" placeholder="Correo electrónico"
-                           class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-gold outline-none">
-                </div>
-
-                <div>
-                    <h4 class="font-bold text-forest mb-3">Detalle de cada mascota</h4>
-                    <div id="bw-pets-detail" class="space-y-4"></div>
                 </div>
             </div>
 
-            <div id="bw-step-3" class="bw-step hidden space-y-6">
-                <p class="text-gray-600 text-sm">
-                    Por la seguridad de todos los huéspedes necesitamos la cartilla de vacunación
-                    y desparasitación <strong>de cada perro</strong>.
-                </p>
+            <!-- SERVICIOS ADICIONALES -->
+            <div class="servicios-adicionales">
+                <h3 class="servicios-title fade-in-left">Servicios Adicionales Disponibles</h3>
 
-                <div id="bw-pets-medical" class="space-y-4"></div>
-
-                <div class="bg-yellow-50 p-4 rounded-xl text-sm text-yellow-800 space-y-2">
-                    <p class="font-bold"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Validación obligatoria</p>
-                    <p>Nuestro auxiliar revisa manualmente cada cartilla. Si la documentación está
-                       vencida, incompleta o no es legible, la reservación será rechazada.</p>
-                    <p class="font-bold text-red-600">En caso de rechazo por documentación inválida
-                       no procede reembolso.</p>
-                </div>
-            </div>
-
-<!-- Paso 4: Términos y Condiciones -->
-            <div id="bw-step-4" class="bw-step hidden space-y-6">
-                <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-xl flex gap-3">
-                    <i class="fa-solid fa-scale-balanced text-yellow-600 text-xl mt-0.5"></i>
-                    <p class="text-sm text-yellow-800">
-                        Lee con atención antes de continuar. Al aceptar quedas sujeto a las
-                        políticas de cancelación y validación médica.
-                    </p>
-                </div>
-
-                <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
-                    <div class="flex items-center justify-between mb-3">
-                        <h4 class="font-bold text-forest">Términos y Condiciones</h4>
-                        <span id="bw-tc-version" class="text-[10px] text-gray-400 font-mono"></span>
+                <div class="servicios-especiales">
+                    <div class="servicio-especial fade-in-up">
+                        <h4><i class="fas fa-dumbbell"></i> Fisioterapia y Rehabilitación Veterinaria</h4>
+                        <p>Servicios dirigidos por un médico veterinario con formación especializada. Fundamental para la recuperación después de cirugías, lesiones, manejo del dolor y enfermedades ortopédicas.</p>
                     </div>
-                    <div id="bw-tc-text" onscroll="onTermsScroll()"
-                         class="text-xs text-gray-700 h-56 overflow-y-auto custom-scrollbar pr-2 whitespace-pre-wrap leading-relaxed">Cargando términos...</div>
-                    <p id="bw-tc-hint" class="text-[11px] text-gray-400 mt-2 italic">
-                        <i class="fa-solid fa-arrow-down mr-1"></i>Desplázate hasta el final para poder aceptar.
-                    </p>
-                </div>
 
-                <label id="bw-tc-label" class="flex items-start gap-3 cursor-not-allowed opacity-50 bg-white border-2 border-gray-200 rounded-xl p-4 transition">
-                    <input type="checkbox" id="bw-accept-tc" disabled onchange="onTermsToggle()"
-                           class="w-5 h-5 mt-0.5 rounded text-forest focus:ring-forest cursor-pointer">
-                    <span class="text-sm font-bold text-forest">
-                        He leído y acepto los Términos y Condiciones de Casa Canis
-                    </span>
-                </label>
+                    <div class="servicio-especial fade-in-up" style="animation-delay: 0.15s;">
+                        <h4><i class="fas fa-syringe"></i> Atención Médico-Veterinaria Exclusiva</h4>
+                        <p>Los servicios médico-veterinarios son un beneficio exclusivo para huéspedes. Respuesta rápida y oportuna sin traslados a clínica externa. Todos los procedimientos documentados por Médico Veterinario colegiado.</p>
+                    </div>
+
+                    <div class="servicio-especial fade-in-up" style="animation-delay: 0.3s;">
+                        <h4><i class="fas fa-birthday-cake"></i> Eventos Privados</h4>
+                        <p>Celebra momentos especiales en un espacio diseñado para mascotas y familias. Grupos de 15 a 30 personas. 4 horas de uso exclusivo. Servicios adicionales: catering, fotografía, decoración, actividades recreativas.</p>
+                    </div>
+                </div>
             </div>
+        </div>
+    </section>
 
-            <!-- Paso 5: Pago y comprobante -->
-            <div id="bw-step-5" class="bw-step hidden space-y-6">
-                <div class="bg-forest text-cream p-5 rounded-xl">
-                    <p class="text-xs uppercase tracking-wider text-gold font-bold mb-1">Total a depositar</p>
-                    <p class="text-3xl font-black" id="bw-total">Q 0.00</p>
-                    <p class="text-xs opacity-75 mt-1" id="bw-total-nota">Pago del 100% por adelantado.</p>
-                </div>
+    <!-- ============================================ -->
+    <!-- FORMULARIO DE CONTACTO -->
+    <!-- ============================================ -->
+    <section id="contacto" class="contacto-section">
+        <div class="container">
+            <h2 class="section-title fade-in">Solicita tu Reserva</h2>
+            <p class="section-subtitle fade-in">Completa el formulario y nos pondremos en contacto por WhatsApp para confirmar tu reserva</p>
 
-                <div>
-                    <h4 class="font-bold text-forest mb-3">Método de Pago</h4>
-                    <div class="grid grid-cols-2 gap-4">
-                        <label class="border-2 border-gray-200 rounded-xl p-4 cursor-pointer hover:border-gold transition flex flex-col items-center text-center gap-2 relative bw-pay-option" onclick="selectPayOption('transfer')">
-                            <input type="radio" name="paymethod" value="transfer" class="absolute top-3 left-3 opacity-0">
-                            <i class="fa-solid fa-money-bill-transfer text-2xl text-gray-400"></i>
-                            <span class="font-bold text-sm">Transferencia / Depósito</span>
-                        </label>
-                        <div class="border-2 border-gray-100 bg-gray-50 rounded-xl p-4 flex flex-col items-center text-center gap-2 relative opacity-60 cursor-not-allowed">
-                            <i class="fa-solid fa-credit-card text-2xl text-gray-300"></i>
-                            <span class="font-bold text-sm text-gray-400">Tarjeta de Crédito</span>
-                            <span class="text-[10px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full font-bold uppercase">Próximamente</span>
+            <div class="contacto-form-container fade-in-up">
+                <form id="contactForm" class="contacto-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="nombre">Nombre Completo *</label>
+                            <input type="text" id="nombre" name="nombre" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="telefono">Teléfono *</label>
+                            <input type="tel" id="telefono" name="telefono" required>
                         </div>
                     </div>
 
-                    <div id="bw-pay-transfer" class="hidden mt-4 space-y-4">
-                        <div class="p-5 bg-cream rounded-xl border border-gold/30">
-                            <p class="text-[10px] uppercase tracking-wider text-gold font-bold mb-3">Datos para el depósito</p>
-                            <div class="space-y-1.5 text-sm">
-                                <div class="flex justify-between"><span class="text-gray-500">Banco</span><span class="font-bold text-forest" id="bw-bank-name">—</span></div>
-                                <div class="flex justify-between"><span class="text-gray-500">Tipo</span><span class="font-bold text-forest" id="bw-bank-type">—</span></div>
-                                <div class="flex justify-between items-center">
-                                    <span class="text-gray-500">Cuenta</span>
-                                    <span class="flex items-center gap-2">
-                                        <span class="font-mono font-bold text-forest text-base" id="bw-bank-number">—</span>
-                                        <button onclick="copyBankNumber()" class="text-gold hover:text-forest transition" title="Copiar"><i class="fa-regular fa-copy"></i></button>
-                                    </span>
-                                </div>
-                                <div class="flex justify-between"><span class="text-gray-500">A nombre de</span><span class="font-bold text-forest" id="bw-bank-owner">—</span></div>
-                                <div class="flex justify-between" id="bw-bank-nit-row"><span class="text-gray-500">NIT</span><span class="font-bold text-forest" id="bw-bank-nit">—</span></div>
-                            </div>
-                            <p id="bw-bank-notes" class="text-xs text-gray-600 mt-3 pt-3 border-t border-gold/20 whitespace-pre-wrap"></p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email">
                         </div>
+                        <div class="form-group">
+                            <label for="mascota">Nombre Mascota *</label>
+                            <input type="text" id="mascota" name="mascota" required>
+                        </div>
+                    </div>
 
-                        <label class="block w-full bg-white border-2 border-dashed border-gray-300 rounded-xl p-5 text-center cursor-pointer hover:border-gold hover:bg-gray-50 transition">
-                            <input type="file" id="bw-file-comprobante" accept="image/*,.pdf" class="hidden" onchange="onComprobanteSelected()">
-                            <i class="fa-solid fa-receipt text-3xl text-gray-400 mb-2"></i>
-                            <p class="font-bold text-forest text-sm">Subir comprobante del depósito</p>
-                            <p class="text-xs text-gray-500 mt-1">Obligatorio. Foto o PDF de la boleta.</p>
-                            <p id="bw-comprobante-status" class="text-sm font-bold text-green-600 mt-2 hidden"></p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="raza">Raza</label>
+                            <input type="text" id="raza" name="raza">
+                        </div>
+                        <div class="form-group">
+                            <label for="peso">Peso Aproximado (lb)</label>
+                            <input type="number" id="peso" name="peso">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mensaje">Información Adicional o Necesidades Especiales</label>
+                        <textarea id="mensaje" name="mensaje" rows="4"></textarea>
+                    </div>
+
+                    <div class="terminos-check">
+                        <input type="checkbox" id="terminos" name="terminos" required>
+                        <label for="terminos">
+                            Acepto los <a href="terminos-condiciones.html" target="_blank" class="link-terminos">Términos y Condiciones</a> *
                         </label>
                     </div>
-                </div>
+
+                    <button type="submit" class="btn btn-primary btn-full">
+                        <i class="fas fa-check-circle"></i> Enviar Reserva por WhatsApp
+                    </button>
+                </form>
             </div>
         </div>
+    </section>
 
-        <!-- Footer / Navigation -->
-        <div class="p-6 bg-gray-50 border-t border-gray-100 flex justify-between">
-            <button id="bw-btn-back" onclick="wizardStepBack()" class="px-6 py-2.5 font-bold text-gray-500 hover:text-gray-800 transition hidden">Atrás</button>
-            <div class="flex-1"></div>
-            <button id="bw-btn-next" onclick="wizardStepNext()" class="bg-forest text-gold px-8 py-2.5 rounded-xl font-bold shadow-md hover:bg-gray-900 transition flex items-center gap-2">
-                Siguiente <i class="fa-solid fa-arrow-right"></i>
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- ========================================== -->
-    <!-- SCRIPT MAESTRO (LÓGICA MODULAR Y FIREBASE) -->
-    <!-- ========================================== -->
-
-<!-- Modal: alta de empleado -->
-    <!-- ================================================
-         MODALES DE GESTIÓN STAFF
-         ================================================ -->
-
-    <!-- Modal: Crear/Editar Categoría -->
-    <div id="category-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8">
-            <h2 class="text-2xl font-bold text-forest mb-6">Categoría de Productos</h2>
-            <div class="space-y-4">
-                <input type="hidden" id="category-id">
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Nombre</label>
-                    <input type="text" id="category-name" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="Alimentos">
+    <!-- ============================================ -->
+    <!-- FOOTER -->
+    <!-- ============================================ -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>Casa Canis</h4>
+                    <p>Dog Hotel & Resort 5 Estrellas<br>Guatemala</p>
                 </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Descripción</label>
-                    <input type="text" id="category-desc" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="Comidas para perros">
+                <div class="footer-section">
+                    <h4>Enlaces Rápidos</h4>
+                    <ul>
+                        <li><a href="#sobre-nosotros">Sobre Nosotros</a></li>
+                        <li><a href="#diferenciadores">Diferenciadores</a></li>
+                        <li><a href="#servicios">Servicios</a></li>
+                        <li><a href="terminos-condiciones.html" target="_blank">Términos y Condiciones</a></li>
+                    </ul>
                 </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Ícono</label>
-                    <input type="text" id="category-icon" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="🍖" maxlength="2">
-                </div>
-            </div>
-            <div class="flex gap-3 mt-6">
-                <button onclick="closeCategoryModal()" class="flex-1 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-bold">Cancelar</button>
-                <button onclick="saveCategoryModal()" class="flex-1 px-4 py-2 bg-forest text-cream font-bold rounded-lg hover:bg-forestLight">Guardar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal: Crear/Editar Producto -->
-    <div id="product-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8 max-h-96 overflow-y-auto">
-            <h2 class="text-2xl font-bold text-forest mb-6">Producto</h2>
-            <div class="space-y-4">
-                <input type="hidden" id="product-id">
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Nombre</label>
-                    <input type="text" id="product-name" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Categoría</label>
-                    <select id="product-category" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold">
-                        <option value="">Selecciona categoría</option>
-                    </select>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Precio (Q)</label>
-                        <input type="number" id="product-price" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" step="0.01">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Stock</label>
-                        <input type="number" id="product-quantity" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold">
+                <div class="footer-section">
+                    <h4>Redes Sociales</h4>
+                    <div class="social-links">
+                        <a href="https://www.instagram.com/casacanis.gt" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="https://wa.me/50255555555" target="_blank" title="WhatsApp"><i class="fab fa-whatsapp"></i></a>
                     </div>
                 </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Mínimo Stock (Alarma)</label>
-                    <input type="number" id="product-minstock" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" value="10">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Proveedor</label>
-                    <input type="text" id="product-supplier" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold">
-                </div>
             </div>
-            <div class="flex gap-3 mt-6">
-                <button onclick="closeProductModal()" class="flex-1 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-bold">Cancelar</button>
-                <button onclick="saveProductModal()" class="flex-1 px-4 py-2 bg-forest text-cream font-bold rounded-lg hover:bg-forestLight">Guardar</button>
+            <div class="footer-bottom">
+                <p>&copy; 2026 Casa Canis Guatemala. Todos los derechos reservados.</p>
             </div>
         </div>
+    </footer>
+
+    <!-- ============================================ -->
+    <!-- BOTÓN FLOTANTE WHATSAPP -->
+    <!-- ============================================ -->
+    <div id="whatsappButton" class="whatsapp-button" title="Contactar por WhatsApp">
+        <i class="fab fa-whatsapp"></i>
     </div>
 
-    <!-- Modal: Crear/Editar Servicio -->
-    <div id="service-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8 max-h-96 overflow-y-auto">
-            <h2 class="text-2xl font-bold text-forest mb-6">Servicio</h2>
-            <div class="space-y-4">
-                <input type="hidden" id="service-id">
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Nombre</label>
-                    <input type="text" id="service-name" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Categoría</label>
-                    <select id="service-category" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold">
-                        <option value="alojamiento">Alojamiento</option>
-                        <option value="grooming">Grooming</option>
-                        <option value="guarderia">Guardería</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Duración (minutos)</label>
-                    <input type="number" id="service-duration" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold">
-                </div>
-                <div class="grid grid-cols-3 gap-2 text-sm">
-                    <div>
-                        <label class="block font-bold text-gray-700 mb-1">Pequeño (Q)</label>
-                        <input type="number" id="service-price-small" class="w-full border border-gray-300 rounded p-2 outline-none focus:border-gold" step="0.01">
-                    </div>
-                    <div>
-                        <label class="block font-bold text-gray-700 mb-1">Mediano (Q)</label>
-                        <input type="number" id="service-price-medium" class="w-full border border-gray-300 rounded p-2 outline-none focus:border-gold" step="0.01">
-                    </div>
-                    <div>
-                        <label class="block font-bold text-gray-700 mb-1">Grande (Q)</label>
-                        <input type="number" id="service-price-large" class="w-full border border-gray-300 rounded p-2 outline-none focus:border-gold" step="0.01">
-                    </div>
-                </div>
-            </div>
-            <div class="flex gap-3 mt-6">
-                <button onclick="closeServiceModal()" class="flex-1 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-bold">Cancelar</button>
-                <button onclick="saveServiceModal()" class="flex-1 px-4 py-2 bg-forest text-cream font-bold rounded-lg hover:bg-forestLight">Guardar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal: Registrar Movimiento de Inventario -->
-    <div id="inventory-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-8">
-            <h2 class="text-2xl font-bold text-forest mb-6">Movimiento de Inventario</h2>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Producto</label>
-                    <select id="inventory-product" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold">
-                        <option value="">Selecciona producto</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Tipo</label>
-                    <select id="inventory-type" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold">
-                        <option value="entrada">Entrada (Compra)</option>
-                        <option value="salida">Salida (Venta)</option>
-                        <option value="ajuste">Ajuste</option>
-                    </select>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Cantidad</label>
-                        <input type="number" id="inventory-quantity" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Razón</label>
-                        <input type="text" id="inventory-reason" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="Compra, Venta...">
-                    </div>
-                </div>
-            </div>
-            <div class="flex gap-3 mt-6">
-                <button onclick="closeInventoryModal()" class="flex-1 px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-bold">Cancelar</button>
-                <button onclick="saveInventoryModal()" class="flex-1 px-4 py-2 bg-forest text-cream font-bold rounded-lg hover:bg-forestLight">Registrar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ================================================
-         LOGIN / SIGNUP MODAL
-         ================================================ -->
-    <div id="auth-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
-            <!-- TABS: LOGIN / SIGNUP -->
-            <div class="flex border-b">
-                <button onclick="switchAuthTab('login')" class="auth-tab flex-1 py-4 font-bold text-forest border-b-2 border-forest" data-tab="login">
-                    Login
-                </button>
-                <button onclick="switchAuthTab('signup')" class="auth-tab flex-1 py-4 font-bold text-gray-500 border-b-2 border-transparent hover:text-forest" data-tab="signup">
-                    Registrarse
-                </button>
-            </div>
-
-            <!-- LOGIN TAB -->
-            <div id="login-tab" class="p-8 space-y-4">
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Email</label>
-                    <input type="email" id="auth-login-email" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="tu@email.com">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Contraseña</label>
-                    <input type="password" id="auth-login-password" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="••••••••">
-                </div>
-                <button onclick="handleLogin()" class="w-full bg-forest text-cream font-bold py-3 rounded-lg hover:bg-forestLight">
-                    Ingresar
-                </button>
-                <p id="auth-login-error" class="text-red-500 text-sm hidden"></p>
-            </div>
-
-            <!-- SIGNUP TAB -->
-            <div id="signup-tab" class="hidden p-8 space-y-4 max-h-96 overflow-y-auto">
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Email</label>
-                    <input type="email" id="auth-signup-email" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="tu@email.com">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Contraseña</label>
-                    <input type="password" id="auth-signup-password" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="••••••••">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Nombre Completo</label>
-                    <input type="text" id="auth-signup-name" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="Juan García">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">DPI</label>
-                    <input type="text" id="auth-signup-dpi" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="1234567890123">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Dirección</label>
-                    <input type="text" id="auth-signup-address" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="Calle 5 #123">
-                </div>
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">Teléfono (WhatsApp)</label>
-                    <input type="tel" id="auth-signup-phone" class="w-full border border-gray-300 rounded-lg p-3 outline-none focus:border-gold" placeholder="+502 7654 3210">
-                </div>
-                <button onclick="handleSignup()" class="w-full bg-forest text-cream font-bold py-3 rounded-lg hover:bg-forestLight">
-                    Crear Cuenta
-                </button>
-                <p id="auth-signup-error" class="text-red-500 text-sm hidden"></p>
-            </div>
-
-            <!-- CERRAR -->
-            <div class="px-8 pb-4 flex justify-end">
-                <button onclick="closeAuthModal()" class="text-gray-500 hover:text-gray-800">
-                    <i class="fa-solid fa-times text-xl"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ================================================
-         CLIENTE PROFILE VIEW
-         ================================================ -->
-    <div id="client-profile-view" class="hidden min-h-screen bg-gray-100 flex flex-col">
-        <!-- HEADER -->
-        <div class="bg-forest text-cream p-6 shadow-lg flex justify-between items-center">
-            <h1 class="text-2xl font-bold">Mi Perfil</h1>
-            <button onclick="handleLogout()" class="bg-gold text-forest font-bold px-6 py-2 rounded-lg hover:bg-goldHover">
-                Cerrar Sesión
-            </button>
-        </div>
-
-        <!-- CONTENIDO -->
-        <div class="flex-grow p-8">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                <!-- DATOS PERSONALES -->
-                <div class="lg:col-span-1">
-                    <div class="bg-white rounded-xl shadow-md p-6">
-                        <h2 class="text-xl font-bold text-forest mb-4">Mis Datos</h2>
-                        <div class="space-y-3 text-sm">
-                            <div>
-                                <label class="font-bold text-gray-700">Nombre:</label>
-                                <p id="profile-name" class="text-gray-600">-</p>
-                            </div>
-                            <div>
-                                <label class="font-bold text-gray-700">DPI:</label>
-                                <p id="profile-dpi" class="text-gray-600">-</p>
-                            </div>
-                            <div>
-                                <label class="font-bold text-gray-700">Teléfono:</label>
-                                <p id="profile-phone" class="text-gray-600">-</p>
-                            </div>
-                            <div>
-                                <label class="font-bold text-gray-700">Email:</label>
-                                <p id="profile-email" class="text-gray-600">-</p>
-                            </div>
-                            <div>
-                                <label class="font-bold text-gray-700">Dirección:</label>
-                                <p id="profile-address" class="text-gray-600">-</p>
-                            </div>
-                        </div>
-                        <button onclick="openEditProfileModal()" class="w-full mt-4 bg-gold text-forest font-bold py-2 rounded-lg hover:bg-goldHover">
-                            Editar
-                        </button>
-                    </div>
-                </div>
-
-                <!-- MASCOTAS Y RESERVAS -->
-                <div class="lg:col-span-2 space-y-8">
-
-                    <!-- MIS MASCOTAS -->
-                    <div class="bg-white rounded-xl shadow-md p-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-xl font-bold text-forest">Mis Mascotas</h2>
-                            <button onclick="openAddPetModal()" class="bg-forest text-cream px-4 py-2 rounded-lg hover:bg-forestLight font-bold text-sm">
-                                + Agregar
-                            </button>
-                        </div>
-                        <div id="pets-list" class="space-y-3">
-                            <p class="text-gray-500 text-center py-4">Sin mascotas registradas</p>
-                        </div>
-                    </div>
-
-                    <!-- MIS RESERVAS -->
-                    <div class="bg-white rounded-xl shadow-md p-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <h2 class="text-xl font-bold text-forest">Mis Reservas</h2>
-                            <button onclick="openBookingWizard()" class="bg-forest text-cream px-4 py-2 rounded-lg hover:bg-forestLight font-bold text-sm">
-                                + Hacer Reserva
-                            </button>
-                        </div>
-                        <div id="reservas-list" class="space-y-3">
-                            <p class="text-gray-500 text-center py-4">Sin reservas registradas</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script type="module" src="app.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
