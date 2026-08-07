@@ -434,14 +434,13 @@ body {
     border-radius: 16px;
     overflow: hidden;
     transition: var(--transition-smooth);
-    opacity: 0;
     background-position: center;
     background-size: cover;
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
 }
 
-.diferenciador-card.visible {
-    opacity: 1;
-}
 
 .diferenciador-card:hover {
     transform: translateY(-8px);
@@ -529,15 +528,14 @@ body {
     border-radius: 16px;
     overflow: hidden;
     transition: var(--transition-smooth);
-    opacity: 0;
     background-position: center;
     background-size: cover;
     background-attachment: fixed;
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
 }
 
-.servicio-card.visible {
-    opacity: 1;
-}
 
 .servicio-card:hover {
     transform: translateY(-12px);
@@ -697,224 +695,6 @@ body {
     }
 }
 
-/* ============================================ */
-/* SECCIÓN: SERVICIOS Y PRODUCTOS (CARRITO) */
-/* ============================================ */
-.servicios-productos-section {
-    padding: 6rem 0;
-    background: var(--color-white);
-}
-
-.servicios-productos-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-    gap: 2rem;
-    margin-bottom: 4rem;
-}
-
-.producto-categoria {
-    background: var(--color-cream);
-    padding: 2rem;
-    border-radius: 16px;
-    border-left: 4px solid var(--color-gold);
-    opacity: 0;
-}
-
-.producto-categoria.visible {
-    animation: fade-in-up 0.8s ease-out forwards;
-}
-
-.producto-categoria h3 {
-    color: var(--color-forest);
-    margin-bottom: 1.5rem;
-    font-size: 1.2rem;
-    font-weight: 600;
-}
-
-.productos-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.producto-item {
-    background: var(--color-white);
-    padding: 1.5rem;
-    border-radius: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border: 1px solid rgba(11, 47, 29, 0.1);
-    transition: var(--transition-fast);
-}
-
-.producto-item:hover {
-    border-color: var(--color-gold);
-    box-shadow: 0 4px 12px rgba(197, 160, 89, 0.1);
-}
-
-.producto-info h4 {
-    color: var(--color-forest);
-    font-size: 0.95rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-}
-
-.precio {
-    color: var(--color-gold);
-    font-weight: 700;
-    font-size: 1rem;
-}
-
-.producto-controls {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.qty-btn {
-    width: 30px;
-    height: 30px;
-    border: 1px solid var(--color-gold);
-    background: var(--color-white);
-    color: var(--color-gold);
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: var(--transition-fast);
-}
-
-.qty-btn:hover {
-    background: var(--color-gold);
-    color: var(--color-white);
-}
-
-.qty-input {
-    width: 45px;
-    height: 30px;
-    text-align: center;
-    border: 1px solid var(--color-gold);
-    border-radius: 6px;
-    font-weight: 600;
-    color: var(--color-forest);
-}
-
-.qty-input:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(197, 160, 89, 0.1);
-}
-
-/* CARRITO */
-.carrito-section {
-    position: sticky;
-    bottom: 0;
-    background: white;
-    border-top: 2px solid var(--color-gold);
-    padding: 2rem 0;
-    box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.08);
-}
-
-.carrito-header {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-    margin-bottom: 1.5rem;
-}
-
-.carrito-header h3 {
-    color: var(--color-forest);
-    font-size: 1.3rem;
-    font-weight: 600;
-}
-
-.carrito-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-    display: grid;
-    grid-template-columns: 1fr 350px;
-    gap: 3rem;
-    align-items: start;
-}
-
-.carrito-items {
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.empty-cart {
-    color: var(--color-gray-dark);
-    text-align: center;
-    padding: 2rem;
-}
-
-.carrito-item {
-    background: var(--color-cream);
-    padding: 1rem;
-    border-radius: 10px;
-    margin-bottom: 0.75rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-left: 3px solid var(--color-gold);
-}
-
-.carrito-item-name {
-    font-weight: 600;
-    color: var(--color-forest);
-    font-size: 0.95rem;
-}
-
-.carrito-item-qty {
-    color: var(--color-gray-dark);
-    font-size: 0.85rem;
-}
-
-.carrito-item-price {
-    color: var(--color-gold);
-    font-weight: 700;
-}
-
-.carrito-total {
-    background: var(--color-cream);
-    padding: 1.5rem;
-    border-radius: 12px;
-    border: 2px solid var(--color-gold);
-}
-
-.total-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 1rem;
-    font-weight: 600;
-    color: var(--color-forest);
-}
-
-.total-row.final {
-    border-top: 2px solid var(--color-gold);
-    padding-top: 1rem;
-    font-size: 1.2rem;
-    color: var(--color-gold);
-}
-
-.carrito-total .btn {
-    margin-top: 1.5rem;
-}
-
-@media (max-width: 1024px) {
-    .carrito-content {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 768px) {
-    .servicios-productos-grid {
-        grid-template-columns: 1fr;
-    }
-    .carrito-section {
-        position: static;
-    }
-}
 
 /* ============================================ */
 /* SECCIÓN: FORMULARIO DE CONTACTO */
@@ -1174,6 +954,18 @@ body {
 /* ============================================ */
 /* RESPONSIVE GENERAL */
 /* ============================================ */
+@media (max-width: 768px) {
+    body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+    }
+    .hero-subtitle {
+        letter-spacing: 0;
+        word-spacing: 0;
+    }
+}
+
 @media (max-width: 480px) {
     .container {
         padding: 0 16px;
@@ -1183,5 +975,10 @@ body {
     }
     .hero-content {
         padding: 40px 16px;
+    }
+    body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
     }
 }

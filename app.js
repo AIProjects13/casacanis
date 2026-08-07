@@ -30,117 +30,10 @@ class ScrollAnimationObserver {
     }
 
     init() {
-        const animatedElements = document.querySelectorAll('.fade-in, .fade-in-up, .fade-in-left, .producto-categoria, .servicio-especial');
+        const animatedElements = document.querySelectorAll('.fade-in, .fade-in-up, .fade-in-left, .servicio-especial');
         animatedElements.forEach(element => {
             this.observer.observe(element);
         });
-    }
-}
-
-/* ============================================ */
-/* CARRITO DE COMPRAS (PedidosYa Style) */
-/* ============================================ */
-
-class CarritoManager {
-    constructor() {
-        this.setupEventListeners();
-    }
-
-    setupEventListeners() {
-        // Botones de cantidad
-        const minusButtons = document.querySelectorAll('.qty-btn.minus');
-        const plusButtons = document.querySelectorAll('.qty-btn.plus');
-        const qtyInputs = document.querySelectorAll('.qty-input');
-
-        minusButtons.forEach((btn, index) => {
-            btn.addEventListener('click', () => this.decrementQty(index));
-        });
-
-        plusButtons.forEach((btn, index) => {
-            btn.addEventListener('click', () => this.incrementQty(index));
-        });
-
-        qtyInputs.forEach((input, index) => {
-            input.addEventListener('change', () => this.updateQty(index));
-        });
-    }
-
-    incrementQty(index) {
-        const input = document.querySelectorAll('.qty-input')[index];
-        let value = parseInt(input.value) || 0;
-        input.value = value + 1;
-        this.updateCarrito();
-    }
-
-    decrementQty(index) {
-        const input = document.querySelectorAll('.qty-input')[index];
-        let value = parseInt(input.value) || 0;
-        if (value > 0) {
-            input.value = value - 1;
-            this.updateCarrito();
-        }
-    }
-
-    updateQty(index) {
-        this.updateCarrito();
-    }
-
-    updateCarrito() {
-        carrito = [];
-
-        const productos = document.querySelectorAll('.producto-item');
-        productos.forEach((producto, index) => {
-            const input = document.querySelectorAll('.qty-input')[index];
-            const cantidad = parseInt(input.value) || 0;
-
-            if (cantidad > 0) {
-                const nombre = producto.querySelector('.producto-info h4').textContent;
-                const precioText = producto.querySelector('.precio').textContent;
-                const precio = parseFloat(precioText.replace('Q', '').replace(',', ''));
-
-                carrito.push({
-                    nombre: nombre,
-                    cantidad: cantidad,
-                    precio: precio,
-                    total: precio * cantidad
-                });
-            }
-        });
-
-        this.renderCarrito();
-    }
-
-    renderCarrito() {
-        const carritoItems = document.getElementById('carrito-items');
-        const subtotal = document.getElementById('subtotal');
-        const total = document.getElementById('total');
-
-        carritoItems.innerHTML = '';
-
-        if (carrito.length === 0) {
-            carritoItems.innerHTML = '<p class="empty-cart">No hay servicios seleccionados</p>';
-            subtotal.textContent = 'Q0.00';
-            total.textContent = 'Q0.00';
-            return;
-        }
-
-        let totalAmount = 0;
-        carrito.forEach(item => {
-            totalAmount += item.total;
-            const itemHTML = `
-                <div class="carrito-item">
-                    <div>
-                        <div class="carrito-item-name">${item.nombre}</div>
-                        <div class="carrito-item-qty">Cantidad: ${item.cantidad}</div>
-                    </div>
-                    <div class="carrito-item-price">Q${item.total.toFixed(2)}</div>
-                </div>
-            `;
-            carritoItems.innerHTML += itemHTML;
-        });
-
-        subtotal.textContent = `Q${totalAmount.toFixed(2)}`;
-        total.textContent = `Q${totalAmount.toFixed(2)}`;
     }
 }
 
@@ -322,7 +215,6 @@ function irAFormularioContacto() {
 
 document.addEventListener('DOMContentLoaded', () => {
     new ScrollAnimationObserver();
-    new CarritoManager();
     new ContactForm();
     new WhatsAppButton();
     new SmoothNavigation();
