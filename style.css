@@ -139,14 +139,53 @@ body {
 }
 
 @media (max-width: 768px) {
+    .navbar {
+        padding: 0.5rem 0;
+    }
+    .nav-brand {
+        gap: 0.5rem;
+        font-size: 1rem;
+    }
+    .nav-brand .logo-img {
+        height: 60px;
+        width: 60px;
+    }
     .nav-links {
-        gap: 1rem;
+        gap: 0.7rem;
     }
     .nav-link {
-        font-size: 0.85rem;
+        font-size: 0.75rem;
     }
     .nav-link-cta {
-        padding: 0.6rem 1rem;
+        padding: 0.5rem 0.8rem;
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .navbar {
+        padding: 0.4rem 0;
+    }
+    .nav-container {
+        padding: 0 12px;
+    }
+    .nav-brand {
+        gap: 0.4rem;
+        font-size: 0.9rem;
+    }
+    .nav-brand .logo-img {
+        height: 50px;
+        width: 50px;
+    }
+    .nav-links {
+        gap: 0.5rem;
+    }
+    .nav-link {
+        font-size: 0.7rem;
+    }
+    .nav-link-cta {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.7rem;
     }
 }
 
