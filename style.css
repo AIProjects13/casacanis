@@ -468,7 +468,7 @@ body {
 
 .diferenciador-card {
     position: relative;
-    min-height: 450px;
+    min-height: 500px;
     border-radius: 16px;
     overflow: hidden;
     transition: var(--transition-smooth);
