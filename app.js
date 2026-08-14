@@ -2,8 +2,8 @@
 /* CONFIGURACIÓN GLOBAL */
 /* ============================================ */
 
-const WHATSAPP_NUMBER = '+502 5555 5555';
-const WHATSAPP_API = 'https://wa.me/50255555555';
+const WHATSAPP_NUMBER = '+502 3048 4614';
+const WHATSAPP_API = 'https://wa.me/50230484614';
 
 let carrito = [];
 
