@@ -849,12 +849,15 @@ body {
 
 .cantidad-stepper {
     display: flex;
+    flex-wrap: nowrap;
     align-items: stretch;
     gap: 0.5rem;
 }
 
 .cantidad-stepper input[type="number"] {
     text-align: center;
+    min-width: 0;
+    flex: 1;
     -moz-appearance: textfield;
 }
 
@@ -865,6 +868,7 @@ body {
 }
 
 .stepper-btn {
+    display: none;
     width: 48px;
     flex-shrink: 0;
     border: 1px solid var(--color-gray-medium);
@@ -885,6 +889,12 @@ body {
 
 .stepper-btn:active {
     transform: scale(0.95);
+}
+
+@media (max-width: 768px) {
+    .stepper-btn {
+        display: block;
+    }
 }
 
 .mascota-block {
