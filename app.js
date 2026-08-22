@@ -5,8 +5,6 @@
 const WHATSAPP_NUMBER = '+502 3048 4614';
 const WHATSAPP_API = 'https://wa.me/50230484614';
 
-let carrito = [];
-
 /* ============================================ */
 /* SCROLL-TRIGGERED ANIMATIONS */
 /* ============================================ */
@@ -44,9 +42,62 @@ class ScrollAnimationObserver {
 class ContactForm {
     constructor() {
         this.form = document.getElementById('contactForm');
+        this.cantidadInput = document.getElementById('cantidadMascotas');
+        this.mascotasContainer = document.getElementById('mascotas-container');
+
+        if (this.cantidadInput && this.mascotasContainer) {
+            this.cantidadInput.addEventListener('input', () => this.renderMascotaBlocks());
+            this.renderMascotaBlocks();
+        }
+
         if (this.form) {
             this.form.addEventListener('submit', (e) => this.handleSubmit(e));
         }
+    }
+
+    renderMascotaBlocks() {
+        let cantidad = parseInt(this.cantidadInput.value) || 1;
+        cantidad = Math.min(Math.max(cantidad, 1), 10);
+        this.cantidadInput.value = cantidad;
+
+        const datosPrevios = Array.from(this.mascotasContainer.querySelectorAll('.mascota-block')).map(block => ({
+            nombre: block.querySelector('.mascota-nombre').value,
+            raza: block.querySelector('.mascota-raza').value,
+            peso: block.querySelector('.mascota-peso').value
+        }));
+
+        let html = '';
+        for (let i = 0; i < cantidad; i++) {
+            const datos = datosPrevios[i] || { nombre: '', raza: '', peso: '' };
+            html += `
+                <div class="mascota-block">
+                    <h4><i class="fas fa-paw"></i> Mascota ${i + 1}</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Nombre *</label>
+                            <input type="text" class="mascota-nombre" value="${datos.nombre}" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Raza</label>
+                            <input type="text" class="mascota-raza" value="${datos.raza}">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Peso Aproximado (lb)</label>
+                        <input type="number" class="mascota-peso" value="${datos.peso}">
+                    </div>
+                </div>
+            `;
+        }
+        this.mascotasContainer.innerHTML = html;
+    }
+
+    getMascotas() {
+        return Array.from(this.mascotasContainer.querySelectorAll('.mascota-block')).map(block => ({
+            nombre: block.querySelector('.mascota-nombre').value.trim(),
+            raza: block.querySelector('.mascota-raza').value.trim(),
+            peso: block.querySelector('.mascota-peso').value.trim()
+        }));
     }
 
     handleSubmit(e) {
@@ -56,24 +107,23 @@ class ContactForm {
             nombre: document.getElementById('nombre').value.trim(),
             telefono: document.getElementById('telefono').value.trim(),
             email: document.getElementById('email').value.trim(),
-            mascota: document.getElementById('mascota').value.trim(),
-            raza: document.getElementById('raza').value.trim(),
-            peso: document.getElementById('peso').value.trim(),
-            mensaje: document.getElementById('mensaje').value.trim()
+            mensaje: document.getElementById('mensaje').value.trim(),
+            mascotas: this.getMascotas()
         };
 
         if (!this.validateForm(formData)) {
-            alert('Por favor completa todos los campos requeridos.');
+            alert('Por favor completa todos los campos requeridos, incluyendo el nombre de cada mascota.');
             return;
         }
 
         const whatsappMessage = this.buildMessage(formData);
         this.openWhatsApp(whatsappMessage);
         this.form.reset();
+        this.renderMascotaBlocks();
     }
 
     validateForm(data) {
-        return data.nombre && data.telefono && data.mascota;
+        return data.nombre && data.telefono && data.mascotas.length > 0 && data.mascotas.every(m => m.nombre);
     }
 
     buildMessage(data) {
@@ -85,29 +135,19 @@ class ContactForm {
             message += `📧 *Email:* ${data.email}\n`;
         }
 
-        message += `\n🐕 *Información de Mascota*\n`;
-        message += `Nombre: ${data.mascota}\n`;
-
-        if (data.raza) {
-            message += `Raza: ${data.raza}\n`;
-        }
-
-        if (data.peso) {
-            message += `Peso: ${data.peso} lb\n`;
-        }
+        message += `\n🐕 *Mascotas (${data.mascotas.length})*\n`;
+        data.mascotas.forEach((mascota, index) => {
+            message += `\n*${index + 1}. ${mascota.nombre}*\n`;
+            if (mascota.raza) {
+                message += `   Raza: ${mascota.raza}\n`;
+            }
+            if (mascota.peso) {
+                message += `   Peso: ${mascota.peso} lb\n`;
+            }
+        });
 
         if (data.mensaje) {
             message += `\n💬 *Necesidades Especiales:*\n${data.mensaje}\n`;
-        }
-
-        message += `\n📋 *Servicios Seleccionados:*\n`;
-        if (carrito.length > 0) {
-            carrito.forEach(item => {
-                message += `• ${item.nombre} (x${item.cantidad}) - Q${item.total.toFixed(2)}\n`;
-            });
-            message += `\n*TOTAL: Q${carrito.reduce((sum, item) => sum + item.total, 0).toFixed(2)}*\n`;
-        } else {
-            message += `Consulta general sobre servicios\n`;
         }
 
         message += `\n---\nEnviado desde: Casa Canis Landing Page`;

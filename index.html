@@ -229,7 +229,7 @@
                     <div class="servicio-overlay"></div>
                     <div class="servicio-content">
                         <div class="servicio-icon">
-                            <i class="fas fa-sun"></i>
+                            <i class="fas fa-paw"></i>
                         </div>
                         <h3>Day Pass: Un Día de Actividad y Bienestar</h3>
                         <p>Nuestro servicio de Day Pass está diseñado para perros que necesitan mantenerse activos mientras sus propietarios trabajan, viajan o cumplen otros compromisos. Amplias áreas verdes, contacto con la naturaleza, ejercicio supervisado y oportunidades de socialización.</p>
@@ -304,21 +304,12 @@
                             <input type="email" id="email" name="email">
                         </div>
                         <div class="form-group">
-                            <label for="mascota">Nombre Mascota *</label>
-                            <input type="text" id="mascota" name="mascota" required>
+                            <label for="cantidadMascotas">¿Cuántas mascotas? *</label>
+                            <input type="number" id="cantidadMascotas" name="cantidadMascotas" min="1" max="10" value="1" required>
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="raza">Raza</label>
-                            <input type="text" id="raza" name="raza">
-                        </div>
-                        <div class="form-group">
-                            <label for="peso">Peso Aproximado (lb)</label>
-                            <input type="number" id="peso" name="peso">
-                        </div>
-                    </div>
+                    <div id="mascotas-container"></div>
 
                     <div class="form-group">
                         <label for="mensaje">Información Adicional o Necesidades Especiales</label>
