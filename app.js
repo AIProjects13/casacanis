@@ -46,8 +46,9 @@ class ContactForm {
         this.mascotasContainer = document.getElementById('mascotas-container');
 
         if (this.cantidadInput && this.mascotasContainer) {
-            this.cantidadInput.addEventListener('input', () => this.renderMascotaBlocks());
-            this.renderMascotaBlocks();
+            this.cantidadInput.addEventListener('input', () => this.handleCantidadInput());
+            this.cantidadInput.addEventListener('blur', () => this.handleCantidadBlur());
+            this.handleCantidadBlur();
         }
 
         if (this.form) {
@@ -55,11 +56,20 @@ class ContactForm {
         }
     }
 
-    renderMascotaBlocks() {
+    handleCantidadInput() {
+        const raw = parseInt(this.cantidadInput.value);
+        const cantidad = (!isNaN(raw) && raw >= 1) ? Math.min(raw, 10) : 0;
+        this.renderMascotaBlocks(cantidad);
+    }
+
+    handleCantidadBlur() {
         let cantidad = parseInt(this.cantidadInput.value) || 1;
         cantidad = Math.min(Math.max(cantidad, 1), 10);
         this.cantidadInput.value = cantidad;
+        this.renderMascotaBlocks(cantidad);
+    }
 
+    renderMascotaBlocks(cantidad) {
         const datosPrevios = Array.from(this.mascotasContainer.querySelectorAll('.mascota-block')).map(block => ({
             nombre: block.querySelector('.mascota-nombre').value,
             raza: block.querySelector('.mascota-raza').value,
@@ -71,7 +81,7 @@ class ContactForm {
             const datos = datosPrevios[i] || { nombre: '', raza: '', peso: '' };
             html += `
                 <div class="mascota-block">
-                    <h4><i class="fas fa-paw"></i> Mascota ${i + 1}</h4>
+                    <h4><i class="fas fa-dog"></i> Mascota ${i + 1}</h4>
                     <div class="form-row">
                         <div class="form-group">
                             <label>Nombre *</label>
@@ -119,7 +129,7 @@ class ContactForm {
         const whatsappMessage = this.buildMessage(formData);
         this.openWhatsApp(whatsappMessage);
         this.form.reset();
-        this.renderMascotaBlocks();
+        this.handleCantidadBlur();
     }
 
     validateForm(data) {
@@ -149,6 +159,8 @@ class ContactForm {
         if (data.mensaje) {
             message += `\n💬 *Necesidades Especiales:*\n${data.mensaje}\n`;
         }
+
+        message += `\n✅ *Términos y Condiciones:* Aceptados por el cliente\n`;
 
         message += `\n---\nEnviado desde: Casa Canis Landing Page`;
 
