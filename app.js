@@ -44,11 +44,19 @@ class ContactForm {
         this.form = document.getElementById('contactForm');
         this.cantidadInput = document.getElementById('cantidadMascotas');
         this.mascotasContainer = document.getElementById('mascotas-container');
+        this.cantidadMinus = document.getElementById('cantidadMinus');
+        this.cantidadPlus = document.getElementById('cantidadPlus');
 
         if (this.cantidadInput && this.mascotasContainer) {
             this.cantidadInput.addEventListener('input', () => this.handleCantidadInput());
             this.cantidadInput.addEventListener('blur', () => this.handleCantidadBlur());
-            this.handleCantidadBlur();
+            if (this.cantidadMinus) {
+                this.cantidadMinus.addEventListener('click', () => this.stepCantidad(-1));
+            }
+            if (this.cantidadPlus) {
+                this.cantidadPlus.addEventListener('click', () => this.stepCantidad(1));
+            }
+            this.renderMascotaBlocks(0);
         }
 
         if (this.form) {
@@ -56,15 +64,23 @@ class ContactForm {
         }
     }
 
+    stepCantidad(delta) {
+        let cantidad = parseInt(this.cantidadInput.value) || 0;
+        cantidad = Math.min(Math.max(cantidad + delta, 0), 10);
+        this.cantidadInput.value = cantidad;
+        this.renderMascotaBlocks(cantidad);
+    }
+
     handleCantidadInput() {
         const raw = parseInt(this.cantidadInput.value);
-        const cantidad = (!isNaN(raw) && raw >= 1) ? Math.min(raw, 10) : 0;
+        const cantidad = (!isNaN(raw) && raw >= 0) ? Math.min(raw, 10) : 0;
         this.renderMascotaBlocks(cantidad);
     }
 
     handleCantidadBlur() {
-        let cantidad = parseInt(this.cantidadInput.value) || 1;
-        cantidad = Math.min(Math.max(cantidad, 1), 10);
+        let cantidad = parseInt(this.cantidadInput.value);
+        if (isNaN(cantidad)) cantidad = 0;
+        cantidad = Math.min(Math.max(cantidad, 0), 10);
         this.cantidadInput.value = cantidad;
         this.renderMascotaBlocks(cantidad);
     }

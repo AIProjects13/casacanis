@@ -847,6 +847,46 @@ body {
     box-shadow: 0 0 0 3px rgba(178, 150, 24, 0.1);
 }
 
+.cantidad-stepper {
+    display: flex;
+    align-items: stretch;
+    gap: 0.5rem;
+}
+
+.cantidad-stepper input[type="number"] {
+    text-align: center;
+    -moz-appearance: textfield;
+}
+
+.cantidad-stepper input[type="number"]::-webkit-outer-spin-button,
+.cantidad-stepper input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.stepper-btn {
+    width: 48px;
+    flex-shrink: 0;
+    border: 1px solid var(--color-gray-medium);
+    background: var(--color-gray-light);
+    color: var(--color-forest);
+    border-radius: 10px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.stepper-btn:hover {
+    background: var(--color-gold);
+    border-color: var(--color-gold);
+    color: var(--color-white);
+}
+
+.stepper-btn:active {
+    transform: scale(0.95);
+}
+
 .mascota-block {
     background: var(--color-cream);
     padding: 1.5rem;
