@@ -17,16 +17,24 @@
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-brand">
-                <img src="fotos/casa canis logo 2.JPG" alt="Casa Canis Logo" class="logo-img">
+                <img src="fotos/casa canis logo 2.png" alt="Casa Canis Logo" class="logo-img">
             </div>
-            <div class="nav-links">
+            <button type="button" class="hamburger-btn" id="hamburgerBtn" aria-label="Abrir menú" aria-expanded="false">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div class="nav-links" id="navLinks">
                 <a href="#sobre-nosotros" class="nav-link">Sobre Nosotros</a>
                 <a href="#diferenciadores" class="nav-link">Beneficios</a>
                 <a href="#servicios" class="nav-link">Servicios</a>
+                <a href="#promociones" class="nav-link">Promociones</a>
+                <a href="terminos-condiciones.html" target="_blank" class="nav-link">Términos y Condiciones</a>
                 <a href="#contacto" class="nav-link nav-link-cta">Haz tu Reserva</a>
             </div>
         </div>
     </nav>
+    <div class="nav-overlay" id="navOverlay"></div>
 
     <!-- ============================================ -->
     <!-- HERO SECTION CON FOTO REAL -->
@@ -45,6 +53,7 @@
                         <i class="fas fa-chevron-down"></i> Conoce Más
                     </a>
                 </div>
+                <p class="hero-note">Todos nuestros servicios de grooming incluyen Day Pass gratis</p>
             </div>
         </div>
     </section>
@@ -89,7 +98,7 @@
                             <i class="fas fa-leaf"></i>
                         </div>
                         <h3>Naturaleza como Parte del Cuidado</h3>
-                        <p>Creemos que el bienestar también depende del entorno. Por eso nuestros huéspedes disfrutan de amplias áreas verdes donde pueden correr libremente, caminar sobre césped natural, explorar diferentes aromas, interactuar con un ambiente cambiante y disfrutar del aire fresco y la luz del sol.</p>
+                        <p>Creemos que el bienestar también depende del entorno. Por eso nuestros huéspedes disfrutan de amplias áreas verdes donde pueden correr libremente, caminar sobre césped natural, explorar diferentes aromas, interactuar con un ambiente cambiante y disfrutar del aire fresco y la luz del sol. Todo esto proporciona un nivel de estimulación física y mental que favorece una estancia más activa, relajada y enriquecedora.</p>
                     </div>
                 </div>
 
@@ -100,7 +109,7 @@
                             <i class="fas fa-stethoscope"></i>
                         </div>
                         <h3>Respaldo Veterinario Permanente</h3>
-                        <p>Nos permite responder de forma inmediata ante cualquier situación médica o emergencia que pueda presentarse durante la estancia, minimizando riesgos y brindando tranquilidad a los propietarios. Atendemos mascotas con necesidades médicas especiales.</p>
+                        <p>Nos permite responder de forma inmediata ante cualquier situación médica o emergencia que pueda presentarse durante la estancia, minimizando riesgos y brindando tranquilidad a los propietarios. Además, contamos con la experiencia para atender mascotas que requieren administración de medicamentos, tratamientos médicos, cuidados especiales, monitoreo clínico, hembras en celo y otras necesidades particulares.</p>
                     </div>
                 </div>
 
@@ -111,7 +120,7 @@
                             <i class="fas fa-heart"></i>
                         </div>
                         <h3>Atención Completamente Personalizada</h3>
-                        <p>Nos adaptamos a la rutina, alimentación y necesidades individuales de cada mascota, asegurando que cada experiencia sea única y especial.</p>
+                        <p>Nos adaptamos a la rutina, alimentación y necesidades individuales de cada mascota.</p>
                     </div>
                 </div>
 
@@ -122,7 +131,7 @@
                             <i class="fas fa-shield-alt"></i>
                         </div>
                         <h3>Protocolos Estrictos de Bioseguridad</h3>
-                        <p>Nuestra dirección veterinaria ha permitido establecer estándares superiores de bioseguridad, higiene y control sanitario. Cada procedimiento diseñado para reducir riesgos y prevenir enfermedades.</p>
+                        <p>Nuestra dirección veterinaria ha permitido establecer estándares superiores de bioseguridad, higiene y control sanitario. Cada procedimiento ha sido diseñado para reducir riesgos, prevenir enfermedades y mantener un ambiente seguro y saludable para todas las mascotas que nos visitan.</p>
                     </div>
                 </div>
 
@@ -133,7 +142,7 @@
                             <i class="fas fa-users"></i>
                         </div>
                         <h3>Personal Capacitado y Comprometido</h3>
-                        <p>Cada integrante ha sido seleccionado y capacitado para brindar atención basada en profesionalismo, responsabilidad y respeto. Compromiso con capacitación continua.</p>
+                        <p>Cada integrante de Casa Canis ha sido seleccionado y capacitado para brindar una atención basada en profesionalismo, responsabilidad y respeto por cada mascota. Nuestro compromiso con la capacitación continua nos permite ofrecer un servicio consistente, seguro y de la más alta calidad.</p>
                     </div>
                 </div>
 
@@ -144,7 +153,7 @@
                             <i class="fas fa-handshake"></i>
                         </div>
                         <h3>Transparencia y Confianza</h3>
-                        <p>Creemos que la confianza se construye con hechos. Ofrecemos visitas guiadas programadas para que los propietarios conozcan nuestras instalaciones y protocolos.</p>
+                        <p>Creemos que la confianza se construye con hechos. Por ello, ofrecemos visitas guiadas programadas para que los propietarios conozcan nuestras instalaciones, protocolos, áreas de recreación y la forma en que cuidamos de cada huésped.</p>
                     </div>
                 </div>
             </div>
@@ -169,7 +178,7 @@
                             <i class="fas fa-spa"></i>
                         </div>
                         <h3>Grooming con Respaldo Profesional</h3>
-                        <p>En Casa Canis entendemos que el grooming es mucho más que la apariencia; es una parte fundamental de la salud y el bienestar de cada mascota. Nuestro equipo cuenta con amplia experiencia y dedica el tiempo necesario para brindar un servicio de calidad.</p>
+                        <p>En Casa Canis entendemos que el grooming es mucho más que la apariencia; es una parte fundamental de la salud y el bienestar de cada mascota. Nuestro equipo cuenta con amplia experiencia y dedica el tiempo necesario para brindar un servicio de calidad, adaptándose a las características de cada raza, tipo de pelaje y a las preferencias específicas de cada propietario. Trabajamos con productos de alta calidad y, cuando la condición de la piel o el pelaje lo requiere, ofrecemos baños terapéuticos y tratamientos dermatológicos respaldados por un médico veterinario. Durante cada sesión realizamos una evaluación detallada de la mascota, lo que nos permite identificar oportunamente anomalías como lesiones cutáneas, masas, parásitos, infecciones de oído, alteraciones en uñas, problemas dermatológicos u otras condiciones que frecuentemente pasan desapercibidas. Cuando detectamos alguna anomalía, informamos inmediatamente al propietario y recomendamos las alternativas de diagnóstico o tratamiento más adecuadas.</p>
 
                         <div class="servicio-horario">
                             <h4><i class="fas fa-clock"></i> Horarios de Recepción</h4>
@@ -201,7 +210,7 @@
                             <i class="fas fa-bed"></i>
                         </div>
                         <h3>Hospedaje Diseñado para el Bienestar Integral</h3>
-                        <p>En Casa Canis cada estancia ha sido diseñada para ofrecer mucho más que un lugar donde dormir. Ambiente seguro, limpio y enriquecido, con amplias áreas verdes, espacios para el ejercicio y períodos de descanso adecuados.</p>
+                        <p>En Casa Canis cada estancia ha sido diseñada para ofrecer mucho más que un lugar donde dormir. Nuestros huéspedes disfrutan de un ambiente seguro, limpio y enriquecido, con amplias áreas verdes, espacios para el ejercicio, recreación supervisada y períodos adecuados de descanso. Cada mascota recibe atención personalizada de acuerdo con su edad, temperamento, nivel de actividad y necesidades particulares. Nuestro equipo realiza un monitoreo constante del comportamiento, apetito, hidratación y estado general de cada huésped, contando además con respaldo médico veterinario para atender mascotas que requieren administración de medicamentos, tratamientos, cuidados especiales o una respuesta profesional inmediata ante cualquier eventualidad.</p>
 
                         <div class="servicio-horario">
                             <h4><i class="fas fa-clock"></i> Horarios</h4>
@@ -232,7 +241,7 @@
                             <i class="fas fa-umbrella-beach"></i>
                         </div>
                         <h3>Day Pass: Un Día de Actividad y Bienestar</h3>
-                        <p>Nuestro servicio de Day Pass está diseñado para perros que necesitan mantenerse activos mientras sus propietarios trabajan, viajan o cumplen otros compromisos. Amplias áreas verdes, contacto con la naturaleza, ejercicio supervisado y oportunidades de socialización.</p>
+                        <p>Nuestro servicio de Day Pass está diseñado para perros que necesitan mantenerse activos mientras sus propietarios trabajan, viajan o cumplen otros compromisos. Durante su estancia, los huéspedes disfrutan de amplias áreas verdes, contacto con la naturaleza, ejercicio supervisado, enriquecimiento ambiental y oportunidades de socialización de acuerdo con su temperamento y compatibilidad con otros perros. El objetivo del Day Pass no es únicamente cuidar a su mascota durante algunas horas, sino ofrecerle un ambiente donde pueda ejercitarse, explorar, jugar, descansar y regresar a casa física y mentalmente más satisfecha.</p>
 
                         <div class="servicio-horario">
                             <h4><i class="fas fa-clock"></i> Disponibilidad</h4>
@@ -251,6 +260,32 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- ESCUELA CANINA -->
+                <div class="servicio-card fade-in-up" style="background: url('fotos/26.jpeg') center/cover; animation-delay: 0.4s;">
+                    <div class="servicio-overlay"></div>
+                    <div class="servicio-content">
+                        <div class="servicio-icon">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <h3>Escuela Canina Profesional</h3>
+                        <p>Entrenamiento profesional para que tu mejor amigo aprenda, se comporte mejor y fortalezca su vínculo contigo, con un enfoque adaptado a las necesidades de cada mascota.</p>
+
+                        <div class="servicio-horario">
+                            <h4><i class="fas fa-clock"></i> Horarios</h4>
+                            <ul>
+                                <li><strong>En Casa Canis:</strong> lunes y martes, 8:00 a.m. a 4:00 p.m.</li>
+                                <li><strong>A domicilio:</strong> miércoles, jueves y viernes, 8:00 a.m. a 4:00 p.m.</li>
+                            </ul>
+                        </div>
+
+                        <div class="servicio-beneficios">
+                            <p>✓ Entrenamiento profesional personalizado</p>
+                            <p>✓ Disponible en las instalaciones o a domicilio</p>
+                            <p>✓ Fortalece la relación con tu mascota</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- SERVICIOS ADICIONALES -->
@@ -260,17 +295,17 @@
                 <div class="servicios-especiales">
                     <div class="servicio-especial fade-in-up">
                         <h4><i class="fas fa-dumbbell"></i> Fisioterapia y Rehabilitación Veterinaria</h4>
-                        <p>Servicios dirigidos por un médico veterinario con formación especializada. Fundamental para la recuperación después de cirugías, lesiones, manejo del dolor y enfermedades ortopédicas.</p>
+                        <p>Ofrecemos servicios de fisioterapia y rehabilitación dirigidos por un médico veterinario con formación especializada en medicina física y rehabilitación. Cada paciente es evaluado de forma individual para desarrollar un plan terapéutico adaptado a su condición clínica, edad, nivel de actividad y objetivos de recuperación. La fisioterapia puede desempeñar un papel fundamental en la recuperación después de cirugías o lesiones, el manejo del dolor, el tratamiento de enfermedades ortopédicas y neurológicas, y el mantenimiento de la movilidad en pacientes geriátricos o con enfermedades crónicas.</p>
                     </div>
 
                     <div class="servicio-especial fade-in-up" style="animation-delay: 0.15s;">
                         <h4><i class="fas fa-syringe"></i> Atención Médico-Veterinaria Exclusiva</h4>
-                        <p>Los servicios médico-veterinarios son un beneficio exclusivo para huéspedes. Respuesta rápida y oportuna sin traslados a clínica externa. Todos los procedimientos documentados por Médico Veterinario colegiado.</p>
+                        <p>En Casa Canis no operamos como una clínica veterinaria abierta al público. Nuestros servicios médico-veterinarios constituyen un beneficio exclusivo para las mascotas hospedadas o inscritas en alguno de nuestros servicios, lo que nos permite brindar atención profesional de manera rápida y oportuna sin necesidad de trasladar a la mascota a una clínica externa. Todos los procedimientos médicos, vacunaciones y desparasitaciones son documentados y registrados por un Médico Veterinario con colegiado activo, asegurando que el carnet sanitario de su mascota quede firmado y sellado conforme a los requisitos correspondientes.</p>
                     </div>
 
                     <div class="servicio-especial fade-in-up" style="animation-delay: 0.3s;">
                         <h4><i class="fas fa-birthday-cake"></i> Eventos Privados</h4>
-                        <p>Celebra momentos especiales en un espacio diseñado para mascotas y familias. Grupos de 15 a 30 personas. 4 horas de uso exclusivo. Servicios adicionales: catering, fotografía, decoración, actividades recreativas.</p>
+                        <p>Celebra momentos especiales en un espacio diseñado para que las mascotas y sus familias disfruten con total tranquilidad. Ofrecemos eventos completamente privados para grupos de 15 a 30 personas, con acceso exclusivo a nuestras amplias áreas verdes y una cómoda pérgola para tus invitados. Cada reservación incluye 4 horas de uso exclusivo de las instalaciones, y puedes personalizar tu evento contratando servicios adicionales como catering, decoración, fotografía y actividades recreativas.</p>
                     </div>
                 </div>
             </div>
@@ -278,10 +313,25 @@
     </section>
 
     <!-- ============================================ -->
+    <!-- SECCIÓN: PROMOCIONES -->
+    <!-- ============================================ -->
+    <section id="promociones" class="promociones-section" style="background: url('fotos/Promociones.png') center/cover;">
+        <div class="promociones-overlay"></div>
+        <div class="container promociones-content">
+            <h2 class="section-title fade-in-left">Promociones</h2>
+            <p class="section-subtitle fade-in-left">Muy pronto tendremos promociones especiales para nuestros huéspedes. Escríbenos por WhatsApp y te avisamos apenas estén disponibles.</p>
+            <a href="https://wa.me/50230484614" target="_blank" class="btn btn-primary fade-in-up">
+                <i class="fab fa-whatsapp"></i> Consultar Promociones
+            </a>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
     <!-- FORMULARIO DE CONTACTO -->
     <!-- ============================================ -->
-    <section id="contacto" class="contacto-section">
-        <div class="container">
+    <section id="contacto" class="contacto-section" style="background: url('fotos/Un resort Diseñado.png') center/cover;">
+        <div class="contacto-overlay"></div>
+        <div class="container contacto-content">
             <h2 class="section-title fade-in">Solicita tu Reserva</h2>
             <p class="section-subtitle fade-in">Completa el formulario y nos pondremos en contacto por WhatsApp para confirmar tu reserva</p>
 
@@ -316,9 +366,11 @@
                     <div id="mascotas-container"></div>
 
                     <div class="form-group">
-                        <label for="mensaje">Información Adicional o Necesidades Especiales</label>
+                        <label for="mensaje">Información Adicional o Necesidades Especiales para el Grupo (opcional)</label>
                         <textarea id="mensaje" name="mensaje" rows="4"></textarea>
                     </div>
+
+                    <p class="pago-nota">Al momento de realizar tu pago estás aceptando nuestros Términos y Condiciones.</p>
 
                     <div class="terminos-check">
                         <input type="checkbox" id="terminos" name="terminos" required>
@@ -349,8 +401,9 @@
                     <h4>Enlaces Rápidos</h4>
                     <ul>
                         <li><a href="#sobre-nosotros">Sobre Nosotros</a></li>
-                        <li><a href="#diferenciadores">Diferenciadores</a></li>
+                        <li><a href="#diferenciadores">Beneficios</a></li>
                         <li><a href="#servicios">Servicios</a></li>
+                        <li><a href="#promociones">Promociones</a></li>
                         <li><a href="terminos-condiciones.html" target="_blank">Términos y Condiciones</a></li>
                     </ul>
                 </div>

@@ -35,7 +35,7 @@ body {
     font-family: var(--font-sans);
     color: #2d3748;
     background: var(--color-white);
-    line-height: 1.6;
+    line-height: 1.5;
 }
 
 .container {
@@ -144,6 +144,62 @@ body {
     transform: translateY(-2px);
 }
 
+/* MENÚ HAMBURGUESA */
+.hamburger-btn {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 36px;
+    height: 36px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    z-index: 1001;
+}
+
+.hamburger-btn span {
+    display: block;
+    width: 100%;
+    height: 3px;
+    background: var(--color-forest);
+    border-radius: 2px;
+    transition: var(--transition-fast);
+}
+
+.hamburger-btn.open span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+}
+
+.hamburger-btn.open span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-btn.open span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+}
+
+.nav-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.nav-overlay.open {
+    display: block;
+    opacity: 1;
+}
+
+body.nav-open {
+    overflow: hidden;
+}
+
 @media (max-width: 768px) {
     :root {
         --navbar-height: 92px;
@@ -159,23 +215,50 @@ body {
         height: 60px;
         width: 60px;
     }
+    .hamburger-btn {
+        display: flex;
+    }
     .nav-links {
-        flex: 1;
-        gap: 0.3rem;
-        justify-content: space-between;
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 280px;
+        max-width: 80vw;
+        background: var(--color-white);
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        gap: 0;
+        padding: calc(var(--navbar-height) + 1rem) 1.5rem 2rem;
+        transform: translateX(100%);
+        transition: transform 0.35s ease;
+        z-index: 999;
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+        overflow-y: auto;
+    }
+    .nav-links.open {
+        transform: translateX(0);
     }
     .nav-link {
-        flex: 1;
-        text-align: center;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        font-size: 0.7rem;
+        flex: none;
+        width: 100%;
+        text-align: left;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        font-size: 1rem;
+        padding: 0.9rem 0;
+        border-bottom: 1px solid var(--color-gray-medium);
     }
     .nav-link-cta {
-        flex: 1.2;
-        padding: 0.5rem 0.4rem;
-        font-size: 0.7rem;
+        flex: none;
+        width: 100%;
+        margin-top: 1.25rem;
+        border-bottom: none;
+        justify-content: center;
+        font-size: 1rem;
+        padding: 0.9rem 1rem;
     }
 }
 
@@ -196,16 +279,6 @@ body {
     .nav-brand .logo-img {
         height: 50px;
         width: 50px;
-    }
-    .nav-links {
-        gap: 0.25rem;
-    }
-    .nav-link {
-        font-size: 0.6rem;
-    }
-    .nav-link-cta {
-        padding: 0.4rem 0.3rem;
-        font-size: 0.6rem;
     }
 }
 
@@ -271,6 +344,14 @@ body {
     gap: 1.5rem;
     justify-content: center;
     flex-wrap: wrap;
+}
+
+.hero-note {
+    margin-top: 1.75rem;
+    color: var(--color-cream);
+    font-size: 0.95rem;
+    font-weight: 500;
+    opacity: 0.9;
 }
 
 /* ============================================ */
@@ -420,7 +501,7 @@ body {
 .summary-text p {
     margin-bottom: 1.5rem;
     color: var(--color-gray-dark);
-    line-height: 1.8;
+    line-height: 1.6;
     text-align: left;
 }
 
@@ -477,7 +558,7 @@ body {
     font-size: 1rem;
     color: var(--color-gray-dark);
     margin-bottom: 2rem;
-    line-height: 1.8;
+    line-height: 1.6;
 }
 
 .diferenciadores-grid {
@@ -554,13 +635,12 @@ body {
 
 .card-content p {
     font-size: 0.95rem;
-    line-height: 1.6;
+    line-height: 1.55;
     opacity: 0.95;
-    display: -webkit-box;
-    -webkit-line-clamp: 4;
-    line-clamp: 4;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    max-height: 8.4em;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    padding-right: 4px;
 }
 
 @media (max-width: 768px) {
@@ -656,13 +736,12 @@ body {
 .servicio-content > p {
     font-size: 0.95rem;
     margin-bottom: 1.5rem;
-    line-height: 1.6;
+    line-height: 1.55;
     opacity: 0.95;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    max-height: 6.2em;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    padding-right: 4px;
 }
 
 .servicio-horario {
@@ -699,11 +778,7 @@ body {
 
 .servicio-info p {
     margin-bottom: 0.5rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+    line-height: 1.4;
 }
 
 .servicio-beneficios {
@@ -761,7 +836,7 @@ body {
 
 .servicio-especial p {
     color: var(--color-gray-dark);
-    line-height: 1.7;
+    line-height: 1.6;
     font-size: 0.95rem;
 }
 
@@ -776,21 +851,68 @@ body {
 
 
 /* ============================================ */
+/* SECCIÓN: PROMOCIONES */
+/* ============================================ */
+.promociones-section {
+    position: relative;
+    padding: 7rem 0;
+    background-position: center;
+    background-size: cover;
+    background-attachment: fixed;
+    text-align: center;
+    overflow: hidden;
+}
+
+.promociones-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(8, 24, 4, 0.55) 0%, rgba(8, 24, 4, 0.75) 100%);
+    z-index: 1;
+}
+
+.promociones-content {
+    position: relative;
+    z-index: 2;
+    max-width: 700px;
+}
+
+.promociones-content .section-title,
+.promociones-content .section-subtitle {
+    color: var(--color-cream);
+}
+
+.promociones-content .section-subtitle {
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+    .promociones-section {
+        padding: 4.5rem 0;
+    }
+}
+
+/* ============================================ */
 /* SECCIÓN: FORMULARIO DE CONTACTO */
 /* ============================================ */
 .contacto-section {
+    position: relative;
     padding: 6rem 0;
-    background: linear-gradient(180deg, var(--color-cream) 0%, var(--color-white) 100%);
+    background-position: center;
+    background-size: cover;
+    background-attachment: fixed;
+    overflow: hidden;
 }
 
-.formulario-wrapper {
-    max-width: 700px;
-    margin: 0 auto;
-    opacity: 0;
+.contacto-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(244, 241, 234, 0.94) 0%, rgba(244, 241, 234, 0.97) 100%);
+    z-index: 1;
 }
 
-.formulario-wrapper.visible {
-    animation: fade-in-up 0.8s ease-out forwards;
+.contacto-content {
+    position: relative;
+    z-index: 2;
 }
 
 .contacto-form {
@@ -930,11 +1052,21 @@ body {
     }
 }
 
+.pago-nota {
+    background: rgba(178, 150, 24, 0.1);
+    border-left: 3px solid var(--color-gold);
+    padding: 0.9rem 1.1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--color-forest);
+    margin-top: 1.5rem;
+}
+
 .terminos-check {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin: 2rem 0;
+    margin: 1.25rem 0 2rem;
     font-size: 0.9rem;
 }
 
@@ -1113,6 +1245,10 @@ body {
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         text-rendering: optimizeLegibility;
+        line-height: 1.45;
+    }
+    p {
+        line-height: 1.5;
     }
     .hero-subtitle {
         letter-spacing: 0;

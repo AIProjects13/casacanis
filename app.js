@@ -89,12 +89,13 @@ class ContactForm {
         const datosPrevios = Array.from(this.mascotasContainer.querySelectorAll('.mascota-block')).map(block => ({
             nombre: block.querySelector('.mascota-nombre').value,
             raza: block.querySelector('.mascota-raza').value,
-            peso: block.querySelector('.mascota-peso').value
+            peso: block.querySelector('.mascota-peso').value,
+            notas: block.querySelector('.mascota-notas').value
         }));
 
         let html = '';
         for (let i = 0; i < cantidad; i++) {
-            const datos = datosPrevios[i] || { nombre: '', raza: '', peso: '' };
+            const datos = datosPrevios[i] || { nombre: '', raza: '', peso: '', notas: '' };
             html += `
                 <div class="mascota-block">
                     <h4><i class="fas fa-dog"></i> Mascota ${i + 1}</h4>
@@ -112,6 +113,10 @@ class ContactForm {
                         <label>Peso Aproximado (lb)</label>
                         <input type="number" class="mascota-peso" value="${datos.peso}">
                     </div>
+                    <div class="form-group">
+                        <label>Información Adicional o Necesidades Específicas (opcional)</label>
+                        <textarea class="mascota-notas" rows="2">${datos.notas}</textarea>
+                    </div>
                 </div>
             `;
         }
@@ -122,7 +127,8 @@ class ContactForm {
         return Array.from(this.mascotasContainer.querySelectorAll('.mascota-block')).map(block => ({
             nombre: block.querySelector('.mascota-nombre').value.trim(),
             raza: block.querySelector('.mascota-raza').value.trim(),
-            peso: block.querySelector('.mascota-peso').value.trim()
+            peso: block.querySelector('.mascota-peso').value.trim(),
+            notas: block.querySelector('.mascota-notas').value.trim()
         }));
     }
 
@@ -170,10 +176,13 @@ class ContactForm {
             if (mascota.peso) {
                 message += `   Peso: ${mascota.peso} lb\n`;
             }
+            if (mascota.notas) {
+                message += `   Notas: ${mascota.notas}\n`;
+            }
         });
 
         if (data.mensaje) {
-            message += `\n💬 *Necesidades Especiales:*\n${data.mensaje}\n`;
+            message += `\n💬 *Necesidades Especiales del Grupo:*\n${data.mensaje}\n`;
         }
 
         message += `\n✅ *Términos y Condiciones:* Aceptados por el cliente\n`;
@@ -211,11 +220,50 @@ class WhatsAppButton {
 }
 
 /* ============================================ */
+/* MENÚ HAMBURGUESA (MÓVIL) */
+/* ============================================ */
+
+class HamburgerMenu {
+    constructor() {
+        this.button = document.getElementById('hamburgerBtn');
+        this.navLinks = document.getElementById('navLinks');
+        this.overlay = document.getElementById('navOverlay');
+
+        if (this.button && this.navLinks) {
+            this.button.addEventListener('click', () => this.toggle());
+            this.navLinks.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', () => this.close());
+            });
+        }
+        if (this.overlay) {
+            this.overlay.addEventListener('click', () => this.close());
+        }
+    }
+
+    toggle() {
+        const isOpen = this.navLinks.classList.toggle('open');
+        this.overlay.classList.toggle('open', isOpen);
+        this.button.classList.toggle('open', isOpen);
+        this.button.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        document.body.classList.toggle('nav-open', isOpen);
+    }
+
+    close() {
+        this.navLinks.classList.remove('open');
+        this.overlay.classList.remove('open');
+        this.button.classList.remove('open');
+        this.button.setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('nav-open');
+    }
+}
+
+/* ============================================ */
 /* NAVEGACIÓN SMOOTH */
 /* ============================================ */
 
 class SmoothNavigation {
-    constructor() {
+    constructor(hamburgerMenu) {
+        this.hamburgerMenu = hamburgerMenu;
         this.links = document.querySelectorAll('a[href^="#"]');
         this.links.forEach(link => {
             link.addEventListener('click', (e) => this.handleClick(e));
@@ -223,16 +271,18 @@ class SmoothNavigation {
     }
 
     handleClick(e) {
-        const href = e.target.getAttribute('href');
+        const href = e.target.closest('a')?.getAttribute('href');
 
         if (!href || href === '#') {
             return;
         }
 
-        e.preventDefault();
-
         const target = document.querySelector(href);
         if (target) {
+            e.preventDefault();
+            if (this.hamburgerMenu) {
+                this.hamburgerMenu.close();
+            }
             target.scrollIntoView({
                 behavior: 'smooth',
                 block: 'start'
@@ -282,10 +332,12 @@ function irAFormularioContacto() {
 /* ============================================ */
 
 document.addEventListener('DOMContentLoaded', () => {
+    const hamburgerMenu = new HamburgerMenu();
+
     new ScrollAnimationObserver();
     new ContactForm();
     new WhatsAppButton();
-    new SmoothNavigation();
+    new SmoothNavigation(hamburgerMenu);
     new NavbarScroll();
 
     console.log('%c🐾 Casa Canis Landing Page', 'font-size: 20px; font-weight: bold; color: #0B2F1D;');
