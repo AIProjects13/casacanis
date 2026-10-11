@@ -200,6 +200,80 @@ class ContactForm {
 }
 
 /* ============================================ */
+/* CARRUSEL DE PROMOCIONES */
+/* ============================================ */
+
+class PromoCarousel {
+    constructor() {
+        this.root = document.getElementById('promoCarousel');
+        if (!this.root) return;
+
+        this.slides = Array.from(this.root.querySelectorAll('.promo-slide'));
+        this.dotsBox = this.root.querySelector('.promo-dots');
+        this.index = 0;
+        this.timer = null;
+
+        this.dots = this.slides.map((_, i) => {
+            const dot = document.createElement('button');
+            dot.type = 'button';
+            dot.className = 'promo-dot';
+            dot.setAttribute('aria-label', `Ir a la imagen ${i + 1}`);
+            dot.addEventListener('click', () => this.goTo(i));
+            this.dotsBox.appendChild(dot);
+            return dot;
+        });
+
+        this.root.querySelector('.promo-prev').addEventListener('click', () => this.goTo(this.index - 1));
+        this.root.querySelector('.promo-next').addEventListener('click', () => this.goTo(this.index + 1));
+
+        let startX = null;
+        this.root.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            this.stop();
+        }, { passive: true });
+        this.root.addEventListener('touchend', (e) => {
+            if (startX !== null) {
+                const diff = e.changedTouches[0].clientX - startX;
+                if (Math.abs(diff) > 40) this.goTo(this.index + (diff < 0 ? 1 : -1));
+            }
+            startX = null;
+            this.start();
+        });
+
+        this.root.addEventListener('mouseenter', () => this.stop());
+        this.root.addEventListener('mouseleave', () => this.start());
+
+        this.render();
+        this.start();
+    }
+
+    goTo(i) {
+        const n = this.slides.length;
+        this.index = (i + n) % n;
+        this.render();
+    }
+
+    render() {
+        const n = this.slides.length;
+        this.slides.forEach((slide, i) => {
+            slide.classList.toggle('is-active', i === this.index);
+            slide.classList.toggle('is-prev', i === (this.index - 1 + n) % n);
+            slide.classList.toggle('is-next', i === (this.index + 1) % n);
+        });
+        this.dots.forEach((dot, i) => dot.classList.toggle('is-active', i === this.index));
+    }
+
+    start() {
+        this.stop();
+        this.timer = setInterval(() => this.goTo(this.index + 1), 6000);
+    }
+
+    stop() {
+        clearInterval(this.timer);
+    }
+}
+
+/* ============================================ */
 /* BOTÓN FLOTANTE WHATSAPP */
 /* ============================================ */
 
@@ -336,6 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     new ScrollAnimationObserver();
     new ContactForm();
+    new PromoCarousel();
     new WhatsAppButton();
     new SmoothNavigation(hamburgerMenu);
     new NavbarScroll();
